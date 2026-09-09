@@ -1,0 +1,14 @@
+# BEGIN EAZO DEPLOY SAFETY
+.env
+.env*
+**/.env
+**/.env*
+.git
+.vercel
+**/.git
+**/.vercel
+*.pem
+*.key
+**/*.pem
+**/*.key
+# END EAZO DEPLOY SAFETY
