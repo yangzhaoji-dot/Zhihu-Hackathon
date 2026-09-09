@@ -40,6 +40,7 @@ export interface Opinion {
   title: string; // the crisp opinion statement shown on the node
   summary: string; // one-line elaboration
   kind: OpinionKind;
+  origin?: "demo" | "zhihu-grounded" | "ai-derived";
   support: number; // 0-100 support magnitude; drives node size + collision physics
   x: number; // normalized 0-1 layout position
   y: number;

@@ -81,7 +81,7 @@ export function getSourcesForOpinion(opinionId: string) {
 
 // ── Personal stance ────────────────────────────────────────────────────────
 export function setStance(userId: string, opinionId: string, stance: Stance) {
-  if (!getOpinion(opinionId)) return null;
+  if (!getOpinion(opinionId) && !/^o_live_\d+$/.test(opinionId)) return null;
   let map = stanceByUser.get(userId);
   if (!map) {
     map = new Map();

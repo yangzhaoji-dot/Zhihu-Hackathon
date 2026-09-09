@@ -29,10 +29,26 @@ export function SourceView({
   const isAi = opinion.kind === "ai";
   const current = profile?.stances?.[opinion.id];
   const authorOf = (id: string) => authors.find((a) => a.id === id);
+  const relationCounts = related.reduce<Record<RelationType, number>>((counts, item) => {
+    counts[item.type] = (counts[item.type] ?? 0) + 1;
+    return counts;
+  }, { support: 0, refute: 0, add: 0, cond: 0, oppose: 0 });
 
   return (
     <div>
-      <p>{isAi ? t("cosmos.kindAiDesc") : t("cosmos.kindHumanDesc")}</p>
+      <div className="planet-profile" data-el="opinion-planet-profile">
+        <div className="planet-kicker">{t("cosmos.planetKicker")}</div>
+        <h3>{opinion.title}</h3>
+        <p className="planet-summary">{opinion.summary}</p>
+        <div className="planet-stats">
+          <span><b>{sources.length}</b>{t("cosmos.planetSources")}</span>
+          <span><b>{related.length}</b>{t("cosmos.planetRoutes")}</span>
+          <span><b>{opinion.camp ?? t("cosmos.planetUnclassified")}</b>{t("cosmos.planetCamp")}</span>
+        </div>
+      </div>
+      <p className="planet-provenance">
+        {isAi ? t("cosmos.kindAiDesc") : t("cosmos.kindHumanDesc")}
+      </p>
       <div className="meta">
         <span className="chip">{t("cosmos.supportDeg", { n: opinion.support })}</span>
         <span className="chip">{t("cosmos.sourceCount", { n: sources.length })}</span>
@@ -40,7 +56,20 @@ export function SourceView({
           {isAi ? t("cosmos.ai") : t("cosmos.human")}
         </span>
       </div>
-      <p className="quote">“{opinion.summary}”</p>
+      {related.length > 0 && (
+        <div className="planet-routes">
+          <div className="sec-label">{t("cosmos.planetRoutesTitle")}</div>
+          <div className="planet-route-chips">
+            {(Object.keys(relationCounts) as RelationType[])
+              .filter((type) => relationCounts[type] > 0)
+              .map((type) => (
+                <span key={type} className={`route-chip route-${type}`}>
+                  {t(REL_LABEL[type])} · {relationCounts[type]}
+                </span>
+              ))}
+          </div>
+        </div>
+      )}
 
       {/* personal stance */}
       <div className="actions">
@@ -57,7 +86,8 @@ export function SourceView({
 
       {sources.length > 0 && (
         <>
-          <div className="sec-label">{t("cosmos.secSources")}</div>
+          <div className="sec-label">{t("cosmos.planetMiningTitle")}</div>
+          <p className="mining-hint">{t("cosmos.planetMiningHint")}</p>
           {sources.map((s) => (
             <SourceCard key={s.id} source={s} author={authorOf(s.authorId)} />
           ))}

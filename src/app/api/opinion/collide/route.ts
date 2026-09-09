@@ -1,13 +1,14 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { analyzeCollision } from "@/lib/opinion/ai";
 import { AppAIUnavailableError } from "@/lib/eazo-ai-billing";
+import type { OpinionGraph } from "@/lib/opinion/types";
 
 // POST /api/opinion/collide { aId, bId }
 // Analyze a collision between two opinions: consensus, core disagreement,
 // each side's conditions, evidence comparison, missing information, and a
 // candidate fused opinion. AI-driven with a graceful offline fallback.
 export async function POST(request: NextRequest) {
-  let body: { aId?: unknown; bId?: unknown };
+  let body: { aId?: unknown; bId?: unknown; graph?: unknown };
   try {
     body = await request.json();
   } catch {
@@ -19,7 +20,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, error: "invalid_input" }, { status: 400 });
   }
   try {
-    const analysis = await analyzeCollision(aId, bId);
+    const graph = isOpinionGraph(body.graph) ? body.graph : undefined;
+    const analysis = await analyzeCollision(aId, bId, graph);
     return NextResponse.json({ ok: true, analysis });
   } catch (error) {
     if (error instanceof AppAIUnavailableError) {
@@ -32,4 +34,15 @@ export async function POST(request: NextRequest) {
     }
     return NextResponse.json({ ok: false, error: "collision_failed" }, { status: 500 });
   }
+}
+
+function isOpinionGraph(value: unknown): value is OpinionGraph {
+  if (!value || typeof value !== "object") return false;
+  const graph = value as Partial<OpinionGraph>;
+  return typeof graph.questionId === "string" &&
+    typeof graph.questionTitle === "string" &&
+    Array.isArray(graph.opinions) && graph.opinions.length <= 12 &&
+    Array.isArray(graph.sources) && graph.sources.length <= 20 &&
+    Array.isArray(graph.authors) && graph.authors.length <= 20 &&
+    Array.isArray(graph.relations) && graph.relations.length <= 30;
 }

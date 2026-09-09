@@ -399,6 +399,9 @@ export class CosmosEngine {
     const n = this.nodes.find((x) => x.id === id);
     if (!n) return;
     this.selectedId = id;
+    this.scale = Math.max(this.scale, 1.35);
+    this.pan.x = this.w() / 2 - n.cx;
+    this.pan.y = this.h() / 2 - n.cy;
     this.els.forEach((el) => el.classList.remove("selected"));
     const el = this.els.get(id);
     if (el) el.classList.add("selected");

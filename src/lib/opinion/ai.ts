@@ -5,6 +5,7 @@ import type {
   GapAnalysis,
   NavigationHint,
   Opinion,
+  OpinionGraph,
   OpinionSource,
   SearchResult,
 } from "./types";
@@ -31,8 +32,9 @@ function opinionBrief(o: Opinion, sources: OpinionSource[]): string {
 export async function analyzeCollision(
   aId: string,
   bId: string,
+  graphOverride?: OpinionGraph,
 ): Promise<CollisionAnalysis> {
-  const graph = getOpinionGraph("q_luoci");
+  const graph = graphOverride ?? getOpinionGraph("q_luoci");
   const a = graph?.opinions.find((o) => o.id === aId);
   const b = graph?.opinions.find((o) => o.id === bId);
   if (!graph || !a || !b) return fallbackCollision(a, b);
@@ -57,29 +59,29 @@ export async function analyzeCollision(
 
 function fallbackCollision(a?: Opinion, b?: Opinion): CollisionAnalysis {
   return {
-    consensus: `都承认「${a?.camp ?? "一方"}」与「${b?.camp ?? "另一方"}」的核心关切真实存在：离职决策同时牵动身心状态与现金流。`,
-    coreDisagreement: `分歧在于优先级——${a?.title ?? "A"} 优先止损，${b?.title ?? "B"} 优先保留议价权与安全垫。`,
+    consensus: "两条观点都在回应同一议题，但现有材料不足以自动确认更具体的共识。",
+    coreDisagreement: `当前可见分歧是「${a?.title ?? "观点 A"}」与「${b?.title ?? "观点 B"}」强调了不同判断。`,
     conditions: {
-      a: "当身心健康风险高、且已难以恢复判断力时成立。",
-      b: "当现金储备不足、或就业市场处于收缩期时成立。",
+      a: a?.summary || "需要回到来源确认其成立条件。",
+      b: b?.summary || "需要回到来源确认其成立条件。",
     },
     evidence: {
-      a: "多为亲历式体验证据（睡眠、情绪改善）。",
-      b: "多为结构化数据（offer 折价、招聘周期）。",
-      verdict: "两类证据针对不同问题，谁更充分取决于当事人的健康与财务实况。",
+      a: "请查看观点 A 的知乎来源摘录。",
+      b: "请查看观点 B 的知乎来源摘录。",
+      verdict: "AI 暂不可用，尚不能可靠比较两边证据充分度。",
     },
-    missing: ["所在行业的周期与扩招情况", "个人现金储备与家庭支持", "是否已有医学诊断或体检结论", "是否手握 near-offer"],
+    missing: ["双方主张的完整上下文", "证据的来源与适用范围", "各自主张成立的边界条件"],
     candidate: {
-      title: "先设退出阈值，再决定是否裸辞",
-      summary: "把健康风险、现金储备与就业周期合成一个可行动的退出阈值。",
+      title: "先核对条件，再形成综合判断",
+      summary: "把两条来源中的条件和证据补齐后再尝试融合。",
     },
     source: "fallback",
   };
 }
 
 // ── Blind-spot / gap mining ────────────────────────────────────────────────
-export async function mineGaps(): Promise<GapAnalysis> {
-  const graph = getOpinionGraph("q_luoci");
+export async function mineGaps(graphOverride?: OpinionGraph): Promise<GapAnalysis> {
+  const graph = graphOverride ?? getOpinionGraph("q_luoci");
   if (!graph) return { gaps: [], source: "fallback" };
   const list = graph.opinions.map((o) => `- ${o.title}`).join("\n");
   const result = await aiJson<{ gaps: string[] }>([
@@ -93,12 +95,7 @@ export async function mineGaps(): Promise<GapAnalysis> {
   ]);
   if (!result?.gaps?.length) {
     return {
-      gaps: [
-        "缺少不同行业/城市的生活成本差异",
-        "缺少家庭支持与经济依赖的讨论",
-        "缺少心理健康的专业评估路径",
-        "缺少裸辞后 6-12 个月的长期追踪",
-      ],
+      gaps: ["缺少观点成立条件的交叉验证", "缺少来源之外的反例", "缺少证据时间与适用范围", "当前只覆盖已检索到的材料"],
       source: "fallback",
     };
   }
@@ -106,8 +103,8 @@ export async function mineGaps(): Promise<GapAnalysis> {
 }
 
 // ── Semantic opinion search ────────────────────────────────────────────────
-export async function semanticSearch(query: string): Promise<SearchResult> {
-  const graph = getOpinionGraph("q_luoci");
+export async function semanticSearch(query: string, graphOverride?: OpinionGraph): Promise<SearchResult> {
+  const graph = graphOverride ?? getOpinionGraph("q_luoci");
   if (!graph) return { opinionId: null, reason: "", rankedIds: [], source: "fallback" };
   const list = graph.opinions
     .map((o) => `${o.id}: ${o.title} —— ${o.summary}`)
@@ -158,8 +155,8 @@ function fallbackSearch(query: string, opinions: Opinion[]): SearchResult {
 }
 
 // ── Agent navigation recommendation ────────────────────────────────────────
-export async function recommendPath(): Promise<NavigationHint> {
-  const graph = getOpinionGraph("q_luoci");
+export async function recommendPath(graphOverride?: OpinionGraph): Promise<NavigationHint> {
+  const graph = graphOverride ?? getOpinionGraph("q_luoci");
   if (!graph) return { path: [], rationale: "", source: "fallback" };
   const list = graph.opinions
     .map((o) => `${o.id}: ${o.title}（支持度${o.support}）`)
@@ -178,8 +175,8 @@ export async function recommendPath(): Promise<NavigationHint> {
     return { path: result.path, rationale: result.rationale ?? "", source: "ai" };
   }
   return {
-    path: ["o_cashflow", "o_stoploss", "o_threshold"],
-    rationale: "先看‘现金流风险’，再看‘身心止损’，最后落到‘退出成本可控’，最快看清争议结构。",
+    path: graph.opinions.slice(0, 4).map((opinion) => opinion.id),
+    rationale: "AI 暂不可用，已按当前图中的观点顺序生成基础阅读路径。",
     source: "fallback",
   };
 }

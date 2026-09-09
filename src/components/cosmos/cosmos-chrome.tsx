@@ -13,7 +13,7 @@ const LEGEND: { cls: string; key: string }[] = [
 
 /**
  * The fixed chrome around the canvas: brand + mode switch, semantic search,
- * relation legend, agent rail, and zoom controls. Kept separate from the
+ * live Zhihu topic builder, relation legend, agent rail, and zoom controls. Kept separate from the
  * stateful CosmosApp so each file stays reviewable.
  */
 export function CosmosChrome({

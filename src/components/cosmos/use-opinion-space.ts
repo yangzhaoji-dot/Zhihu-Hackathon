@@ -5,10 +5,12 @@ import {
   fetchOpinionGraph,
   fetchQuestionNetwork,
   fetchStanceProfile,
+  buildOpinionSpace,
   markStance as apiMarkStance,
   type StanceProfile,
 } from "@/lib/api/opinion";
 import type {
+  Opinion,
   OpinionGraph,
   QuestionNetwork,
   Stance,
@@ -64,6 +66,54 @@ export function useOpinionSpace() {
     return next;
   }, []);
 
+  const buildFromZhihu = useCallback(async (query: string) => {
+    setLoading(true);
+    try {
+      const result = await buildOpinionSpace(query);
+      setGraph(result.graph);
+      setNetwork({
+        coreQuestionId: result.graph.questionId,
+        questions: [{
+          id: result.graph.questionId,
+          title: result.graph.questionTitle,
+          x: 0.5,
+          y: 0.5,
+          core: true,
+          answerCount: result.retrieval.itemCount,
+        }],
+        relations: [],
+      });
+      setMode("views");
+      setProfile(null);
+      return result;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const addCandidateToGraph = useCallback((
+    candidate: Opinion,
+    parentA: string,
+    parentB: string,
+  ) => {
+    setGraph((current) => current ? {
+      ...current,
+      opinions: [
+        ...current.opinions,
+        {
+          ...candidate,
+          questionId: current.questionId,
+          origin: "ai-derived",
+        },
+      ],
+      relations: [
+        ...current.relations,
+        { from: parentA, to: candidate.id, type: "add" },
+        { from: parentB, to: candidate.id, type: "add" },
+      ],
+    } : current);
+  }, []);
+
   return {
     mode,
     setMode,
@@ -73,5 +123,7 @@ export function useOpinionSpace() {
     profile,
     loadProfile,
     markStance,
+    buildFromZhihu,
+    addCandidateToGraph,
   };
 }

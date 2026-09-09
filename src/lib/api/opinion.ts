@@ -33,6 +33,16 @@ export interface SourceTrace {
   related: { type: RelationType; opinion: Opinion }[];
 }
 
+export interface BuildOpinionSpaceResult {
+  graph: OpinionGraph;
+  retrieval: {
+    itemCount: number;
+    hasMore: boolean;
+    searchHashId?: string;
+    scope: "zhihu_search_results";
+  };
+}
+
 async function json<T>(res: Response): Promise<T> {
   const data = (await res.json()) as T & { ok?: boolean };
   return data;
@@ -73,11 +83,15 @@ export async function markStance(opinionId: string, stance: Stance): Promise<Sta
   return data.profile;
 }
 
-export async function collideOpinions(aId: string, bId: string): Promise<CollisionAnalysis> {
+export async function collideOpinions(
+  aId: string,
+  bId: string,
+  graph?: OpinionGraph,
+): Promise<CollisionAnalysis> {
   const res = await request("/api/opinion/collide", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ aId, bId }),
+    body: JSON.stringify({ aId, bId, graph }),
   });
   const data = await json<{ analysis: CollisionAnalysis }>(res);
   return data.analysis;
@@ -110,13 +124,32 @@ export async function searchOpinions(query: string): Promise<SearchResult> {
   return data.result;
 }
 
-export async function fetchGaps(): Promise<GapAnalysis> {
-  const res = await request("/api/opinion/gaps");
+export async function buildOpinionSpace(query: string): Promise<BuildOpinionSpaceResult> {
+  const res = await request("/api/opinion/build", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ query }),
+  });
+  const data = await json<BuildOpinionSpaceResult & { error?: string }>(res);
+  if (!res.ok) throw new Error(data.error || "build_failed");
+  return data;
+}
+
+export async function fetchGaps(graph?: OpinionGraph): Promise<GapAnalysis> {
+  const res = await request("/api/opinion/gaps", graph ? {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ graph }),
+  } : undefined);
   return json<GapAnalysis>(res);
 }
 
-export async function fetchNavigation(): Promise<NavigationHint> {
-  const res = await request("/api/opinion/navigate");
+export async function fetchNavigation(graph?: OpinionGraph): Promise<NavigationHint> {
+  const res = await request("/api/opinion/navigate", graph ? {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ graph }),
+  } : undefined);
   return json<NavigationHint>(res);
 }
 

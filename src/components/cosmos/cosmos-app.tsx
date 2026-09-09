@@ -9,8 +9,8 @@ import {
   fetchNavigation,
   fetchSourceTrace,
   fuseOpinions,
-  searchOpinions,
   tintZhihu,
+  type SourceTrace,
 } from "@/lib/api/opinion";
 import type { CollisionAnalysis, Stance } from "@/lib/opinion/types";
 import { useOpinionSpace } from "./use-opinion-space";
@@ -24,7 +24,18 @@ import { createQuestionSpace, type QuestionEngineHandle } from "./three/create-q
 export function CosmosApp() {
   const { t } = useTranslation();
   const space = useOpinionSpace();
-  const { mode, setMode, loading, graph, network, profile, markStance, loadProfile } = space;
+  const {
+    mode,
+    setMode,
+    loading,
+    graph,
+    network,
+    profile,
+    markStance,
+    loadProfile,
+    buildFromZhihu,
+    addCandidateToGraph,
+  } = space;
 
   const rootRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -61,13 +72,37 @@ export function CosmosApp() {
 
   // ── source trace (tap / long-press) ────────────────────────────────────
   const openSource = useCallback(async (opinionId: string) => {
+    const liveOpinion = graph?.opinions.find((opinion) => opinion.id === opinionId);
+    if (liveOpinion && graph?.questionId.startsWith("q_live_")) {
+      const sourceIds = new Set(liveOpinion.sourceIds);
+      const sources = graph.sources.filter((source) => sourceIds.has(source.id));
+      const authorIds = new Set(sources.map((source) => source.authorId));
+      const related = graph.relations
+        .filter((relation) => relation.from === opinionId || relation.to === opinionId)
+        .map((relation) => ({
+          type: relation.type,
+          opinion: graph.opinions.find((opinion) =>
+            opinion.id === (relation.from === opinionId ? relation.to : relation.from)),
+        }))
+        .filter((item): item is SourceTrace["related"][number] => Boolean(item.opinion));
+      setPanel({
+        type: "source",
+        trace: {
+          opinion: liveOpinion,
+          sources,
+          authors: graph.authors.filter((author) => authorIds.has(author.id)),
+          related,
+        },
+      });
+      return;
+    }
     try {
       const trace = await fetchSourceTrace(opinionId);
       setPanel({ type: "source", trace });
     } catch {
       /* ignore */
     }
-  }, []);
+  }, [graph]);
 
   // ── collision → AI analysis ─────────────────────────────────────────────
   const runCollision = useCallback(
@@ -85,7 +120,7 @@ export function CosmosApp() {
       });
       let analysis: CollisionAnalysis | null = null;
       try {
-        analysis = await collideOpinions(a.id, b.id);
+        analysis = await collideOpinions(a.id, b.id, graph ?? undefined);
       } catch {
         analysis = null;
       }
@@ -95,7 +130,7 @@ export function CosmosApp() {
           : prev,
       );
     },
-    [],
+    [graph],
   );
 
   // ── engine lifecycle ────────────────────────────────────────────────────
@@ -109,8 +144,14 @@ export function CosmosApp() {
     let cancelled = false;
 
     createOpinionEngine(canvas, root, {
-      onTap: (n) => openSource(n.id),
-      onLongPress: (n) => openSource(n.id),
+      onTap: (n) => {
+        engineRef.current?.locate(n.id);
+        openSource(n.id);
+      },
+      onLongPress: (n) => {
+        engineRef.current?.locate(n.id);
+        openSource(n.id);
+      },
       onCollision: (a, b, mx, my) => runCollision(a, b, mx, my),
     }).then((handle) => {
       if (cancelled) {
@@ -197,14 +238,15 @@ export function CosmosApp() {
         y: pair.my / h,
       });
       await engine.fuse(pair.aId, pair.bId, candidate);
+      addCandidateToGraph(candidate, pair.aId, pair.bId);
       setHint(t("cosmos.fused"));
       setPanel(null);
     } catch {
       setPanel({ ...current, fusing: false });
     }
-  }, [t]);
+  }, [t, addCandidateToGraph]);
 
-  // ── search ────────────────────────────────────────────────────────────
+  // ── build a traceable space from live Zhihu search results ───────────
   const [query, setQuery] = useState("");
   const [searching, setSearching] = useState(false);
   const onSearch = useCallback(
@@ -213,19 +255,26 @@ export function CosmosApp() {
       if (!query.trim() || searching) return;
       setSearching(true);
       try {
-        const res = await searchOpinions(query.trim());
-        if (res.opinionId) {
-          engineRef.current?.locate(res.opinionId);
-          setHint(res.reason || t("cosmos.hintLocated"));
-          setTimeout(() => openSource(res.opinionId as string), 400);
-        }
-      } catch {
-        /* ignore */
+        const result = await buildFromZhihu(query.trim());
+        setTitle(result.graph.questionTitle);
+        setPanel(null);
+        setRailOn(null);
+        setHint(t("cosmos.buildSuccess", { n: result.retrieval.itemCount }));
+      } catch (error) {
+        const code = error instanceof Error ? error.message : "build_failed";
+        const key = code === "no_zhihu_results"
+          ? "cosmos.buildNoResults"
+          : code === "zhihu_rate_limited"
+            ? "cosmos.buildRateLimited"
+            : code === "zhihu_auth_not_configured" || code === "zhihu_cli_unavailable"
+              ? "cosmos.buildAuthRequired"
+              : "cosmos.buildFailed";
+        setHint(t(key));
       } finally {
         setSearching(false);
       }
     },
-    [query, searching, openSource, t],
+    [query, searching, buildFromZhihu, t],
   );
 
   // ── tint: analyze pasted Zhihu content ──────────────────────────────────
@@ -270,7 +319,7 @@ export function CosmosApp() {
       }
       if (which === "agentPath") {
         setPanel({ type: "agentPath", body: t("cosmos.gapMining"), source: "fallback" });
-        const nav = await fetchNavigation();
+        const nav = await fetchNavigation(graph ?? undefined);
         const pathTitles = nav.path.map(titleOf).join(" → ");
         setPanel({
           type: "agentPath",
@@ -281,10 +330,10 @@ export function CosmosApp() {
       }
       // gaps
       setPanel({ type: "gaps", items: [], source: "fallback" });
-      const g = await fetchGaps();
+      const g = await fetchGaps(graph ?? undefined);
       setPanel({ type: "gaps", items: g.gaps, source: g.source });
     },
-    [railOn, panel, loadProfile, t, titleOf],
+    [railOn, panel, loadProfile, t, titleOf, graph],
   );
 
   const closePanel = useCallback(() => {
