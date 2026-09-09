@@ -33,6 +33,15 @@ interface RawRelation {
 interface RawGraph {
   opinions?: unknown;
   relations?: unknown;
+  station?: unknown;
+}
+
+interface RawStation {
+  claim?: unknown;
+  reason?: unknown;
+  conditions?: unknown;
+  evidence?: unknown;
+  derivedFrom?: unknown;
 }
 
 const SYSTEM: AiMessage = {
@@ -271,7 +280,9 @@ export async function buildOpinionGraph(
         `输出 JSON：{"opinions":[{"claim":"短主张，不超过30字","reason":"理由，不超过80字",` +
         `"conditions":["成立条件"],"evidence":["摘要中明确出现的经验或依据"],"camp":"视角簇",` +
         `"sourceIndices":[0],"support":0到100}],"relations":[{"from":0,"to":1,` +
-        `"type":"support|refute|add|cond|oppose","rationale":"关系依据，不超过50字"}]}。` +
+        `"type":"support|refute|add|cond|oppose","rationale":"关系依据，不超过50字"}],` +
+        `"station":{"claim":"多个观点共同推导出的新判断，不超过34字","reason":"推导说明，不超过100字",` +
+        `"conditions":["推导成立的条件"],"evidence":["来自哪些摘要的共同依据"],"derivedFrom":[0,1]}}。` +
         `每个观点必须至少有一个 sourceIndices；不要把“谢邀”、编号标题或整段正文当成 claim；` +
         `只在摘要明确支持时创建关系。\n\n${materials}`,
     },
@@ -359,12 +370,57 @@ export async function buildOpinionGraph(
     }
   }
 
+  const stationRaw = raw?.station as RawStation | undefined;
+  const stationClaim = compact(stationRaw?.claim, 34);
+  const stationReason = compact(stationRaw?.reason, 120);
+  const stationConditions = Array.isArray(stationRaw?.conditions)
+    ? stationRaw.conditions.filter((item): item is string => typeof item === "string").slice(0, 4).map((item) => compact(item, 72))
+    : [];
+  const stationEvidence = Array.isArray(stationRaw?.evidence)
+    ? stationRaw.evidence.filter((item): item is string => typeof item === "string").slice(0, 4).map((item) => compact(item, 72))
+    : [];
+  const stationFromAi = Boolean(stationClaim && stationReason);
+  const parsedStationParents = Array.isArray(stationRaw?.derivedFrom)
+    ? stationRaw.derivedFrom.map(Number).filter((index) => Number.isInteger(index) && index >= 0 && index < opinions.length)
+    : [];
+  const stationParents = parsedStationParents.length > 0
+    ? [...new Set(parsedStationParents)].slice(0, 4)
+    : opinions.slice(0, Math.min(4, opinions.length)).map((_, index) => index);
+  const station: Opinion = {
+    id: `station_${hashText(questionUrl || query)}`,
+    questionId,
+    title: stationClaim || "真正的分歧在于优先考虑什么",
+    summary: stationReason || "这些回答关注了不同的目标、时机和条件，当前材料不足以把它们压缩成一个唯一答案。",
+    claim: stationClaim || "真正的分歧在于优先考虑什么",
+    reason: stationReason || "这些回答关注了不同的目标、时机和条件。",
+    conditions: stationConditions.length > 0 ? stationConditions : ["需要结合个人目标、资源和具体情境判断"],
+    evidence: stationEvidence,
+    kind: "ai",
+    origin: "ai-derived",
+    derivedSource: stationFromAi ? "ai" : "fallback",
+    nodeType: "station",
+    support: 86,
+    x: 0.5,
+    y: 0.14,
+    sourceIds: [],
+    derivedFrom: stationParents.map((index) => opinions[index].id),
+    camp: "Agent 推导",
+  };
+  for (const parentIndex of stationParents) {
+    const relation = { from: opinions[parentIndex].id, to: station.id, type: "cond" as const, rationale: "该观点为 Agent 空间站的推导提供了一个输入视角。" };
+    const key = `${relation.from}->${relation.to}`;
+    if (!seen.has(key)) {
+      relations.push(relation);
+      seen.add(key);
+    }
+  }
+
   return {
     questionId,
     questionTitle: compact(questionTitle || query, 100),
     questionUrl,
     sourceScope: "zhihu-question-answers",
-    opinions: [topic, ...opinions],
+    opinions: [topic, ...opinions, station],
     relations,
     authors,
     sources,

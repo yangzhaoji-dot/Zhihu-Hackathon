@@ -27,6 +27,8 @@ export function SourceView({
   const { t } = useTranslation();
   const { opinion, sources, authors, related } = trace;
   const isAi = opinion.kind === "ai";
+  const isStation = opinion.nodeType === "station";
+  const stationFallback = isStation && opinion.derivedSource === "fallback";
   const current = profile?.stances?.[opinion.id];
   const authorOf = (id: string) => authors.find((a) => a.id === id);
   const relationCounts = related.reduce<Record<RelationType, number>>((counts, item) => {
@@ -47,7 +49,13 @@ export function SourceView({
         </div>
       </div>
       <p className="planet-provenance">
-        {isAi ? t("cosmos.kindAiDesc") : t("cosmos.kindHumanDesc")}
+        {isStation
+          ? stationFallback
+            ? t("cosmos.stationFallbackDesc")
+            : t("cosmos.stationDesc")
+          : isAi
+            ? t("cosmos.kindAiDesc")
+            : t("cosmos.kindHumanDesc")}
       </p>
       {opinion.claim && (
         <div className="planet-fact">
@@ -81,7 +89,13 @@ export function SourceView({
         <span className="chip">{t("cosmos.supportDeg", { n: opinion.support })}</span>
         <span className="chip">{t("cosmos.sourceCount", { n: sources.length })}</span>
         <span className={`chip ${isAi ? "ai" : "human"}`}>
-          {isAi ? t("cosmos.ai") : t("cosmos.human")}
+          {isStation
+            ? stationFallback
+              ? t("cosmos.stationFallback")
+              : t("cosmos.station")
+            : isAi
+              ? t("cosmos.ai")
+              : t("cosmos.human")}
         </span>
       </div>
       {related.length > 0 && (

@@ -42,6 +42,7 @@ export interface Opinion {
   kind: OpinionKind;
   origin?: "demo" | "zhihu-grounded" | "ai-derived";
   nodeType?: "opinion" | "topic" | "station" | "user";
+  derivedSource?: "ai" | "fallback";
   support: number; // 0-100 support magnitude; drives node size + collision physics
   x: number; // normalized 0-1 layout position
   y: number;

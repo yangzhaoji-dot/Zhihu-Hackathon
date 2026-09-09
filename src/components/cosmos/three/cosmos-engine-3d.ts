@@ -225,7 +225,11 @@ export class CosmosEngine3D {
     const group = new THREE.Group();
 
     // core gem — icosahedron reads as a faceted "archive gem"
-    const coreGeo = new THREE.IcosahedronGeometry(radius, 1);
+    const coreGeo = o.nodeType === "station"
+      ? new THREE.OctahedronGeometry(radius * 1.06, 1)
+      : o.nodeType === "topic"
+        ? new THREE.DodecahedronGeometry(radius * 1.08, 1)
+        : new THREE.IcosahedronGeometry(radius, 1);
     const coreMat = new THREE.MeshStandardMaterial({
       color: baseColor,
       emissive: baseColor.clone().multiplyScalar(0.55),
@@ -237,6 +241,22 @@ export class CosmosEngine3D {
     const core = new THREE.Mesh(coreGeo, coreMat);
     core.userData.nodeId = o.id;
     group.add(core);
+
+    if (o.nodeType === "station") {
+      for (const tilt of [0.38, -0.38]) {
+        const orbit = new THREE.Mesh(
+          new THREE.TorusGeometry(radius * 1.75, radius * 0.045, 8, 48),
+          new THREE.MeshBasicMaterial({
+            color: colorGoldBright,
+            transparent: true,
+            opacity: 0.68,
+          }),
+        );
+        orbit.rotation.x = tilt;
+        orbit.rotation.z = tilt * 0.7;
+        group.add(orbit);
+      }
+    }
 
     // gold inner shell (thin faceted skin catching the rim light)
     const shellGeo = new THREE.IcosahedronGeometry(radius * 1.06, 1);
@@ -461,7 +481,10 @@ export class CosmosEngine3D {
   private updateNodeVisuals(t: number) {
     for (const n of this.nodes) {
       // slow spin gives the gem facets life
-      if (!this.reduced) n.core.rotation.y = t * 0.25 + hashId(n.id);
+      if (!this.reduced) {
+        n.core.rotation.y = t * (n.nodeType === "station" ? 0.42 : 0.25) + hashId(n.id);
+        if (n.nodeType === "station") n.group.rotation.y = t * 0.08;
+      }
       // orient rings to face the camera plane loosely
       if (n.ring) n.ring.lookAt(this.camera.position);
       if (n.selRing) {
