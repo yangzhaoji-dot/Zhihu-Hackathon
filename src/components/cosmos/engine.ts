@@ -130,6 +130,7 @@ export class CosmosEngine {
     return [
       "node",
       n.kind === "ai" ? "ai" : "",
+      n.nodeType ?? "opinion",
       n.stance ?? "",
       n.id === this.selectedId ? "selected" : "",
     ]

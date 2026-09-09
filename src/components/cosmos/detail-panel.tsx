@@ -1,7 +1,11 @@
 "use client";
 
 import { useTranslation } from "react-i18next";
-import type { SourceTrace, StanceProfile } from "@/lib/api/opinion";
+import type {
+  SourceTrace,
+  StanceProfile,
+  ZhihuQuestionCandidate,
+} from "@/lib/api/opinion";
 import type {
   CollisionAnalysis,
   MatchResult,
@@ -13,6 +17,7 @@ import { CollisionView } from "./collision-view";
 import { AgentTextView, ProfileView } from "./agent-views";
 import { MatchView } from "./match-view";
 import { TintView } from "./tint-view";
+import { QuestionPickerView } from "./question-picker-view";
 
 export type PanelData =
   | { type: "source"; trace: SourceTrace }
@@ -30,7 +35,13 @@ export type PanelData =
   | { type: "gaps"; items: string[]; source: "ai" | "fallback" }
   | { type: "profile" }
   | { type: "match"; result: MatchResult | null; loading: boolean }
-  | { type: "tint"; result: TintAnalysis | null; loading: boolean };
+  | { type: "tint"; result: TintAnalysis | null; loading: boolean }
+  | {
+      type: "questionPicker";
+      query: string;
+      questions: ZhihuQuestionCandidate[];
+      loading: boolean;
+    };
 
 export function DetailPanel({
   data,
@@ -41,6 +52,7 @@ export function DetailPanel({
   onOpenRelated,
   onFuse,
   onAnalyzeTint,
+  onSelectQuestion,
 }: {
   data: PanelData | null;
   profile: StanceProfile | null;
@@ -50,6 +62,7 @@ export function DetailPanel({
   onOpenRelated: (opinionId: string) => void;
   onFuse: () => void;
   onAnalyzeTint: (text: string, url: string) => void;
+  onSelectQuestion: (question: ZhihuQuestionCandidate) => void;
 }) {
   const { t } = useTranslation();
 
@@ -62,11 +75,16 @@ export function DetailPanel({
         profile: t("cosmos.profileTitle"),
         match: t("cosmos.matchTitle"),
         tint: t("cosmos.tintTitle"),
+        questionPicker: t("cosmos.questionPickerTitle"),
       }[data.type]
     : "";
 
   return (
-    <aside className={`panel ${data ? "open" : ""}`} aria-live="polite" data-el="detail-panel">
+    <aside
+      className={`panel ${data ? "open" : ""} ${data?.type === "source" ? "planet-panel" : ""} ${data?.type === "questionPicker" ? "question-picker-panel" : ""}`}
+      aria-live="polite"
+      data-el="detail-panel"
+    >
       {data && (
         <>
           <div className="panel-head">
@@ -117,6 +135,14 @@ export function DetailPanel({
               result={data.result}
               loading={data.loading}
               onAnalyze={onAnalyzeTint}
+            />
+          )}
+
+          {data.type === "questionPicker" && (
+            <QuestionPickerView
+              questions={data.questions}
+              loading={data.loading}
+              onSelect={onSelectQuestion}
             />
           )}
         </>

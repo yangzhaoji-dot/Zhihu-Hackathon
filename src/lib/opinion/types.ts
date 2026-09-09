@@ -41,12 +41,17 @@ export interface Opinion {
   summary: string; // one-line elaboration
   kind: OpinionKind;
   origin?: "demo" | "zhihu-grounded" | "ai-derived";
+  nodeType?: "opinion" | "topic" | "station" | "user";
   support: number; // 0-100 support magnitude; drives node size + collision physics
   x: number; // normalized 0-1 layout position
   y: number;
   sourceIds: string[]; // human opinions map to real answers; ai opinions cite derivation
   camp?: string; // rough stance camp label, e.g. "止损派" / "稳健派"
   derivedFrom?: string[]; // for ai opinions: parent opinion ids
+  claim?: string;
+  reason?: string;
+  conditions?: string[];
+  evidence?: string[];
 }
 
 /** A directed relation between two opinions. */
@@ -54,6 +59,7 @@ export interface Relation {
   from: string;
   to: string;
   type: RelationType;
+  rationale?: string;
 }
 
 /** A question node in the global question network (layer 1). */
@@ -80,6 +86,8 @@ export interface QuestionRelation {
 export interface OpinionGraph {
   questionId: string;
   questionTitle: string;
+  questionUrl?: string;
+  sourceScope?: "zhihu-question-answers" | "demo";
   opinions: Opinion[];
   relations: Relation[];
   authors: Author[];

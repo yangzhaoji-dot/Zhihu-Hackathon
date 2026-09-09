@@ -18,12 +18,19 @@ export interface ZhihuSearchItem {
   AuthorName?: string;
   AuthorSignature?: string;
   AuthorBadgeText?: string;
+  Summary?: string;
 }
 
 export interface ZhihuSearchResult {
   items: ZhihuSearchItem[];
   hasMore: boolean;
   searchHashId?: string;
+}
+
+export interface ZhihuQuestionCandidate {
+  url: string;
+  title: string;
+  sourceCount: number;
 }
 
 interface ZhihuResponse {
@@ -111,4 +118,59 @@ export function searchZhihu(query: string, count = 10): Promise<ZhihuSearchResul
   });
   cache.set(key, { expiresAt: Date.now() + CACHE_TTL_MS, result });
   return result;
+}
+
+const QUESTION_URL_RE = /https?:\/\/www\.zhihu\.com\/question\/\d+/i;
+
+export function canonicalQuestionUrl(value: string): string | null {
+  const match = value.match(QUESTION_URL_RE);
+  return match?.[0] ?? null;
+}
+
+export function questionCandidates(
+  items: ZhihuSearchItem[],
+  fallbackTitle: string,
+): ZhihuQuestionCandidate[] {
+  const byUrl = new Map<string, ZhihuQuestionCandidate>();
+  for (const item of items) {
+    const url = canonicalQuestionUrl(item.Url ?? "");
+    if (!url) continue;
+    const existing = byUrl.get(url);
+    const title = compact(item.Title) || existing?.title || fallbackTitle;
+    byUrl.set(url, {
+      url,
+      title,
+      sourceCount: (existing?.sourceCount ?? 0) + 1,
+    });
+  }
+  return [...byUrl.values()].slice(0, 3);
+}
+
+function compact(value: string | undefined) {
+  return typeof value === "string" ? value.replace(/\s+/g, " ").trim().slice(0, 160) : "";
+}
+
+export async function fetchQuestionAnswers(
+  questionUrl: string,
+  limit = 20,
+): Promise<ZhihuSearchResult> {
+  const canonical = canonicalQuestionUrl(questionUrl);
+  if (!canonical) throw new Error("invalid_question_url");
+  if (process.platform !== "win32" || !process.env.LOCALAPPDATA) {
+    throw new Error("zhihu_auth_not_configured");
+  }
+  const cli = `${process.env.LOCALAPPDATA}\\ZhihuCLI\\current\\zhihu-cli.exe`;
+  try {
+    const { stdout } = await execFileAsync(
+      cli,
+      ["question", "answers", "--question-url", canonical, "--limit", String(Math.max(1, Math.min(20, Math.round(limit))))],
+      { windowsHide: true, timeout: 20_000, maxBuffer: 4 * 1024 * 1024 },
+    );
+    const result = parseResponse(stdout);
+    const items = result.items.filter((item) => Boolean(item.Summary || item.ContentText));
+    return { ...result, items };
+  } catch (error) {
+    if (error instanceof Error && error.message.startsWith("zhihu_")) throw error;
+    throw new Error("zhihu_question_answers_failed");
+  }
 }

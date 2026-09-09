@@ -1,11 +1,16 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { buildOpinionGraph } from "@/lib/opinion/build-opinion-graph";
-import { searchZhihu } from "@/lib/opinion/zhihu-search";
+import {
+  canonicalQuestionUrl,
+  fetchQuestionAnswers,
+  questionCandidates,
+  searchZhihu,
+} from "@/lib/opinion/zhihu-search";
 
 export const runtime = "nodejs";
 
 export async function POST(request: NextRequest) {
-  let body: { query?: unknown };
+  let body: { query?: unknown; questionUrl?: unknown; questionTitle?: unknown };
   try {
     body = await request.json();
   } catch {
@@ -20,24 +25,50 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const search = await searchZhihu(query, 10);
-    if (search.items.length === 0) {
-      return NextResponse.json({ ok: false, error: "no_zhihu_results" }, { status: 404 });
+    const requestedQuestionUrl = typeof body.questionUrl === "string"
+      ? canonicalQuestionUrl(body.questionUrl)
+      : canonicalQuestionUrl(query);
+    if (!requestedQuestionUrl) {
+      const search = await searchZhihu(query, 10);
+      const questions = questionCandidates(search.items, query);
+      if (questions.length === 0) {
+        return NextResponse.json({ ok: false, error: "no_question_candidates" }, { status: 404 });
+      }
+      return NextResponse.json({
+        ok: true,
+        selectionRequired: true,
+        query,
+        questions,
+      });
     }
-    const graph = await buildOpinionGraph(query, search.items);
+
+    const answers = await fetchQuestionAnswers(requestedQuestionUrl, 20);
+    if (answers.items.length < 2) {
+      return NextResponse.json({ ok: false, error: "zhihu_not_enough_answers" }, { status: 404 });
+    }
+    const questionTitle = typeof body.questionTitle === "string"
+      ? body.questionTitle.trim().slice(0, 160)
+      : query;
+    const graph = await buildOpinionGraph(query, answers.items, questionTitle, requestedQuestionUrl);
     return NextResponse.json({
       ok: true,
+      selectionRequired: false,
       graph,
       retrieval: {
         itemCount: graph.sources.length,
-        hasMore: search.hasMore,
-        searchHashId: search.searchHashId,
-        scope: "zhihu_search_results",
+        hasMore: answers.hasMore,
+        scope: "zhihu-question-answers",
       },
     });
   } catch (error) {
     const code = error instanceof Error ? error.message : "build_failed";
-    const status = code === "zhihu_auth_not_configured" ? 503 : code === "zhihu_rate_limited" ? 429 : 502;
+    const status = code === "zhihu_auth_not_configured"
+      ? 503
+      : code === "zhihu_rate_limited"
+        ? 429
+        : code === "zhihu_not_enough_answers"
+          ? 404
+          : 502;
     return NextResponse.json({ ok: false, error: code }, { status });
   }
 }

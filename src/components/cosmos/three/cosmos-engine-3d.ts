@@ -221,7 +221,7 @@ export class CosmosEngine3D {
 
   private mountNode(o: Opinion, stance?: Stance) {
     const radius = nodeSize(o.support) * NODE_UNIT;
-    const baseColor = nodeColor(o.kind);
+    const baseColor = nodeColor(o.kind, o.nodeType);
     const group = new THREE.Group();
 
     // core gem — icosahedron reads as a faceted "archive gem"

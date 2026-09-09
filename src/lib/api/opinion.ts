@@ -18,6 +18,12 @@ import type {
   TintAnalysis,
 } from "@/lib/opinion/types";
 
+export interface ZhihuQuestionCandidate {
+  url: string;
+  title: string;
+  sourceCount: number;
+}
+
 export interface StanceProfile {
   stances: Record<string, Stance>;
   agree: string[];
@@ -33,15 +39,23 @@ export interface SourceTrace {
   related: { type: RelationType; opinion: Opinion }[];
 }
 
-export interface BuildOpinionSpaceResult {
+export interface BuildOpinionSpaceSelection {
+  selectionRequired: true;
+  query: string;
+  questions: ZhihuQuestionCandidate[];
+}
+
+export interface BuildOpinionSpaceSuccess {
+  selectionRequired: false;
   graph: OpinionGraph;
   retrieval: {
     itemCount: number;
     hasMore: boolean;
-    searchHashId?: string;
-    scope: "zhihu_search_results";
+    scope: "zhihu-question-answers";
   };
 }
+
+export type BuildOpinionSpaceResult = BuildOpinionSpaceSelection | BuildOpinionSpaceSuccess;
 
 async function json<T>(res: Response): Promise<T> {
   const data = (await res.json()) as T & { ok?: boolean };
@@ -124,11 +138,11 @@ export async function searchOpinions(query: string): Promise<SearchResult> {
   return data.result;
 }
 
-export async function buildOpinionSpace(query: string): Promise<BuildOpinionSpaceResult> {
+export async function buildOpinionSpace(query: string, questionUrl?: string, questionTitle?: string): Promise<BuildOpinionSpaceResult> {
   const res = await request("/api/opinion/build", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ query }),
+    body: JSON.stringify({ query, questionUrl, questionTitle }),
   });
   const data = await json<BuildOpinionSpaceResult & { error?: string }>(res);
   if (!res.ok) throw new Error(data.error || "build_failed");

@@ -11,6 +11,7 @@ import {
   fuseOpinions,
   tintZhihu,
   type SourceTrace,
+  type ZhihuQuestionCandidate,
 } from "@/lib/api/opinion";
 import type { CollisionAnalysis, Stance } from "@/lib/opinion/types";
 import { useOpinionSpace } from "./use-opinion-space";
@@ -31,6 +32,7 @@ export function CosmosApp() {
     graph,
     network,
     profile,
+    loadError,
     markStance,
     loadProfile,
     buildFromZhihu,
@@ -256,6 +258,17 @@ export function CosmosApp() {
       setSearching(true);
       try {
         const result = await buildFromZhihu(query.trim());
+        if (result.selectionRequired) {
+          setPanel({
+            type: "questionPicker",
+            query: result.query,
+            questions: result.questions,
+            loading: false,
+          });
+          setRailOn(null);
+          setHint(t("cosmos.questionPickerHint"));
+          return;
+        }
         setTitle(result.graph.questionTitle);
         setPanel(null);
         setRailOn(null);
@@ -264,6 +277,10 @@ export function CosmosApp() {
         const code = error instanceof Error ? error.message : "build_failed";
         const key = code === "no_zhihu_results"
           ? "cosmos.buildNoResults"
+          : code === "no_question_candidates"
+            ? "cosmos.buildNoQuestionCandidates"
+            : code === "zhihu_not_enough_answers"
+              ? "cosmos.buildNotEnoughAnswers"
           : code === "zhihu_rate_limited"
             ? "cosmos.buildRateLimited"
             : code === "zhihu_auth_not_configured" || code === "zhihu_cli_unavailable"
@@ -276,6 +293,24 @@ export function CosmosApp() {
     },
     [query, searching, buildFromZhihu, t],
   );
+
+  const onSelectQuestion = useCallback(async (question: ZhihuQuestionCandidate) => {
+    const current = panelRef.current;
+    if (!current || current.type !== "questionPicker" || current.loading) return;
+    setPanel({ ...current, loading: true });
+    try {
+      const result = await buildFromZhihu(current.query, question.url, question.title);
+      if (result.selectionRequired) return;
+      setTitle(result.graph.questionTitle);
+      setPanel(null);
+      setRailOn(null);
+      setHint(t("cosmos.buildSuccess", { n: result.retrieval.itemCount }));
+    } catch (error) {
+      const code = error instanceof Error ? error.message : "build_failed";
+      setPanel({ ...current, loading: false });
+      setHint(code === "zhihu_not_enough_answers" ? t("cosmos.buildNotEnoughAnswers") : t("cosmos.buildFailed"));
+    }
+  }, [buildFromZhihu, t]);
 
   // ── tint: analyze pasted Zhihu content ──────────────────────────────────
   const onAnalyzeTint = useCallback(async (text: string, url: string) => {
@@ -383,12 +418,19 @@ export function CosmosApp() {
           onOpenRelated={openSource}
           onFuse={onFuse}
           onAnalyzeTint={onAnalyzeTint}
+          onSelectQuestion={onSelectQuestion}
         />
 
         {loading && (
           <div className="boot">
             <div className="halo" />
             <p>{t("cosmos.booting")}</p>
+          </div>
+        )}
+        {!loading && loadError && !graph && (
+          <div className="boot boot-error">
+            <div className="halo" />
+            <p>{t("cosmos.initialLoadFailed")}</p>
           </div>
         )}
       </main>

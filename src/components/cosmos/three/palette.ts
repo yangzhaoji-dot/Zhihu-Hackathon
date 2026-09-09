@@ -28,7 +28,10 @@ export const colorInk = new THREE.Color(INK);
 export const colorInkDeep = new THREE.Color(INK_DEEP);
 
 /** Node core color by provenance — the human/AI distinction is load-bearing. */
-export function nodeColor(kind: OpinionKind): THREE.Color {
+export function nodeColor(kind: OpinionKind, nodeType?: "opinion" | "topic" | "station" | "user"): THREE.Color {
+  if (nodeType === "topic") return colorGold.clone();
+  if (nodeType === "station") return colorVi.clone();
+  if (nodeType === "user") return colorGoldBright.clone();
   return kind === "ai" ? colorVi.clone() : colorCy.clone();
 }
 

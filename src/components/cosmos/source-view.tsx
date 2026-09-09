@@ -49,6 +49,34 @@ export function SourceView({
       <p className="planet-provenance">
         {isAi ? t("cosmos.kindAiDesc") : t("cosmos.kindHumanDesc")}
       </p>
+      {opinion.claim && (
+        <div className="planet-fact">
+          <div className="sec-label">{t("cosmos.planetClaim")}</div>
+          <p>{opinion.claim}</p>
+        </div>
+      )}
+      {opinion.reason && (
+        <div className="planet-fact">
+          <div className="sec-label">{t("cosmos.planetReason")}</div>
+          <p>{opinion.reason}</p>
+        </div>
+      )}
+      {opinion.conditions && opinion.conditions.length > 0 && (
+        <div className="planet-fact">
+          <div className="sec-label">{t("cosmos.planetConditions")}</div>
+          <div className="analysis">
+            {opinion.conditions.map((condition) => <div key={condition}>{condition}</div>)}
+          </div>
+        </div>
+      )}
+      {opinion.evidence && opinion.evidence.length > 0 && (
+        <div className="planet-fact">
+          <div className="sec-label">{t("cosmos.planetEvidence")}</div>
+          <div className="evidence">
+            {opinion.evidence.map((evidence) => <span key={evidence}>{evidence}</span>)}
+          </div>
+        </div>
+      )}
       <div className="meta">
         <span className="chip">{t("cosmos.supportDeg", { n: opinion.support })}</span>
         <span className="chip">{t("cosmos.sourceCount", { n: sources.length })}</span>

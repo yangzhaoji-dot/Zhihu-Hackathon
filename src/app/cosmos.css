@@ -381,6 +381,21 @@
     0 0 0 5px rgba(230, 207, 160, 0.28),
     0 0 60px var(--gold-glow), 0 16px 46px rgba(0, 0, 0, 0.5);
 }
+.cosmos .node.topic {
+  background: radial-gradient(
+    circle at 32% 25%,
+    rgba(255, 246, 222, 0.98),
+    rgba(230, 207, 160, 0.58) 28%,
+    rgba(200, 168, 111, 0.3) 62%,
+    rgba(18, 14, 9, 0.9)
+  );
+  color: #fff3d3;
+  box-shadow: 0 0 0 1px rgba(246, 227, 195, 0.55) inset,
+    0 0 42px rgba(230, 207, 160, 0.48), 0 16px 46px rgba(0, 0, 0, 0.5);
+}
+.cosmos .node.topic .label {
+  font-size: 13px;
+}
 .cosmos .node.dim {
   filter: opacity(0.35) saturate(0.7);
 }
@@ -590,6 +605,73 @@
 }
 .cosmos .panel.open {
   transform: translateY(0);
+}
+.cosmos .planet-panel {
+  max-height: 44vh;
+}
+.cosmos .planet-fact {
+  margin: 10px 0;
+  padding: 9px 10px;
+  border-left: 1px solid rgba(230, 207, 160, 0.34);
+  background: rgba(233, 224, 205, 0.025);
+}
+.cosmos .planet-fact p {
+  margin-bottom: 0;
+}
+.cosmos .question-picker-panel {
+  max-height: 54vh;
+}
+.cosmos .question-choice-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+.cosmos .question-choice-list button {
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  gap: 9px;
+  align-items: start;
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 15px;
+  padding: 10px 11px;
+  background: rgba(233, 224, 205, 0.05);
+  color: #f2ede1;
+  text-align: left;
+}
+.cosmos .question-choice-list button:hover,
+.cosmos .question-choice-list button:focus-visible {
+  border-color: rgba(230, 207, 160, 0.55);
+  background: rgba(230, 207, 160, 0.1);
+}
+.cosmos .question-choice-list button:disabled {
+  opacity: 0.55;
+}
+.cosmos .question-choice-index {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  background: rgba(230, 207, 160, 0.18);
+  color: var(--gold-bright);
+  font-size: 12px;
+}
+.cosmos .question-choice-list b {
+  display: block;
+  color: #f6e3c3;
+  font-size: 13px;
+  line-height: 1.45;
+}
+.cosmos .question-choice-list small {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 10px;
+}
+.cosmos .question-picker-loading {
+  color: var(--gold) !important;
+  font-size: 11px !important;
 }
 .cosmos .panel .panel-head {
   display: flex;
@@ -1075,6 +1157,10 @@
     width: 400px;
     max-height: 68vh;
   }
+  .cosmos .planet-panel {
+    width: 350px;
+    max-height: 54vh;
+  }
   .cosmos .rail {
     left: 28px;
     right: auto;
@@ -1334,8 +1420,6 @@
   width: 100% !important;
   height: 100% !important;
 }
-
-
 
 
 

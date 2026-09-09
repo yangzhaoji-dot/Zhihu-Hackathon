@@ -20,6 +20,15 @@ const CORE_ID = "q_luoci";
 
 export type Mode = "views" | "questions";
 
+const INIT_TIMEOUT_MS = 8_000;
+
+async function settleWithin<T>(promise: Promise<T>, fallback: T): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((resolve) => setTimeout(() => resolve(fallback), INIT_TIMEOUT_MS)),
+  ]);
+}
+
 /**
  * Data + high-level state for the opinion space. Physics (drag, collision,
  * particles) live imperatively inside the canvas component; this hook owns the
@@ -32,20 +41,22 @@ export function useOpinionSpace() {
   const [graph, setGraph] = useState<OpinionGraph | null>(null);
   const [network, setNetwork] = useState<QuestionNetwork | null>(null);
   const [profile, setProfile] = useState<StanceProfile | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     let alive = true;
     (async () => {
       try {
         const [g, n, p] = await Promise.all([
-          fetchOpinionGraph(CORE_ID),
-          fetchQuestionNetwork(),
-          fetchStanceProfile().catch(() => null),
+          settleWithin(fetchOpinionGraph(CORE_ID), null),
+          settleWithin(fetchQuestionNetwork(), null),
+          settleWithin(fetchStanceProfile().catch(() => null), null),
         ]);
         if (!alive) return;
-        setGraph(g);
-        setNetwork(n);
+        if (g) setGraph(g);
+        if (n) setNetwork(n);
         setProfile(p);
+        if (!g || !n) setLoadError("initial_load_timeout");
       } finally {
         if (alive) setLoading(false);
       }
@@ -66,10 +77,15 @@ export function useOpinionSpace() {
     return next;
   }, []);
 
-  const buildFromZhihu = useCallback(async (query: string) => {
+  const buildFromZhihu = useCallback(async (
+    query: string,
+    questionUrl?: string,
+    questionTitle?: string,
+  ) => {
     setLoading(true);
     try {
-      const result = await buildOpinionSpace(query);
+      const result = await buildOpinionSpace(query, questionUrl, questionTitle);
+      if (result.selectionRequired) return result;
       setGraph(result.graph);
       setNetwork({
         coreQuestionId: result.graph.questionId,
@@ -121,6 +137,7 @@ export function useOpinionSpace() {
     graph,
     network,
     profile,
+    loadError,
     loadProfile,
     markStance,
     buildFromZhihu,
