@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { ArrowLeft, Pickaxe } from "lucide-react";
 import {
   collideOpinions,
   fetchGaps,
@@ -54,6 +55,11 @@ export function CosmosApp() {
   const [title, setTitle] = useState("");
   const [hint, setHint] = useState("");
   const [railOn, setRailOn] = useState<string | null>(null);
+  const [focusedId, setFocusedId] = useState<string | null>(null);
+  const focusedIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    focusedIdRef.current = focusedId;
+  }, [focusedId]);
 
   const collisionRef = useRef<{ aId: string; bId: string; mx: number; my: number } | null>(null);
 
@@ -147,10 +153,20 @@ export function CosmosApp() {
 
     createOpinionEngine(canvas, root, {
       onTap: (n) => {
+        if (focusedIdRef.current === n.id) {
+          openSource(n.id);
+          return;
+        }
+        focusedIdRef.current = n.id;
+        setFocusedId(n.id);
+        setPanel(null);
+        setRailOn(null);
         engineRef.current?.locate(n.id);
-        openSource(n.id);
+        setHint(t("cosmos.planetFocusHint"));
       },
       onLongPress: (n) => {
+        focusedIdRef.current = n.id;
+        setFocusedId(n.id);
         engineRef.current?.locate(n.id);
         openSource(n.id);
       },
@@ -283,6 +299,9 @@ export function CosmosApp() {
           return;
         }
         setTitle(result.graph.questionTitle);
+        focusedIdRef.current = null;
+        setFocusedId(null);
+        rootRef.current?.classList.remove("planet-focus");
         setPanel(null);
         setRailOn(null);
         setHint(buildSuccessHint(result));
@@ -315,6 +334,9 @@ export function CosmosApp() {
       const result = await buildFromZhihu(current.query, question.url, question.title);
       if (result.selectionRequired) return;
       setTitle(result.graph.questionTitle);
+      focusedIdRef.current = null;
+      setFocusedId(null);
+      rootRef.current?.classList.remove("planet-focus");
       setPanel(null);
       setRailOn(null);
       setHint(buildSuccessHint(result));
@@ -389,6 +411,15 @@ export function CosmosApp() {
     setRailOn(null);
   }, []);
 
+  const returnToUniverse = useCallback(() => {
+    focusedIdRef.current = null;
+    setFocusedId(null);
+    setPanel(null);
+    setRailOn(null);
+    engineRef.current?.resetFocus();
+    setHint(t("cosmos.hintDrag3D"));
+  }, [t]);
+
   return (
     <div className="cosmos" ref={rootRef} data-el="cosmos-root">
       <div className="bg" aria-hidden />
@@ -402,6 +433,9 @@ export function CosmosApp() {
           searching={searching}
           railOn={railOn}
           onModeChange={(m) => {
+            focusedIdRef.current = null;
+            setFocusedId(null);
+            engineRef.current?.resetFocus();
             setMode(m);
             setPanel(null);
             setRailOn(null);
@@ -414,6 +448,19 @@ export function CosmosApp() {
         />
 
         {mode === "views" && <div className="canvas" ref={canvasRef} aria-label="观点空间" />}
+
+        {mode === "views" && focusedId && (
+          <div className="focus-controls" data-el="planet-focus-controls">
+            <button onClick={returnToUniverse}>
+              <ArrowLeft size={16} aria-hidden />
+              {t("cosmos.returnUniverse")}
+            </button>
+            <button className="primary" onClick={() => openSource(focusedId)}>
+              <Pickaxe size={16} aria-hidden />
+              {t("cosmos.mineSources")}
+            </button>
+          </div>
+        )}
 
         {mode === "questions" && network && (
           <>

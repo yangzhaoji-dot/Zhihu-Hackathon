@@ -110,6 +110,57 @@
   cursor: grabbing;
 }
 
+.cosmos .topbar,
+.cosmos .search,
+.cosmos .hint,
+.cosmos .legend,
+.cosmos .rail,
+.cosmos .zoom {
+  transition: opacity 0.24s ease, transform 0.24s ease;
+}
+.cosmos.planet-focus .topbar,
+.cosmos.planet-focus .search,
+.cosmos.planet-focus .hint,
+.cosmos.planet-focus .legend,
+.cosmos.planet-focus .rail,
+.cosmos.planet-focus .zoom {
+  opacity: 0;
+  pointer-events: none;
+}
+.cosmos .focus-controls {
+  position: absolute;
+  z-index: 28;
+  top: calc(var(--eazo-safe-area-top) + 16px);
+  left: 16px;
+  right: 16px;
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  pointer-events: none;
+}
+.cosmos .focus-controls button {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 42px;
+  padding: 0 14px;
+  border: 1px solid rgba(230, 207, 160, 0.3);
+  border-radius: 999px;
+  background: rgba(5, 7, 15, 0.78);
+  backdrop-filter: blur(18px);
+  color: #f2ede1;
+  font-size: 12px;
+  box-shadow: var(--shadow-lift);
+}
+.cosmos .focus-controls button.primary {
+  border-color: rgba(230, 207, 160, 0.55);
+  background: linear-gradient(135deg, var(--gold-bright), var(--gold-deep));
+  color: #2a2413;
+  font-weight: 700;
+}
+
 /* ── top bar / mode / search ────────────────────────────────────────────── */
 .cosmos .topbar {
   position: absolute;
@@ -1172,6 +1223,10 @@
 
 /* desktop layout: dock panel to the right, search to a fixed width */
 @media (min-width: 780px) {
+  .cosmos .focus-controls {
+    left: 28px;
+    right: 28px;
+  }
   .cosmos .topbar {
     left: 28px;
     right: 28px;
@@ -1451,7 +1506,6 @@
   width: 100% !important;
   height: 100% !important;
 }
-
 
 
 

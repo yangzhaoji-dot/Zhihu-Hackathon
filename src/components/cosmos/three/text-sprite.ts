@@ -13,6 +13,8 @@ export interface LabelOptions {
   maxWidth?: number; // wrap width in canvas px
   glow?: string; // optional shadow color
   align?: "center" | "left";
+  background?: string;
+  border?: string;
 }
 
 const SERIF = '"Songti SC", Georgia, "Times New Roman", "Noto Serif SC", serif';
@@ -52,6 +54,8 @@ export function makeLabel(text: string, opts: LabelOptions = {}): THREE.Sprite {
     maxWidth = 520,
     glow = "rgba(5,7,15,0.9)",
     align = "center",
+    background,
+    border,
   } = opts;
 
   const canvas = document.createElement("canvas");
@@ -77,6 +81,19 @@ export function makeLabel(text: string, opts: LabelOptions = {}): THREE.Sprite {
   ctx.font = fontStr;
   ctx.textBaseline = "middle";
   ctx.textAlign = align;
+  if (background) {
+    ctx.fillStyle = background;
+    ctx.beginPath();
+    ctx.roundRect(1, 1, w - 2, h - 2, Math.max(8, Math.round(fontSize * 0.35)));
+    ctx.fill();
+  }
+  if (border) {
+    ctx.strokeStyle = border;
+    ctx.lineWidth = Math.max(2, Math.round(fontSize * 0.05));
+    ctx.beginPath();
+    ctx.roundRect(2, 2, w - 4, h - 4, Math.max(8, Math.round(fontSize * 0.35)));
+    ctx.stroke();
+  }
   ctx.shadowColor = glow;
   ctx.shadowBlur = Math.round(fontSize * 0.5);
   ctx.shadowOffsetY = 2;

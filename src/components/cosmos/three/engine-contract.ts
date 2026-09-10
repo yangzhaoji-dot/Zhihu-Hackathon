@@ -26,6 +26,7 @@ export interface OpinionEngine {
   setStance(id: string, stance: Stance): void;
   zoom(factor: number): void;
   locate(id: string): void;
+  resetFocus(): void;
   fuse(aId: string, bId: string, candidate: Opinion): Promise<void>;
   layout(): void;
   getNode(id: string): OpinionNodeLike | null;

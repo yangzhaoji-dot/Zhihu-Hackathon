@@ -38,6 +38,7 @@ export interface Node3D extends Opinion {
   ring?: THREE.Mesh; // stance ring
   selRing?: THREE.Mesh; // selection ring
   label: THREE.Sprite;
+  detailGroup: THREE.Group;
   baseColor: THREE.Color;
   radius: number; // world-space radius
 }
@@ -147,7 +148,7 @@ export class CosmosEngine3D {
     this.controls.rotateSpeed = 0.55;
     this.controls.zoomSpeed = 0.8;
     this.controls.panSpeed = 0.6;
-    this.controls.minDistance = 18;
+    this.controls.minDistance = 28;
     this.controls.maxDistance = 130;
     this.controls.maxPolarAngle = Math.PI * 0.92;
     this.controls.minPolarAngle = Math.PI * 0.08;
@@ -294,6 +295,10 @@ export class CosmosEngine3D {
     label.scale.multiplyScalar(2.1 * labelScale);
     group.add(label);
 
+    const detailGroup = this.createOrbitDetails(o, radius);
+    detailGroup.visible = false;
+    group.add(detailGroup);
+
     const node: Node3D = {
       ...o,
       cx: 0,
@@ -307,6 +312,7 @@ export class CosmosEngine3D {
       core,
       glow,
       label,
+      detailGroup,
       baseColor,
       radius,
     };
@@ -316,6 +322,100 @@ export class CosmosEngine3D {
     this.nodes.push(node);
     this.nodeById.set(o.id, node);
     this.decorateStance(node);
+  }
+
+  private createOrbitDetails(o: Opinion, radius: number) {
+    const details = new THREE.Group();
+    const addLabel = (
+      text: string,
+      position: THREE.Vector3,
+      scale: number,
+      color = "#f6e3c3",
+    ) => {
+      const label = makeLabel(text, {
+        color,
+        font: "600 30px",
+        maxWidth: 520,
+        background: "rgba(5,7,15,0.86)",
+        border: "rgba(230,207,160,0.42)",
+      });
+      label.position.copy(position);
+      label.scale.multiplyScalar(scale);
+      details.add(label);
+    };
+
+    addLabel(
+      `主张 · ${o.claim || o.title}`,
+      new THREE.Vector3(0, radius * 2.15, radius * 0.35),
+      1.9,
+    );
+    if (o.reason || o.summary) {
+      addLabel(
+        `理由 · ${o.reason || o.summary}`,
+        new THREE.Vector3(radius * 2.55, radius * 0.35, radius * 0.2),
+        1.45,
+        "#d7fffb",
+      );
+    }
+    if (o.conditions?.[0]) {
+      addLabel(
+        `成立条件 · ${o.conditions[0]}`,
+        new THREE.Vector3(-radius * 2.55, -radius * 0.25, radius * 0.2),
+        1.42,
+        "#f1eadc",
+      );
+      const ring = new THREE.Mesh(
+        new THREE.TorusGeometry(radius * 1.55, radius * 0.035, 8, 64),
+        new THREE.MeshBasicMaterial({
+          color: colorGoldBright,
+          transparent: true,
+          opacity: 0.56,
+        }),
+      );
+      ring.rotation.x = Math.PI * 0.42;
+      details.add(ring);
+    }
+    addLabel(
+      `证据矿点 · ${o.evidence?.length ?? 0}`,
+      new THREE.Vector3(radius * 1.75, -radius * 1.65, radius * 0.4),
+      1.18,
+      "#9ff9f4",
+    );
+    addLabel(
+      `来源卫星 · ${o.sourceIds.length}`,
+      new THREE.Vector3(-radius * 1.75, -radius * 1.75, radius * 0.35),
+      1.18,
+      "#f6e3c3",
+    );
+
+    const evidenceCount = Math.max(1, Math.min(3, o.evidence?.length ?? 0));
+    for (let index = 0; index < evidenceCount; index += 1) {
+      const crystal = new THREE.Mesh(
+        new THREE.OctahedronGeometry(radius * 0.1, 0),
+        new THREE.MeshBasicMaterial({ color: 0x1bc2c2 }),
+      );
+      const angle = 0.4 + index * 0.42;
+      crystal.position.set(
+        Math.cos(angle) * radius * 1.35,
+        -radius * 0.9,
+        Math.sin(angle) * radius * 1.35,
+      );
+      details.add(crystal);
+    }
+    for (let index = 0; index < Math.min(3, o.sourceIds.length); index += 1) {
+      const satellite = new THREE.Mesh(
+        new THREE.SphereGeometry(radius * 0.075, 10, 8),
+        new THREE.MeshBasicMaterial({ color: 0xe6cfa0 }),
+      );
+      const angle = Math.PI + index * 0.5;
+      satellite.position.set(
+        Math.cos(angle) * radius * 1.75,
+        radius * (0.35 - index * 0.24),
+        Math.sin(angle) * radius * 1.75,
+      );
+      details.add(satellite);
+    }
+    return details;
   }
 
   private buildLinks() {
@@ -701,36 +801,47 @@ export class CosmosEngine3D {
     const n = this.nodeById.get(id);
     if (!n) return;
     this.setSelected(id);
-    // dim others briefly
+    this.root.classList.add("planet-focus");
     for (const other of this.nodes) {
-      if (other.id !== id) {
-        (other.core.material as THREE.MeshStandardMaterial).opacity = 0.25;
-        (other.core.material as THREE.MeshStandardMaterial).transparent = true;
-      }
+      const selected = other.id === id;
+      other.detailGroup.visible = selected;
+      other.label.visible = false;
+      other.glow.material.opacity = selected ? 0.5 : 0.08;
+      const material = other.core.material as THREE.MeshStandardMaterial;
+      material.opacity = selected ? 1 : 0.12;
+      material.transparent = !selected;
     }
-    this.flyTo(n.pos, n.radius * 8 + 14);
-    setTimeout(() => {
-      for (const other of this.nodes) {
-        const m = other.core.material as THREE.MeshStandardMaterial;
-        m.opacity = 1;
-        m.transparent = false;
-      }
-    }, 1600);
+    this.flyTo(n.pos, Math.max(42, n.radius * 8 + 20));
+  }
+
+  resetFocus() {
+    this.setSelected(null);
+    this.root.classList.remove("planet-focus");
+    for (const node of this.nodes) {
+      node.detailGroup.visible = false;
+      node.label.visible = true;
+      node.glow.material.opacity = 0.5;
+      const material = node.core.material as THREE.MeshStandardMaterial;
+      material.opacity = 1;
+      material.transparent = false;
+    }
+    this.flyTo(new THREE.Vector3(0, 0, 0), 62);
   }
 
   /** Smoothly move the camera to look at `target` from `dist` away. */
   private flyTo(target: THREE.Vector3, dist: number, duration = 900) {
+    const endTarget = target.clone();
     const startTarget = this.controls.target.clone();
     const startPos = this.camera.position.clone();
     const dir = startPos.clone().sub(startTarget).normalize();
-    const endPos = target.clone().addScaledVector(dir, dist);
+    const endPos = endTarget.clone().addScaledVector(dir, dist);
     const t0 = performance.now();
     const ease = (x: number) => 1 - Math.pow(1 - x, 3);
     const tick = () => {
       if (this.disposed) return;
       const k = Math.min(1, (performance.now() - t0) / duration);
       const e = ease(k);
-      this.controls.target.lerpVectors(startTarget, target, e);
+      this.controls.target.lerpVectors(startTarget, endTarget, e);
       this.camera.position.lerpVectors(startPos, endPos, e);
       this.controls.update();
       if (k < 1) requestAnimationFrame(tick);
@@ -823,6 +934,10 @@ export class CosmosEngine3D {
       n.selRing?.geometry.dispose();
       if (n.selRing) (n.selRing.material as THREE.Material).dispose();
       n.group.traverse((o) => {
+        if (o instanceof THREE.Sprite && o !== n.label && o !== n.glow) {
+          const dispose = o.userData.dispose as (() => void) | undefined;
+          dispose?.();
+        }
         if (o instanceof THREE.Mesh && o !== n.core) {
           o.geometry.dispose();
           (o.material as THREE.Material).dispose();

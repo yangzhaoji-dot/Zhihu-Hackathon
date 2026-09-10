@@ -403,6 +403,7 @@ export class CosmosEngine {
     this.scale = Math.max(this.scale, 1.35);
     this.pan.x = this.w() / 2 - n.cx;
     this.pan.y = this.h() / 2 - n.cy;
+    this.root.classList.add("planet-focus");
     this.els.forEach((el) => el.classList.remove("selected"));
     const el = this.els.get(id);
     if (el) el.classList.add("selected");
@@ -415,6 +416,16 @@ export class CosmosEngine {
       this.els.forEach((e) => e.classList.remove("dim"));
       this.linkEls.forEach((e) => e.classList.remove("dim"));
     }, 1600);
+  }
+
+  resetFocus() {
+    this.selectedId = null;
+    this.scale = 1;
+    this.pan = { x: 0, y: 0 };
+    this.els.forEach((el) => el.classList.remove("selected", "dim"));
+    this.linkEls.forEach((el) => el.classList.remove("dim"));
+    this.root.classList.remove("planet-focus");
+    this.draw();
   }
 
   getNode(id: string) {
