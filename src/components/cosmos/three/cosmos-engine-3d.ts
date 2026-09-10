@@ -38,6 +38,7 @@ export interface Node3D extends Opinion {
   ring?: THREE.Mesh; // stance ring
   selRing?: THREE.Mesh; // selection ring
   label: THREE.Sprite;
+  orbitGroup: THREE.Group;
   detailGroup: THREE.Group;
   baseColor: THREE.Color;
   radius: number; // world-space radius
@@ -295,8 +296,10 @@ export class CosmosEngine3D {
     label.scale.multiplyScalar(2.1 * labelScale);
     group.add(label);
 
-    const detailGroup = this.createOrbitDetails(o, radius);
+    const { orbitGroup, detailGroup } = this.createOrbitDetails(o, radius);
+    orbitGroup.visible = false;
     detailGroup.visible = false;
+    group.add(orbitGroup);
     group.add(detailGroup);
 
     const node: Node3D = {
@@ -312,6 +315,7 @@ export class CosmosEngine3D {
       core,
       glow,
       label,
+      orbitGroup,
       detailGroup,
       baseColor,
       radius,
@@ -325,43 +329,51 @@ export class CosmosEngine3D {
   }
 
   private createOrbitDetails(o: Opinion, radius: number) {
-    const details = new THREE.Group();
+    const orbitGroup = new THREE.Group();
+    const detailGroup = new THREE.Group();
+    const sceneText = (value: string, max: number) => {
+      const normalized = value.replace(/\s+/g, " ").trim();
+      return normalized.length > max ? `${normalized.slice(0, max - 1)}…` : normalized;
+    };
     const addLabel = (
       text: string,
       position: THREE.Vector3,
       scale: number,
       color = "#f6e3c3",
+      target = detailGroup,
     ) => {
       const label = makeLabel(text, {
         color,
-        font: "600 30px",
-        maxWidth: 520,
-        background: "rgba(5,7,15,0.86)",
-        border: "rgba(230,207,160,0.42)",
+        font: "600 26px",
+        maxWidth: 360,
+        background: "rgba(5,7,15,0.78)",
+        border: "rgba(230,207,160,0.34)",
       });
       label.position.copy(position);
       label.scale.multiplyScalar(scale);
-      details.add(label);
+      target.add(label);
     };
 
     addLabel(
-      `主张 · ${o.claim || o.title}`,
-      new THREE.Vector3(0, radius * 2.15, radius * 0.35),
-      1.9,
+      `主张 · ${sceneText(o.claim || o.title, 30)}`,
+      new THREE.Vector3(0, radius * 1.82, radius * 0.3),
+      0.82,
+      "#f6e3c3",
+      orbitGroup,
     );
     if (o.reason || o.summary) {
       addLabel(
-        `理由 · ${o.reason || o.summary}`,
-        new THREE.Vector3(radius * 2.55, radius * 0.35, radius * 0.2),
-        1.45,
+        `理由 · ${sceneText(o.reason || o.summary, 42)}`,
+        new THREE.Vector3(radius * 1.86, radius * 0.18, radius * 0.2),
+        0.66,
         "#d7fffb",
       );
     }
     if (o.conditions?.[0]) {
       addLabel(
-        `成立条件 · ${o.conditions[0]}`,
-        new THREE.Vector3(-radius * 2.55, -radius * 0.25, radius * 0.2),
-        1.42,
+        `条件 · ${sceneText(o.conditions[0], 36)}`,
+        new THREE.Vector3(-radius * 1.86, radius * 0.08, radius * 0.2),
+        0.64,
         "#f1eadc",
       );
       const ring = new THREE.Mesh(
@@ -373,18 +385,18 @@ export class CosmosEngine3D {
         }),
       );
       ring.rotation.x = Math.PI * 0.42;
-      details.add(ring);
+      detailGroup.add(ring);
     }
     addLabel(
       `证据矿点 · ${o.evidence?.length ?? 0}`,
-      new THREE.Vector3(radius * 1.75, -radius * 1.65, radius * 0.4),
-      1.18,
+      new THREE.Vector3(radius * 1.38, -radius * 1.38, radius * 0.35),
+      0.56,
       "#9ff9f4",
     );
     addLabel(
       `来源卫星 · ${o.sourceIds.length}`,
-      new THREE.Vector3(-radius * 1.75, -radius * 1.75, radius * 0.35),
-      1.18,
+      new THREE.Vector3(-radius * 1.38, -radius * 1.38, radius * 0.35),
+      0.56,
       "#f6e3c3",
     );
 
@@ -400,7 +412,7 @@ export class CosmosEngine3D {
         -radius * 0.9,
         Math.sin(angle) * radius * 1.35,
       );
-      details.add(crystal);
+      detailGroup.add(crystal);
     }
     for (let index = 0; index < Math.min(3, o.sourceIds.length); index += 1) {
       const satellite = new THREE.Mesh(
@@ -413,9 +425,9 @@ export class CosmosEngine3D {
         radius * (0.35 - index * 0.24),
         Math.sin(angle) * radius * 1.75,
       );
-      details.add(satellite);
+      detailGroup.add(satellite);
     }
-    return details;
+    return { orbitGroup, detailGroup };
   }
 
   private buildLinks() {
@@ -507,7 +519,7 @@ export class CosmosEngine3D {
     if (!id) return;
     const n = this.nodeById.get(id);
     if (!n || n.selRing) return;
-    const geo = new THREE.TorusGeometry(n.radius * 1.85, n.radius * 0.12, 10, 48);
+    const geo = new THREE.TorusGeometry(n.radius * 1.42, n.radius * 0.055, 8, 48);
     const mat = new THREE.MeshBasicMaterial({
       color: colorGoldBright,
       transparent: true,
@@ -804,26 +816,132 @@ export class CosmosEngine3D {
     this.root.classList.add("planet-focus");
     for (const other of this.nodes) {
       const selected = other.id === id;
-      other.detailGroup.visible = selected;
+      other.orbitGroup.visible = selected;
+      other.detailGroup.visible = false;
       other.label.visible = false;
-      other.glow.material.opacity = selected ? 0.5 : 0.08;
+      other.glow.material.opacity = selected ? 0.38 : 0.025;
       const material = other.core.material as THREE.MeshStandardMaterial;
-      material.opacity = selected ? 1 : 0.12;
+      material.opacity = selected ? 1 : 0.055;
       material.transparent = !selected;
     }
-    this.flyTo(n.pos, Math.max(42, n.radius * 8 + 20));
+    for (const [, link] of this.linkLines) {
+      const connected = link.from === id || link.to === id;
+      (link.line.material as THREE.LineBasicMaterial).opacity = connected ? 0.4 : 0.025;
+    }
+    this.flyTo(n.pos, Math.max(68, n.radius * 10 + 22));
+  }
+
+  launchTo(id: string): Promise<void> {
+    const node = this.nodeById.get(id);
+    if (!node) return Promise.resolve();
+
+    const rocket = new THREE.Group();
+    const bodyMaterial = new THREE.MeshStandardMaterial({
+      color: 0xf6e3c3,
+      emissive: 0xc8a86f,
+      emissiveIntensity: 0.65,
+      metalness: 0.7,
+      roughness: 0.24,
+    });
+    const body = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.23, 0.9, 12), bodyMaterial);
+    rocket.add(body);
+    const nose = new THREE.Mesh(
+      new THREE.ConeGeometry(0.22, 0.4, 12),
+      new THREE.MeshStandardMaterial({ color: 0xe6cfa0, metalness: 0.55, roughness: 0.28 }),
+    );
+    nose.position.y = 0.64;
+    rocket.add(nose);
+    const flame = new THREE.Mesh(
+      new THREE.ConeGeometry(0.13, 0.48, 10),
+      new THREE.MeshBasicMaterial({ color: 0xff7a3c, transparent: true, opacity: 0.9 }),
+    );
+    flame.position.y = -0.68;
+    flame.rotation.z = Math.PI;
+    rocket.add(flame);
+
+    const direction = node.pos.clone().sub(this.camera.position).normalize();
+    const start = this.camera.position.clone()
+      .addScaledVector(direction, 10)
+      .addScaledVector(this.camera.up, -5.5);
+    const end = node.pos.clone().addScaledVector(direction, -node.radius * 1.65);
+    const path = end.clone().sub(start).normalize();
+    rocket.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), path);
+    rocket.position.copy(start);
+    this.scene.add(rocket);
+
+    return new Promise((resolve) => {
+      const startedAt = performance.now();
+      let lastBurst = 0;
+      const tick = () => {
+        if (this.disposed) {
+          resolve();
+          return;
+        }
+        const progress = Math.min(1, (performance.now() - startedAt) / 1050);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        rocket.position.lerpVectors(start, end, eased);
+        const pulse = 0.78 + Math.sin(progress * Math.PI * 12) * 0.18;
+        flame.scale.setScalar(pulse);
+        if (progress - lastBurst > 0.1) {
+          lastBurst = progress;
+          this.sparkSystem?.burst(rocket.position, 4, 90);
+        }
+        if (progress < 1) {
+          requestAnimationFrame(tick);
+          return;
+        }
+        this.scene.remove(rocket);
+        rocket.traverse((item) => {
+          if (item instanceof THREE.Mesh) {
+            item.geometry.dispose();
+            (item.material as THREE.Material).dispose();
+          }
+        });
+        resolve();
+      };
+      tick();
+    });
+  }
+
+  enterSurface(id: string) {
+    const node = this.nodeById.get(id);
+    if (!node) return;
+    this.setSelected(id);
+    this.root.classList.add("planet-focus");
+    this.root.classList.add("planet-surface");
+    for (const other of this.nodes) {
+      const selected = other.id === id;
+      other.orbitGroup.visible = selected;
+      other.detailGroup.visible = selected;
+      other.label.visible = false;
+      other.glow.material.opacity = selected ? 0.38 : 0.025;
+      const material = other.core.material as THREE.MeshStandardMaterial;
+      material.opacity = selected ? 1 : 0.055;
+      material.transparent = !selected;
+    }
+    for (const [, link] of this.linkLines) {
+      const connected = link.from === id || link.to === id;
+      (link.line.material as THREE.LineBasicMaterial).opacity = connected ? 0.4 : 0.025;
+    }
+    this.flyTo(node.pos, Math.max(58, node.radius * 9 + 20));
   }
 
   resetFocus() {
     this.setSelected(null);
     this.root.classList.remove("planet-focus");
+    this.root.classList.remove("planet-surface");
     for (const node of this.nodes) {
+      node.orbitGroup.visible = false;
       node.detailGroup.visible = false;
       node.label.visible = true;
       node.glow.material.opacity = 0.5;
       const material = node.core.material as THREE.MeshStandardMaterial;
       material.opacity = 1;
       material.transparent = false;
+    }
+    for (const [, link] of this.linkLines) {
+      (link.line.material as THREE.LineBasicMaterial).opacity =
+        link.line.material instanceof THREE.LineDashedMaterial ? 0.42 : 0.34;
     }
     this.flyTo(new THREE.Vector3(0, 0, 0), 62);
   }

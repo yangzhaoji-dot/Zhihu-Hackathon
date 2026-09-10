@@ -418,6 +418,29 @@ export class CosmosEngine {
     }, 1600);
   }
 
+  launchTo(id: string) {
+    const node = this.nodes.find((item) => item.id === id);
+    if (!node) return Promise.resolve();
+    const rocket = document.createElement("i");
+    rocket.className = "launch-rocket";
+    rocket.style.left = `${this.w() / 2}px`;
+    rocket.style.top = `${this.h() - 70}px`;
+    this.canvas.appendChild(rocket);
+    const dx = node.cx - this.w() / 2;
+    const dy = node.cy - (this.h() - 70);
+    const animation = rocket.animate([
+      { transform: "translate(-50%, -50%) scale(0.45)", opacity: 0 },
+      { transform: "translate(-50%, -50%) scale(1)", opacity: 1, offset: 0.12 },
+      { transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(0.22)`, opacity: 0.25 },
+    ], { duration: 900, easing: "cubic-bezier(.2,.7,.2,1)" });
+    return animation.finished.catch(() => undefined).then(() => rocket.remove());
+  }
+
+  enterSurface(id: string) {
+    this.locate(id);
+    this.root.classList.add("planet-surface");
+  }
+
   resetFocus() {
     this.selectedId = null;
     this.scale = 1;
@@ -425,6 +448,7 @@ export class CosmosEngine {
     this.els.forEach((el) => el.classList.remove("selected", "dim"));
     this.linkEls.forEach((el) => el.classList.remove("dim"));
     this.root.classList.remove("planet-focus");
+    this.root.classList.remove("planet-surface");
     this.draw();
   }
 

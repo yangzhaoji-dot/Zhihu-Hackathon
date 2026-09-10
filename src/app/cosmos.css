@@ -160,6 +160,19 @@
   color: #2a2413;
   font-weight: 700;
 }
+.cosmos .focus-controls button:disabled {
+  opacity: 0.62;
+}
+.cosmos .launch-rocket {
+  position: absolute;
+  z-index: 26;
+  width: 14px;
+  height: 30px;
+  border-radius: 50% 50% 38% 38%;
+  background: linear-gradient(180deg, #fff5df, var(--gold-deep));
+  box-shadow: 0 0 18px rgba(246, 227, 195, 0.75), 0 12px 18px rgba(255, 122, 60, 0.78);
+  pointer-events: none;
+}
 
 /* ── top bar / mode / search ────────────────────────────────────────────── */
 .cosmos .topbar {
@@ -1506,7 +1519,6 @@
   width: 100% !important;
   height: 100% !important;
 }
-
 
 
 

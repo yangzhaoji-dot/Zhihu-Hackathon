@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ArrowLeft, Pickaxe } from "lucide-react";
+import { ArrowLeft, Pickaxe, Rocket } from "lucide-react";
 import {
   collideOpinions,
   fetchGaps,
@@ -56,10 +56,15 @@ export function CosmosApp() {
   const [hint, setHint] = useState("");
   const [railOn, setRailOn] = useState<string | null>(null);
   const [focusedId, setFocusedId] = useState<string | null>(null);
+  const [focusStage, setFocusStage] = useState<"orbit" | "launching" | "surface" | null>(null);
   const focusedIdRef = useRef<string | null>(null);
+  const focusStageRef = useRef<"orbit" | "launching" | "surface" | null>(null);
   useEffect(() => {
     focusedIdRef.current = focusedId;
   }, [focusedId]);
+  useEffect(() => {
+    focusStageRef.current = focusStage;
+  }, [focusStage]);
 
   const collisionRef = useRef<{ aId: string; bId: string; mx: number; my: number } | null>(null);
 
@@ -112,6 +117,24 @@ export function CosmosApp() {
     }
   }, [graph]);
 
+  const launchIntoPlanet = useCallback(async (opinionId: string) => {
+    const engine = engineRef.current;
+    if (!engine || focusStageRef.current === "launching") return;
+    focusedIdRef.current = opinionId;
+    focusStageRef.current = "launching";
+    setFocusedId(opinionId);
+    setFocusStage("launching");
+    setPanel(null);
+    setRailOn(null);
+    setHint(t("cosmos.rocketLaunching"));
+    await engine.launchTo(opinionId);
+    if (focusedIdRef.current !== opinionId) return;
+    engine.enterSurface(opinionId);
+    focusStageRef.current = "surface";
+    setFocusStage("surface");
+    setHint(t("cosmos.planetSurfaceHint"));
+  }, [t]);
+
   // ── collision → AI analysis ─────────────────────────────────────────────
   const runCollision = useCallback(
     async (a: OpinionNodeLike, b: OpinionNodeLike, mx: number, my: number) => {
@@ -154,21 +177,20 @@ export function CosmosApp() {
     createOpinionEngine(canvas, root, {
       onTap: (n) => {
         if (focusedIdRef.current === n.id) {
-          openSource(n.id);
+          setHint(t("cosmos.planetOrbitHint"));
           return;
         }
         focusedIdRef.current = n.id;
+        focusStageRef.current = "orbit";
         setFocusedId(n.id);
+        setFocusStage("orbit");
         setPanel(null);
         setRailOn(null);
         engineRef.current?.locate(n.id);
-        setHint(t("cosmos.planetFocusHint"));
+        setHint(t("cosmos.planetOrbitHint"));
       },
       onLongPress: (n) => {
-        focusedIdRef.current = n.id;
-        setFocusedId(n.id);
-        engineRef.current?.locate(n.id);
-        openSource(n.id);
+        launchIntoPlanet(n.id);
       },
       onCollision: (a, b, mx, my) => runCollision(a, b, mx, my),
     }).then((handle) => {
@@ -300,7 +322,9 @@ export function CosmosApp() {
         }
         setTitle(result.graph.questionTitle);
         focusedIdRef.current = null;
+        focusStageRef.current = null;
         setFocusedId(null);
+        setFocusStage(null);
         rootRef.current?.classList.remove("planet-focus");
         setPanel(null);
         setRailOn(null);
@@ -335,7 +359,9 @@ export function CosmosApp() {
       if (result.selectionRequired) return;
       setTitle(result.graph.questionTitle);
       focusedIdRef.current = null;
+      focusStageRef.current = null;
       setFocusedId(null);
+      setFocusStage(null);
       rootRef.current?.classList.remove("planet-focus");
       setPanel(null);
       setRailOn(null);
@@ -413,7 +439,9 @@ export function CosmosApp() {
 
   const returnToUniverse = useCallback(() => {
     focusedIdRef.current = null;
+    focusStageRef.current = null;
     setFocusedId(null);
+    setFocusStage(null);
     setPanel(null);
     setRailOn(null);
     engineRef.current?.resetFocus();
@@ -434,7 +462,9 @@ export function CosmosApp() {
           railOn={railOn}
           onModeChange={(m) => {
             focusedIdRef.current = null;
+            focusStageRef.current = null;
             setFocusedId(null);
+            setFocusStage(null);
             engineRef.current?.resetFocus();
             setMode(m);
             setPanel(null);
@@ -455,9 +485,21 @@ export function CosmosApp() {
               <ArrowLeft size={16} aria-hidden />
               {t("cosmos.returnUniverse")}
             </button>
-            <button className="primary" onClick={() => openSource(focusedId)}>
-              <Pickaxe size={16} aria-hidden />
-              {t("cosmos.mineSources")}
+            <button
+              className="primary"
+              disabled={focusStage === "launching"}
+              onClick={() => focusStage === "surface"
+                ? openSource(focusedId)
+                : launchIntoPlanet(focusedId)}
+            >
+              {focusStage === "surface"
+                ? <Pickaxe size={16} aria-hidden />
+                : <Rocket size={16} aria-hidden />}
+              {focusStage === "surface"
+                ? t("cosmos.mineSources")
+                : focusStage === "launching"
+                  ? t("cosmos.rocketInFlight")
+                  : t("cosmos.landPlanet")}
             </button>
           </div>
         )}
