@@ -8,7 +8,7 @@ import type {
   Relation,
   RelationType,
 } from "./types";
-import { aiJson, type AiMessage } from "./ai-client";
+import { aiJsonWithProvider, type AiMessage } from "./ai-client";
 import type { ZhihuSearchItem } from "./zhihu-search";
 
 const RELATION_TYPES: RelationType[] = ["support", "refute", "add", "cond", "oppose"];
@@ -271,7 +271,7 @@ export async function buildOpinionGraph(
   if (usable.length < 2) throw new Error("zhihu_not_enough_answers");
   const questionId = `q_live_${hashText(questionUrl || query)}`;
   const materials = usable.map((item, index) => `[${index}] 回答摘要：${answerText(item)}`).join("\n\n");
-  const raw = await aiJson<RawGraph>([
+  const aiResult = await aiJsonWithProvider<RawGraph>([
     SYSTEM,
     {
       role: "user",
@@ -287,6 +287,7 @@ export async function buildOpinionGraph(
         `只在摘要明确支持时创建关系。\n\n${materials}`,
     },
   ]);
+  const raw = aiResult?.value ?? null;
 
   const fallback = fallbackOpinions(questionTitle || query, usable, sources, questionId);
   const rawOpinions = Array.isArray(raw?.opinions) ? raw.opinions as RawOpinion[] : [];
@@ -420,6 +421,8 @@ export async function buildOpinionGraph(
     questionTitle: compact(questionTitle || query, 100),
     questionUrl,
     sourceScope: "zhihu-question-answers",
+    buildSource: aiResult?.provider ?? "fallback",
+    buildModel: aiResult?.model,
     opinions: [topic, ...opinions, station],
     relations,
     authors,

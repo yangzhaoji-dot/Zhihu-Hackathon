@@ -6,8 +6,33 @@ import {
   questionCandidates,
   searchZhihu,
 } from "@/lib/opinion/zhihu-search";
+import type { OpinionGraph } from "@/lib/opinion/types";
 
 export const runtime = "nodejs";
+
+const GRAPH_CACHE_TTL_MS = 10 * 60 * 1000;
+const graphCache = new Map<string, {
+  expiresAt: number;
+  result: Promise<{ graph: OpinionGraph; hasMore: boolean }>;
+}>();
+
+function cachedGraph(query: string, questionUrl: string, questionTitle: string) {
+  const key = `${questionUrl}|${questionTitle}`;
+  const cached = graphCache.get(key);
+  if (cached && cached.expiresAt > Date.now()) return cached.result;
+  const result = (async () => {
+    const answers = await fetchQuestionAnswers(questionUrl, 20);
+    if (answers.items.length < 2) throw new Error("zhihu_not_enough_answers");
+    const graph = await buildOpinionGraph(query, answers.items, questionTitle, questionUrl);
+    return { graph, hasMore: answers.hasMore };
+  })().catch((error) => {
+    graphCache.delete(key);
+    throw error;
+  });
+  graphCache.set(key, { expiresAt: Date.now() + GRAPH_CACHE_TTL_MS, result });
+  if (graphCache.size > 20) graphCache.delete(graphCache.keys().next().value as string);
+  return result;
+}
 
 export async function POST(request: NextRequest) {
   let body: { query?: unknown; questionUrl?: unknown; questionTitle?: unknown };
@@ -42,22 +67,20 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const answers = await fetchQuestionAnswers(requestedQuestionUrl, 20);
-    if (answers.items.length < 2) {
-      return NextResponse.json({ ok: false, error: "zhihu_not_enough_answers" }, { status: 404 });
-    }
     const questionTitle = typeof body.questionTitle === "string"
       ? body.questionTitle.trim().slice(0, 160)
       : query;
-    const graph = await buildOpinionGraph(query, answers.items, questionTitle, requestedQuestionUrl);
+    const { graph, hasMore } = await cachedGraph(query, requestedQuestionUrl, questionTitle);
     return NextResponse.json({
       ok: true,
       selectionRequired: false,
       graph,
       retrieval: {
         itemCount: graph.sources.length,
-        hasMore: answers.hasMore,
+        hasMore,
         scope: "zhihu-question-answers",
+        buildSource: graph.buildSource,
+        buildModel: graph.buildModel,
       },
     });
   } catch (error) {

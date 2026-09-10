@@ -52,6 +52,8 @@ export interface BuildOpinionSpaceSuccess {
     itemCount: number;
     hasMore: boolean;
     scope: "zhihu-question-answers";
+    buildSource?: "zhihu-zhida" | "eazo" | "fallback";
+    buildModel?: string;
   };
 }
 

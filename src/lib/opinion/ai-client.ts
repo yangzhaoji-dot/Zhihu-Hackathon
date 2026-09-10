@@ -1,8 +1,13 @@
 import "server-only";
 
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
 import { appAi } from "@/lib/eazo-ai-billing";
 
-/** A single chat message for the App AI text model. */
+const execFileAsync = promisify(execFile);
+const ZHIDA_ENDPOINT = "https://developer.zhihu.com/v1/chat/completions";
+const DEFAULT_ZHIDA_MODEL = "zhida-thinking-1p5";
+
 export interface AiMessage {
   role: "system" | "user" | "assistant";
   content: string;
@@ -13,29 +18,127 @@ type ChatCompletionLike = {
   choices?: Array<{ message?: { content?: string } }>;
 };
 
-/**
- * Call the configured App AI text model and return the raw completion string.
- * Throws AppAIUnavailableError (from the billing helper) when AI is unavailable;
- * callers own the fallback.
- */
-export async function aiComplete(messages: AiMessage[]): Promise<string> {
+export type AiProvider = "zhihu-zhida" | "eazo" | "none";
+
+export interface AiCompletion {
+  content: string;
+  provider: AiProvider;
+  model?: string;
+}
+
+export interface AiJsonResult<T> {
+  value: T;
+  provider: Exclude<AiProvider, "none">;
+  model?: string;
+}
+
+function configuredZhihuModel() {
+  return process.env.ZHIHU_ZHIDA_MODEL?.trim() || DEFAULT_ZHIDA_MODEL;
+}
+
+function promptForCli(messages: AiMessage[]) {
+  return messages
+    .map((message) => `${message.role.toUpperCase()}:\n${message.content}`)
+    .join("\n\n");
+}
+
+async function completeWithZhihuHttp(messages: AiMessage[]): Promise<AiCompletion> {
+  const secret = process.env.ZHIHU_ACCESS_SECRET?.trim();
+  if (!secret) throw new Error("zhihu_secret_not_configured");
+  const model = configuredZhihuModel();
+  const response = await fetch(ZHIDA_ENDPOINT, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${secret}`,
+      "X-Request-Timestamp": String(Math.floor(Date.now() / 1000)),
+    },
+    body: JSON.stringify({ model, messages, stream: false }),
+    cache: "no-store",
+    signal: AbortSignal.timeout(60_000),
+  });
+  if (!response.ok) throw new Error(`zhida_http_${response.status}`);
+  const payload = await response.json() as ChatCompletionLike;
+  const content = payload.choices?.[0]?.message?.content?.trim() || "";
+  if (!content) throw new Error("zhida_empty_response");
+  return { content, provider: "zhihu-zhida", model };
+}
+
+async function completeWithZhihuCli(messages: AiMessage[]): Promise<AiCompletion> {
+  if (process.platform !== "win32" || !process.env.LOCALAPPDATA) {
+    throw new Error("zhihu_cli_unavailable");
+  }
+  const cli = `${process.env.LOCALAPPDATA}\\ZhihuCLI\\current\\zhihu-cli.exe`;
+  const model = configuredZhihuModel();
+  const { stdout } = await execFileAsync(
+    cli,
+    [
+      "answer",
+      "--query",
+      promptForCli(messages),
+      "--model",
+      model,
+      "--output",
+      "json",
+      "--timeout",
+      "60s",
+    ],
+    { windowsHide: true, timeout: 65_000, maxBuffer: 4 * 1024 * 1024 },
+  );
+  const payload = JSON.parse(stdout) as ChatCompletionLike;
+  const content = payload.choices?.[0]?.message?.content?.trim() || "";
+  if (!content) throw new Error("zhida_empty_response");
+  return { content, provider: "zhihu-zhida", model };
+}
+
+function completeWithZhihu(messages: AiMessage[]) {
+  return process.env.ZHIHU_ACCESS_SECRET?.trim()
+    ? completeWithZhihuHttp(messages)
+    : completeWithZhihuCli(messages);
+}
+
+async function completeWithEazo(messages: AiMessage[]): Promise<AiCompletion> {
   const completion = (await appAi.chat({
     capability: "text",
     messages,
   })) as ChatCompletionLike;
-  return completion.choices?.[0]?.message?.content?.trim() ?? "";
+  const content = completion.choices?.[0]?.message?.content?.trim() || "";
+  if (!content) throw new Error("eazo_empty_response");
+  return { content, provider: "eazo" };
 }
 
-/**
- * Extract the first JSON object from a model response that may include prose or
- * ```json fences. Returns null when nothing parses.
- */
+export async function aiCompleteWithProvider(messages: AiMessage[]): Promise<AiCompletion> {
+  const preferred = (process.env.OPINION_AI_PROVIDER || "zhihu").trim().toLowerCase();
+  if (preferred === "eazo") {
+    try {
+      return await completeWithEazo(messages);
+    } catch {
+      try {
+        return await completeWithZhihu(messages);
+      } catch {
+        return { content: "", provider: "none" };
+      }
+    }
+  }
+  try {
+    return await completeWithZhihu(messages);
+  } catch {
+    try {
+      return await completeWithEazo(messages);
+    } catch {
+      return { content: "", provider: "none" };
+    }
+  }
+}
+
+export async function aiComplete(messages: AiMessage[]): Promise<string> {
+  return (await aiCompleteWithProvider(messages)).content;
+}
+
 export function parseJsonLoose<T>(raw: string): T | null {
   if (!raw) return null;
-  // Strip code fences.
   const fenced = raw.match(/```(?:json)?\s*([\s\S]*?)```/i);
   const body = fenced ? fenced[1] : raw;
-  // Find the outermost object.
   const start = body.indexOf("{");
   const end = body.lastIndexOf("}");
   if (start === -1 || end === -1 || end <= start) return null;
@@ -46,12 +149,13 @@ export function parseJsonLoose<T>(raw: string): T | null {
   }
 }
 
-/** Call the model and parse a JSON object, or return null on any failure. */
+export async function aiJsonWithProvider<T>(messages: AiMessage[]): Promise<AiJsonResult<T> | null> {
+  const completion = await aiCompleteWithProvider(messages);
+  if (completion.provider === "none") return null;
+  const value = parseJsonLoose<T>(completion.content);
+  return value ? { value, provider: completion.provider, model: completion.model } : null;
+}
+
 export async function aiJson<T>(messages: AiMessage[]): Promise<T | null> {
-  try {
-    const raw = await aiComplete(messages);
-    return parseJsonLoose<T>(raw);
-  } catch {
-    return null;
-  }
+  return (await aiJsonWithProvider<T>(messages))?.value ?? null;
 }

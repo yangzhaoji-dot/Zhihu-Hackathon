@@ -89,6 +89,8 @@ export interface OpinionGraph {
   questionTitle: string;
   questionUrl?: string;
   sourceScope?: "zhihu-question-answers" | "demo";
+  buildSource?: "zhihu-zhida" | "eazo" | "fallback";
+  buildModel?: string;
   opinions: Opinion[];
   relations: Relation[];
   authors: Author[];

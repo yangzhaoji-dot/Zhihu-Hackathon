@@ -251,6 +251,19 @@ export function CosmosApp() {
   // ── build a traceable space from live Zhihu search results ───────────
   const [query, setQuery] = useState("");
   const [searching, setSearching] = useState(false);
+  const buildSuccessHint = useCallback((result: {
+    retrieval: { itemCount: number; buildSource?: "zhihu-zhida" | "eazo" | "fallback" };
+  }) => {
+    const source = result.retrieval.buildSource === "zhihu-zhida"
+      ? t("cosmos.modelZhihuZhida")
+      : result.retrieval.buildSource === "eazo"
+        ? t("cosmos.modelEazo")
+        : t("cosmos.modelFallback");
+    return t("cosmos.buildSuccessWithModel", {
+      n: result.retrieval.itemCount,
+      model: source,
+    });
+  }, [t]);
   const onSearch = useCallback(
     async (e: React.FormEvent) => {
       e.preventDefault();
@@ -272,7 +285,7 @@ export function CosmosApp() {
         setTitle(result.graph.questionTitle);
         setPanel(null);
         setRailOn(null);
-        setHint(t("cosmos.buildSuccess", { n: result.retrieval.itemCount }));
+        setHint(buildSuccessHint(result));
       } catch (error) {
         const code = error instanceof Error ? error.message : "build_failed";
         const key = code === "no_zhihu_results"
@@ -291,7 +304,7 @@ export function CosmosApp() {
         setSearching(false);
       }
     },
-    [query, searching, buildFromZhihu, t],
+    [query, searching, buildFromZhihu, buildSuccessHint, t],
   );
 
   const onSelectQuestion = useCallback(async (question: ZhihuQuestionCandidate) => {
@@ -304,13 +317,13 @@ export function CosmosApp() {
       setTitle(result.graph.questionTitle);
       setPanel(null);
       setRailOn(null);
-      setHint(t("cosmos.buildSuccess", { n: result.retrieval.itemCount }));
+      setHint(buildSuccessHint(result));
     } catch (error) {
       const code = error instanceof Error ? error.message : "build_failed";
       setPanel({ ...current, loading: false });
       setHint(code === "zhihu_not_enough_answers" ? t("cosmos.buildNotEnoughAnswers") : t("cosmos.buildFailed"));
     }
-  }, [buildFromZhihu, t]);
+  }, [buildFromZhihu, buildSuccessHint, t]);
 
   // ── tint: analyze pasted Zhihu content ──────────────────────────────────
   const onAnalyzeTint = useCallback(async (text: string, url: string) => {
