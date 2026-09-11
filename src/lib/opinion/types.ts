@@ -198,3 +198,59 @@ export interface TintAnalysis {
   blindSpots: string[]; // perspectives the text never addresses
   source: "ai" | "fallback";
 }
+
+// ── World configuration (world-design-v0.2 §3.1) ────────────────────────────
+
+export type WorldType = "crossroads" | "archive" | "theater" | "forest" | "machine";
+
+/** 一个议题 = 一个世界配置 */
+export interface WorldConfig {
+  questionId: string;
+  worldType: WorldType;
+  name: string;                       // 世界名，如「分岔之城 · 裸辞」
+  tileset: string;                    // 素材包标识，灰盒期用 "graybox"
+  size: { w: number; h: number };     // 网格单位（1 格 = 48px，见 §7.1）
+  spawn: { x: number; y: number };    // 默认落点
+  zones: Zone[];                      // 区域（观点群 = 城区）
+  npcs: NpcConfig[];                  // NPC（单个观点的承载者）
+  pois: Poi[];                        // 兴趣点：桥/门/迷雾/纪念碑/观测点/火箭坪
+  triggers: WorldTrigger[];           // 环境叙事触发器（看山台词钩子）
+}
+
+export interface Zone {
+  id: string;
+  rect: { x: number; y: number; w: number; h: number };
+  camp?: string;                      // 绑定观点阵营：止损派/稳健派/维权派…
+  terrain: "plaza" | "road" | "fog" | "ruin" | "monument" | "bridge" | "station";
+  label: { "zh-CN": string; "en-US": string };   // 名称由界面动态渲染，不写进图片
+  stateKey?: string;                  // 动态状态键（见 §3.4），静态区域省略
+}
+
+export interface NpcConfig {
+  id: string;
+  opinionId: string;                  // 该 NPC 承载的观点（对应 Opinion.id）
+  zoneId: string;
+  pos: { x: number; y: number };
+  sprite: string;                     // 立绘路径，如 /worlds/crossroads/npc-archivist-v1.png
+  role: string;                       // 世界内身份：车站管理员/档案管理员…
+  dialogueId: string;                 // 对话脚本 id（§3.2）
+  translucent?: boolean;              // true = AI 推演观点，半透明未完成材质
+}
+
+export interface Poi {
+  id: string;
+  kind: "bridge" | "gate" | "fog" | "monument" | "observatory" | "rocket" | "chest";
+  pos: { x: number; y: number };
+  /** 成立条件 = 通行条件：需先发现某些来源 / 完成某些动作才开放 */
+  requires?: { sourceIds?: string[]; comparedPair?: [string, string]; stanceCount?: number };
+  stateKey?: string;
+  label?: { "zh-CN": string; "en-US": string };
+}
+
+export interface WorldTrigger {
+  id: string;
+  on: "first-land" | "enter-zone" | "npc-done" | "compare-done" | "judgement-done" | "before-leave";
+  zoneId?: string;                    // on=enter-zone 时必填
+  guideLineKey: string;               // 看山台词：i18n 键或 AI 提示模板 id（§5.6）
+  once?: boolean;                     // true = 触发一次后写入 progress.firedTriggerIds
+}
