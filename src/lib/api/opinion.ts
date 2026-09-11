@@ -4,6 +4,8 @@ import { request } from "@/lib/api/request";
 import { getViewerId } from "@/lib/opinion/viewer-id";
 import type {
   CollisionAnalysis,
+  DialogueLine,
+  ExplorationProgressDto,
   GapAnalysis,
   MatchResult,
   NavigationHint,
@@ -17,6 +19,7 @@ import type {
   Stance,
   TintAnalysis,
   WorldConfig,
+  WorldDialogueReply,
   Zone,
 } from "@/lib/opinion/types";
 
@@ -223,4 +226,68 @@ export async function tintZhihu(text: string, url?: string): Promise<TintAnalysi
   });
   const data = await json<{ result: TintAnalysis }>(res);
   return data.result;
+}
+
+// ── M3：世界进度 / 世界对话 ─────────────────────────────────────────────────
+
+/** 世界进度增量补丁（与 §4.4 POST 体同形）。 */
+export interface WorldProgressPatch {
+  addVisitedNpc?: string[];
+  addCollectedOpinion?: string[];
+  addFoundSource?: string[];
+  addFiredTrigger?: string[];
+  setWorldState?: Record<string, unknown>;
+}
+
+export async function fetchWorldProgress(
+  questionId: string,
+): Promise<ExplorationProgressDto> {
+  const res = await request(
+    `/api/opinion/world/progress?questionId=${encodeURIComponent(questionId)}`,
+    { headers: { "x-viewer-id": getViewerId() } },
+  );
+  const data = await json<{ progress: ExplorationProgressDto } & { error?: string }>(res);
+  if (!res.ok) throw new Error(data.error || "world_progress_failed");
+  return data.progress;
+}
+
+/** 增量写进度；失败（网络/500）时抛错，由调用方降级 localStorage。 */
+export async function patchWorldProgress(
+  questionId: string,
+  patch: WorldProgressPatch,
+): Promise<ExplorationProgressDto> {
+  const res = await request("/api/opinion/world/progress", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "x-viewer-id": getViewerId() },
+    body: JSON.stringify({ questionId, ...patch }),
+  });
+  const data = await json<{ progress: ExplorationProgressDto } & { error?: string }>(res);
+  if (!res.ok) throw new Error(data.error || "world_progress_failed");
+  return data.progress;
+}
+
+export interface WorldDialogueRequestInput {
+  npcId: string;
+  trigger: "talk" | `guide-${string}`;
+  locale: string;
+  history: { speaker: string; text: string }[];
+  worldState?: Record<string, unknown>;
+}
+
+/** AI 对话增强；402/404/网络错误返回 null，调用方回退本地静态模板。 */
+export async function postWorldDialogue(
+  input: WorldDialogueRequestInput,
+): Promise<{ lines: DialogueLine[]; source: WorldDialogueReply["source"] } | null> {
+  try {
+    const res = await request("/api/opinion/world/dialogue", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-viewer-id": getViewerId() },
+      body: JSON.stringify(input),
+    });
+    const data = await json<{ reply: WorldDialogueReply }>(res);
+    if (!res.ok || !data.reply?.lines?.length) return null;
+    return data.reply;
+  } catch {
+    return null;
+  }
 }

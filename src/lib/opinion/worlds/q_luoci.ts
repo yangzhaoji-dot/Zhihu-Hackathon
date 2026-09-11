@@ -181,6 +181,13 @@ export const qLuociWorld: WorldConfig = {
       once: true,
     },
     {
+      id: "t_compare_done",
+      on: "compare-done",
+      guideLineKey: "world.q_luoci.guide.compare-done",
+      // 非 once：每次完成比较都触发（§5.4 第 3 步之后的看山点评钩子）。
+      once: false,
+    },
+    {
       id: "t_before_leave",
       on: "before-leave",
       guideLineKey: "world.q_luoci.guide.before-leave",

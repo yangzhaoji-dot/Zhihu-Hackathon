@@ -196,3 +196,24 @@
   .fog { animation: none; }
   .npcSprite { transition: none; }
 }
+
+/* §5.4 场景反馈：运行时迷雾标记（比较衍生，比 zone 雾更小的雾团） */
+.runtimeFog {
+  border-style: dotted;
+}
+
+/* §5.4 场景反馈：证据较弱方区域的"停工建筑"标记（斜纹地基） */
+.ruinMark {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  width: 34px;
+  height: 26px;
+  border: 2px dashed rgba(245, 241, 232, 0.5);
+  border-radius: 4px 4px 0 0;
+  background: repeating-linear-gradient(
+    135deg,
+    rgba(8, 10, 13, 0.55) 0 6px,
+    rgba(245, 241, 232, 0.18) 6px 9px
+  );
+}

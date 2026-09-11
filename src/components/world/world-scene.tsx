@@ -22,6 +22,8 @@ interface WorldSceneProps {
   theme: OpinionWorldTheme;
   locale: "zh-CN" | "en-US";
   walkCtx: WalkContext;
+  /** 比较衍生的运行时迷雾标记（§5.4：missing 非空 → 两区之间放迷雾带）。 */
+  runtimeFogs?: { id: string; pos: GridPos }[];
   worldElRef: RefObject<HTMLDivElement | null>;
   playerElRef: RefObject<HTMLDivElement | null>;
   highlightId: string | null;
@@ -59,6 +61,7 @@ export function WorldScene({
   theme,
   locale,
   walkCtx,
+  runtimeFogs,
   worldElRef,
   playerElRef,
   highlightId,
@@ -66,6 +69,9 @@ export function WorldScene({
 }: WorldSceneProps) {
   const fogLifted = (zone: Zone) =>
     Boolean(zone.stateKey && walkCtx.worldState && walkCtx.worldState[zone.stateKey]);
+  // §5.4：evidence 较弱方区域的"停工建筑"标记（ruin:<zoneId>）。
+  const ruinMarked = (zone: Zone) =>
+    Boolean(walkCtx.worldState && walkCtx.worldState[`ruin:${zone.id}`]);
 
   const groundZones = config.zones.filter((z) => z.terrain !== "fog");
   const fogZones = config.zones.filter((z) => z.terrain === "fog");
@@ -111,7 +117,24 @@ export function WorldScene({
             }}
           >
             <span className={styles.zoneLabel}>{zone.label[locale] ?? zone.label["zh-CN"]}</span>
+            {ruinMarked(zone) && <span className={styles.ruinMark} aria-hidden />}
           </div>
+        ))}
+
+        {/* §5.4 运行时迷雾标记（比较 missing 非空时两区之间浮现） */}
+        {(runtimeFogs ?? []).map((fog) => (
+          <div
+            key={fog.id}
+            className={`${styles.zone} ${styles.fog} ${styles.runtimeFog}`}
+            style={{
+              left: (fog.pos.x - 1.5) * TILE_SIZE,
+              top: (fog.pos.y - 0.5) * TILE_SIZE,
+              width: 4 * TILE_SIZE,
+              height: 2 * TILE_SIZE,
+              background: zoneBackground("fog", theme),
+            }}
+            aria-hidden
+          />
         ))}
 
         {fogZones.map((zone) => (

@@ -277,3 +277,22 @@ export type DialogueAction =
   | { type: "collect-opinion"; opinionId: string }  // 收下观点卡进背包（M3）
   | { type: "open-compare" }                        // 打开比较面板（M3）
   | { type: "open-stance"; opinionId: string };     // 对该观点标记态度（M4）
+
+// ── 探索进度传输对象（world-design-v0.2 §4.4，M3 提前落地） ──────────────────
+
+/** GET/POST /api/opinion/world/progress 的响应负载（与服务端行记录解耦）。 */
+export interface ExplorationProgressDto {
+  questionId: string;
+  visitedNpcIds: string[];
+  collectedOpinionIds: string[];
+  foundSourceIds: string[];
+  firedTriggerIds: string[];
+  worldState: Record<string, unknown>; // §3.4 键值约定
+  updatedAt?: string;                   // ISO 时间；内存降级路径可能缺省
+}
+
+/** POST /api/opinion/world/dialogue 的回复（§4.2）。 */
+export interface WorldDialogueReply {
+  lines: DialogueLine[];
+  source: "ai" | "fallback";
+}

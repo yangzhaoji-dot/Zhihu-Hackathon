@@ -285,9 +285,50 @@
           "The city right now: 8 opinions, 3 camps, and one fog belt nobody has lit up yet.",
           "Remember, the terrain only reflects the material collected so far — new voices may reshape it.",
           "Tap the rocket when you are ready; close my chatter if you want to wander more."
+        ],
+        "compare-done": [
+          "Did you see the change between those two districts? Your comparison just lit it up.",
+          "The verifiable part: this collision found a shared premise — \"{{consensus}}\". That comes from the two opinions, not from me.",
+          "What remains interpretive: \"{{disagreement}}\" is still a disagreement of framing. The current material cannot decide who is right — only that each side holds under different conditions.",
+          "Next you can: re-read the original answers behind both cards, mark this disagreement as to-investigate, or fuse the two into a new candidate opinion."
         ]
       }
     },
+    "backpack": {
+      "open": "Opinion card backpack",
+      "title": "Backpack · Opinion cards",
+      "count": "{{count}}",
+      "empty": "Your backpack is empty. Talk to the residents and collect their opinion cards.",
+      "sources": "{{count}} source(s)",
+      "support": "Support {{support}}",
+      "aiKind": "AI inference",
+      "humanKind": "Human opinion",
+      "viewSource": "Read original",
+      "compare": "Collide & compare",
+      "compareHint": "Select one more card to collide",
+      "close": "Close backpack",
+      "collected": "Card collected: {{title}}",
+      "alreadyCollected": "This card is already in your backpack"
+    },
+    "compare": {
+      "title": "Opinion collision",
+      "close": "Close comparison",
+      "failed": "Comparison failed, please try again later",
+      "feedbackBridge": "Scene feedback: a bridge lit up between the two districts (saved to world state)",
+      "feedbackFog": "Scene feedback: a new fog belt appeared between the two districts",
+      "feedbackRuin": "Scene feedback: a stalled building appeared in the district with weaker evidence",
+      "fused": "The new opinion was born as a translucent resident next to you"
+    },
+    "stancePicker": {
+      "prompt": "Your stance on \"{{title}}\"?",
+      "agree": "Agree",
+      "disagree": "Disagree",
+      "neutral": "Neutral / not sure yet",
+      "saved": "Your stance was recorded",
+      "failed": "Failed to record your stance, please try again"
+    },
+    "fusedRole": "Translucent newcomer",
+    "progressLocal": "Progress service is unavailable; this run is saved on this device only",
     "fallback": {
       "guide": {
         "first-land": [

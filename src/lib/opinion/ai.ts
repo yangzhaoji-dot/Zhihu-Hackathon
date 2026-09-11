@@ -2,15 +2,20 @@ import "server-only";
 
 import type {
   CollisionAnalysis,
+  DialogueLine,
   GapAnalysis,
   NavigationHint,
   Opinion,
   OpinionGraph,
   OpinionSource,
   SearchResult,
+  WorldDialogueReply,
 } from "./types";
 import { aiJson, type AiMessage } from "./ai-client";
+import { buildGenericDialogue, getDialogueScript } from "./dialogue";
+import { validateDialogueLines } from "./dialogue/validate";
 import { getOpinionGraph } from "./store";
+import { getWorldConfig } from "./world-config";
 
 const SYSTEM: AiMessage = {
   role: "system",
@@ -179,4 +184,192 @@ export async function recommendPath(graphOverride?: OpinionGraph): Promise<Navig
     rationale: "AI 暂不可用，已按当前图中的观点顺序生成基础阅读路径。",
     source: "fallback",
   };
+}
+
+// ── World dialogue（world-design-v0.2 §4.2，M3） ─────────────────────────────
+// 契约红线：AI 只改写表达、不新增事实；actions 白名单校验，越界整段回退静态模板。
+
+export interface WorldDialogueHistoryLine {
+  speaker: string;
+  text: string;
+}
+
+export interface ComposeWorldDialogueInput {
+  npcId: string;
+  /** "talk"（玩家主动对话）或 "guide-*"（看山触发器，§3.1 WorldTrigger.on）。 */
+  trigger: string;
+  locale: string;
+  history: WorldDialogueHistoryLine[];
+  /** 客户端上报的 WorldState 摘要源（§3.4 键值），可选。 */
+  worldState?: Record<string, unknown>;
+}
+
+const DIALOGUE_SYSTEM: AiMessage = {
+  role: "system",
+  content:
+    "你是 OpinionSpace 二维世界里的角色台词引擎。你以 NPC 或引导角色「看山」的口吻续写台词。" +
+    "铁律：只允许复述、改写注入材料里已存在的事实（观点标题/要点/来源摘录/统计数字），" +
+    "禁止新增任何人物、数据、案例或引用；禁止编造来源。只输出规范 JSON，不要输出多余文字。",
+};
+
+function graphStatsLine(graph: OpinionGraph): string {
+  const camps = new Set(graph.opinions.map((o) => o.camp).filter(Boolean));
+  return `议题「${graph.questionTitle}」当前纳入 ${graph.opinions.length} 个观点、` +
+    `${camps.size} 个阵营（${[...camps].join("/")}）、${graph.sources.length} 条真人来源。`;
+}
+
+function worldStateSummary(worldState?: Record<string, unknown>): string {
+  const keys = Object.keys(worldState ?? {});
+  if (keys.length === 0) return "世界状态：初始（桥梁未点亮、迷雾未散、无观测站）。";
+  const bridges = keys.filter((k) => k.startsWith("bridge:")).length;
+  const fogs = keys.filter((k) => k.startsWith("fog")).length;
+  const ruins = keys.filter((k) => k.startsWith("ruin:")).length;
+  const observatory = keys.includes("observatory") ? "已建立观测站" : "未建立观测站";
+  return `世界状态：已点亮桥梁 ${bridges} 座、迷雾标记 ${fogs} 处、停工建筑标记 ${ruins} 处、${observatory}。`;
+}
+
+function sanitizeHistory(history: WorldDialogueHistoryLine[]): string {
+  return history
+    .slice(-8)
+    .map((h) => `${h.speaker === "player" ? "玩家" : "对方"}：${h.text.slice(0, 200)}`)
+    .join("\n");
+}
+
+interface DialogueTarget {
+  opinion: Opinion;
+  role: string;
+  sources: OpinionSource[];
+  staticLines: DialogueLine[];
+}
+
+/** talk 触发：解析 NPC → 绑定观点 + 来源 + 静态模板。找不到返回 null（404）。 */
+function resolveDialogueTarget(npcId: string): DialogueTarget | null {
+  const graph = getOpinionGraph("q_luoci");
+  if (!graph) return null;
+  const config = getWorldConfig("q_luoci");
+  const npc = config?.npcs.find((n) => n.id === npcId) ?? null;
+  // 融合观点的运行时 NPC（npc_o_ai_*）：配置里没有，但观点在 store 里可解析。
+  const opinionId = npc?.opinionId ?? (npcId.startsWith("npc_") ? npcId.slice(4) : "");
+  const opinion = graph.opinions.find((o) => o.id === opinionId) ?? null;
+  if (!opinion) return null;
+  const sources = graph.sources.filter((s) => opinion.sourceIds.includes(s.id));
+  const script = (npc && getDialogueScript(npc.dialogueId)) ?? null;
+  return {
+    opinion,
+    role: npc?.role ?? "半透明新居民",
+    sources,
+    staticLines: (script ?? buildGenericDialogue(npcId, opinion.id)).lines,
+  };
+}
+
+function opinionFullText(o: Opinion, sources: OpinionSource[]): string {
+  const parts = [
+    `标题：${o.title}`,
+    `要点：${o.summary}`,
+    o.claim ? `主张：${o.claim}` : null,
+    o.reason ? `理由：${o.reason}` : null,
+    o.conditions?.length ? `成立条件：${o.conditions.join("；")}` : null,
+    `阵营：${o.camp ?? "无"}；支持度：${o.support}；类型：${o.kind === "ai" ? "AI 推演观点（半透明，无真人履历）" : "真人观点"}`,
+    `支撑来源：${sources.map((s) => `${s.id}「${s.excerpt}」(赞${s.upvotes})`).join("；") || "无真人来源"}`,
+  ];
+  return parts.filter(Boolean).join("\n");
+}
+
+/** 看山静态兜底（服务端版，含真实统计数字，遵守 §5.6 四步结构）。 */
+function buildGuideFallbackLines(
+  trigger: string,
+  graph: OpinionGraph,
+  locale: string,
+): DialogueLine[] {
+  const camps = [...new Set(graph.opinions.map((o) => o.camp).filter(Boolean))];
+  const zh = locale !== "en-US";
+  const texts = zh
+    ? [
+        `我是看山，这座城的导航员。你触发了「${trigger}」时刻，我来说明这里的情况。`,
+        `可以验证的事实是：当前材料里有 ${graph.opinions.length} 个观点、${camps.length} 个阵营（${camps.join("/")}）、${graph.sources.length} 条真人来源。`,
+        "要分清的是：这些数字是事实；城区的样子只是对材料的解释；材料照不到的地方，仍是未知。",
+        "你可以：找任意居民对话核对原文、收下观点卡，或者去别的城区看看不同的声音。",
+      ]
+    : [
+        `I'm Kanshan, the navigator of this city. You triggered "${trigger}", so let me explain.`,
+        `What can be verified: the current material holds ${graph.opinions.length} opinions, ${camps.length} camps (${camps.join("/")}), and ${graph.sources.length} human sources.`,
+        "To be clear: those numbers are facts; the cityscape is only an interpretation of the material; what it cannot reach remains unknown.",
+        "You can talk to any resident to check the original sources, collect opinion cards, or visit another district for different voices.",
+      ];
+  return texts.map((text) => ({ speaker: "guide" as const, text }));
+}
+
+/**
+ * 生成世界内对话回复。返回值：
+ * - null：npcId 无法解析（路由层 404 npc_not_found）；
+ * - source:"ai"：模型输出通过白名单校验；
+ * - source:"fallback"：模型不可用 / 非法 JSON / 越界引用 → 静态模板。
+ */
+export async function composeWorldDialogue(
+  input: ComposeWorldDialogueInput,
+): Promise<WorldDialogueReply | null> {
+  const graph = getOpinionGraph("q_luoci");
+  if (!graph) return null;
+  const isGuide = input.trigger.startsWith("guide-");
+  const zh = input.locale !== "en-US";
+
+  if (!isGuide) {
+    const target = resolveDialogueTarget(input.npcId);
+    if (!target) return null;
+    const { opinion, role, sources, staticLines } = target;
+
+    const result = await aiJson<{ lines?: unknown }>([
+      DIALOGUE_SYSTEM,
+      {
+        role: "user",
+        content:
+          `${graphStatsLine(graph)}\n${worldStateSummary(input.worldState)}\n\n` +
+          `你扮演的角色：${role}（NPC id：${input.npcId}），绑定观点全文：\n${opinionFullText(opinion, sources)}\n\n` +
+          `动作白名单：show-source 只能引用 [${sources.map((s) => s.id).join(", ") || "无"}]；` +
+          `collect-opinion / open-stance 只能引用 ["${opinion.id}"]；open-compare 无参数。\n` +
+          `对话历史：\n${sanitizeHistory(input.history) || "（无）"}\n\n` +
+          `要求：以「${role}」的口吻续写 2-4 行台词，口语化、有角色性格，单行 ≤120 字；` +
+          `只能复述上面注入的事实；至少包含一次 show-source 与一次 collect-opinion 动作。` +
+          `输出严格 JSON：{"lines":[{"speaker":"npc","text":"…","actions":[{"type":"show-source","sourceId":"…"}]}]}` +
+          (zh ? "。语言：中文。" : ". Language: English."),
+      },
+    ]);
+
+    const aiLines = validateDialogueLines(result, {
+      sourceIds: new Set(sources.map((s) => s.id)),
+      opinionIds: new Set([opinion.id]),
+    });
+    if (aiLines) return { lines: aiLines, source: "ai" };
+    return { lines: staticLines, source: "fallback" };
+  }
+
+  // ── 看山触发器路径（trigger="guide-*"） ──
+  const fallbackLines = buildGuideFallbackLines(input.trigger, graph, input.locale);
+  const allSourceIds = new Set(graph.sources.map((s) => s.id));
+  const allOpinionIds = new Set(graph.opinions.map((o) => o.id));
+
+  const result = await aiJson<{ lines?: unknown }>([
+    DIALOGUE_SYSTEM,
+    {
+      role: "user",
+      content:
+        `${graphStatsLine(graph)}\n${worldStateSummary(input.worldState)}\n\n` +
+        `你是引导角色「看山」。玩家触发了环境叙事时刻：${input.trigger}。\n` +
+        `对话历史：\n${sanitizeHistory(input.history) || "（无）"}\n\n` +
+        `要求：遵守四步结构——① 呼应玩家观察；② 给出当前材料中的可验证事实（必须带上面注入的数字）；` +
+        `③ 区分事实 / 系统解释 / 未知；④ 给出可选行动（看原文 / 继续探索 / 前往他处）。` +
+        `单次 ≤4 行，单行 ≤120 字，环境隐喻不得直接当事实。` +
+        `动作白名单：show-source 只能引用已注入来源；open-compare 无参数；一般不需要动作。` +
+        `输出严格 JSON：{"lines":[{"speaker":"guide","text":"…"}]}` +
+        (zh ? "。语言：中文。" : ". Language: English."),
+    },
+  ]);
+
+  const aiLines = validateDialogueLines(result, {
+    sourceIds: allSourceIds,
+    opinionIds: allOpinionIds,
+    maxLines: 4,
+  });
+  if (aiLines) return { lines: aiLines, source: "ai" };
+  return { lines: fallbackLines, source: "fallback" };
 }
