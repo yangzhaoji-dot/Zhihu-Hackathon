@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import type { ResonanceChapter } from "@/lib/world/resonance";
 import styles from "./resonance-overlay.module.css";
 
@@ -70,7 +70,7 @@ export function ResonanceOverlay({
         "--particle-x": `${particle.x}vw`,
         "--particle-y": `${particle.y}vh`,
         "--particle-delay": `${particle.delay}ms`,
-      }) as React.CSSProperties),
+      }) as CSSProperties),
     [],
   );
 
@@ -96,7 +96,7 @@ export function ResonanceOverlay({
             <article
               key={chapter.id}
               className={`${styles.chapter} ${chapter.unresolved ? styles.unresolved : ""}`}
-              style={{ "--chapter-index": index } as React.CSSProperties}
+              style={{ "--chapter-index": index } as CSSProperties}
             >
               <span className={styles.kicker}>{chapter.kicker}</span>
               <h3>{chapter.title}</h3>
