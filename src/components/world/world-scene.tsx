@@ -10,11 +10,12 @@ import { TILE_SIZE, type GridPos } from "@/lib/world/geometry";
 import { isPoiRequirementMet, type WalkContext } from "@/lib/world/walkability";
 import styles from "./world-scene.module.css";
 
-// 灰盒渲染层（world-design-v0.2 §7.1 灰盒约定）：
-// - Zone = 半透明色块（颜色从 world-theme 色板按 terrain 派生）+ label 动态渲染；
-// - fog 区渲染为灰白叠加层（在其他区域之上、实体之下）；
-// - NPC 有 sprite 显示立绘，空串画纯色圆块 + 名字；translucent 半透明显示；
-// - 玩家与相机 transform 由页面 rAF 循环直接写 DOM（playerElRef / worldElRef）。
+// 世界渲染层。
+//
+// graybox：保留原有 Zone + NPC 灰盒，服务动态议题与工程验证。
+// diorama-v1：用于“环境优先”的议题世界。数据层继续复用 NpcConfig，
+// 但固定观点不再画成人，而画成可调查的场景物件；点击/靠近仍复用成熟的
+// 来源追溯、观点卡、比较和 AI 对话流程。
 
 interface WorldSceneProps {
   config: WorldConfig;
@@ -30,13 +31,47 @@ interface WorldSceneProps {
   onTap: (pos: GridPos, npcId: string | null) => void;
 }
 
+type EnvironmentObjectKind =
+  | "resignation-box"
+  | "ledger-desk"
+  | "workbench"
+  | "ticket-machine"
+  | "archive-cabinet"
+  | "quiet-bench"
+  | "departure-board"
+  | "threshold-gate";
+
+const ENVIRONMENT_OBJECTS: Record<string, EnvironmentObjectKind> = {
+  npc_stoploss: "resignation-box",
+  npc_cashflow: "ledger-desk",
+  npc_inwork: "workbench",
+  npc_transform: "ticket-machine",
+  npc_legal: "archive-cabinet",
+  npc_inner: "quiet-bench",
+  npc_window: "departure-board",
+  npc_threshold: "threshold-gate",
+};
+
+function environmentObjectKind(
+  config: WorldConfig,
+  npc: WorldNpcView,
+): EnvironmentObjectKind | null {
+  if (config.tileset !== "diorama-v1") return null;
+  if (!npc.role.startsWith("看山 ·")) return null;
+  return ENVIRONMENT_OBJECTS[npc.id] ?? null;
+}
+
+function environmentObjectLabel(role: string) {
+  return role.replace(/^看山\s*·\s*/, "");
+}
+
 function zoneBackground(terrain: Zone["terrain"], theme: OpinionWorldTheme): string {
   switch (terrain) {
     case "plaza": return `${theme.accent}24`;
     case "road": return `${theme.road}59`;
     case "bridge": return `${theme.road}8c`;
     case "station": return `${theme.accent}3d`;
-    case "fog": return "rgba(225, 233, 231, 0.30)"; // 灰白叠加层
+    case "fog": return "rgba(225, 233, 231, 0.30)";
     case "ruin": return "rgba(8, 10, 13, 0.45)";
     case "monument": return `${theme.accent}52`;
   }
@@ -51,8 +86,18 @@ function PoiGlyph({ poi, locked }: { poi: Poi; locked: boolean }) {
     case "gate":
       return locked ? <Lock size={18} aria-hidden /> : <span className={styles.bridgeDeck} aria-hidden />;
     case "chest": return <span className={styles.chest} aria-hidden />;
-    default: return null; // fog Poi 不单独渲染（迷雾由 Zone 叠加层表达）
+    default: return null;
   }
+}
+
+function EnvironmentObject({ kind }: { kind: EnvironmentObjectKind }) {
+  return (
+    <span className={styles.environmentArtifact} data-kind={kind} aria-hidden>
+      <span className={styles.artifactTop} />
+      <span className={styles.artifactBody} />
+      <span className={styles.artifactDetail} />
+    </span>
+  );
 }
 
 export function WorldScene({
@@ -69,7 +114,6 @@ export function WorldScene({
 }: WorldSceneProps) {
   const fogLifted = (zone: Zone) =>
     Boolean(zone.stateKey && walkCtx.worldState && walkCtx.worldState[zone.stateKey]);
-  // §5.4：evidence 较弱方区域的"停工建筑"标记（ruin:<zoneId>）。
   const ruinMarked = (zone: Zone) =>
     Boolean(walkCtx.worldState && walkCtx.worldState[`ruin:${zone.id}`]);
 
@@ -84,7 +128,6 @@ export function WorldScene({
       x: (event.clientX - rect.left) / TILE_SIZE,
       y: (event.clientY - rect.top) / TILE_SIZE,
     };
-    // 点按 NPC（≈自身 1 格内）直接对话，其余作为移动目的地。
     const npc = npcs.find(
       (n) => Math.hypot(pos.x - (n.pos.x + 0.5), pos.y - (n.pos.y + 0.5)) <= 1,
     );
@@ -96,6 +139,7 @@ export function WorldScene({
       <div
         ref={worldElRef}
         className={styles.worldGrid}
+        data-tileset={config.tileset}
         style={{
           width: config.size.w * TILE_SIZE,
           height: config.size.h * TILE_SIZE,
@@ -121,7 +165,6 @@ export function WorldScene({
           </div>
         ))}
 
-        {/* §5.4 运行时迷雾标记（比较 missing 非空时两区之间浮现） */}
         {(runtimeFogs ?? []).map((fog) => (
           <div
             key={fog.id}
@@ -141,6 +184,7 @@ export function WorldScene({
           <div
             key={zone.id}
             className={`${styles.zone} ${styles.fog} ${fogLifted(zone) ? styles.fogLifted : ""}`}
+            data-terrain="fog"
             style={{
               left: zone.rect.x * TILE_SIZE,
               top: zone.rect.y * TILE_SIZE,
@@ -155,8 +199,7 @@ export function WorldScene({
 
         {config.pois.map((poi) => {
           if (poi.kind === "fog") return null;
-          const locked =
-            Boolean(poi.requires) && !isPoiRequirementMet(poi, walkCtx);
+          const locked = Boolean(poi.requires) && !isPoiRequirementMet(poi, walkCtx);
           return (
             <div
               key={poi.id}
@@ -171,41 +214,49 @@ export function WorldScene({
           );
         })}
 
-        {npcs.map((npc) => (
-          <button
-            key={npc.id}
-            type="button"
-            className={`${styles.npc} ${npc.translucent ? styles.translucent : ""} ${
-              highlightId === npc.id ? styles.highlight : ""
-            }`}
-            style={{ left: npc.pos.x * TILE_SIZE, top: npc.pos.y * TILE_SIZE }}
-            onClick={(event) => {
-              event.stopPropagation();
-              onTap({ x: npc.pos.x + 0.5, y: npc.pos.y + 0.5 }, npc.id);
-            }}
-            aria-label={npc.role}
-          >
-            {npc.sprite ? (
-              <Image
-                className={styles.npcSprite}
-                src={npc.sprite}
-                alt=""
-                width={64}
-                height={96}
-                sizes="64px"
-              />
-            ) : (
-              <span
-                className={styles.npcBlob}
-                style={{ "--blob-color": theme.accent } as CSSProperties}
-                aria-hidden
-              >
-                {npc.role.slice(0, 1)}
+        {npcs.map((npc) => {
+          const objectKind = environmentObjectKind(config, npc);
+          return (
+            <button
+              key={npc.id}
+              type="button"
+              className={`${styles.npc} ${objectKind ? styles.environmentObject : ""} ${
+                npc.translucent ? styles.translucent : ""
+              } ${highlightId === npc.id ? styles.highlight : ""}`}
+              data-object-kind={objectKind ?? undefined}
+              style={{ left: npc.pos.x * TILE_SIZE, top: npc.pos.y * TILE_SIZE }}
+              onClick={(event) => {
+                event.stopPropagation();
+                onTap({ x: npc.pos.x + 0.5, y: npc.pos.y + 0.5 }, npc.id);
+              }}
+              aria-label={npc.role}
+            >
+              {objectKind ? (
+                <EnvironmentObject kind={objectKind} />
+              ) : npc.sprite ? (
+                <Image
+                  className={styles.npcSprite}
+                  src={npc.sprite}
+                  alt=""
+                  width={64}
+                  height={96}
+                  sizes="64px"
+                />
+              ) : (
+                <span
+                  className={styles.npcBlob}
+                  style={{ "--blob-color": theme.accent } as CSSProperties}
+                  aria-hidden
+                >
+                  {npc.role.slice(0, 1)}
+                </span>
+              )}
+              <span className={styles.npcName}>
+                {objectKind ? environmentObjectLabel(npc.role) : npc.role}
               </span>
-            )}
-            <span className={styles.npcName}>{npc.role}</span>
-          </button>
-        ))}
+            </button>
+          );
+        })}
 
         <div ref={playerElRef} className={styles.player} aria-hidden>
           <Image
