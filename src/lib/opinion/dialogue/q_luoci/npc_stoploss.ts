@@ -1,34 +1,29 @@
 import type { DialogueScript } from "../../types";
 
-// 止损派 · 车站管理员（o_stoploss, support 86 —— 全图最高赞，纪念碑原型）
-// 性格：报站员式干脆，三句话不离"发车/到站"，但会主动提醒条件边界。
-// 台词事实锚点：s1 @林小满（焦虑量表、离职后睡眠恢复）、s2 @阿柴（HR 离职面谈）。
+// v0.3：观点不再由“车站管理员”本人陈述。
+// 玩家调查离职申请箱后，由看山把环境现象还原成可核验的观点与来源。
 export const dlgLuociStoploss: DialogueScript = {
   id: "dlg_luoci_stoploss",
   npcId: "npc_stoploss",
   aiPromptId: "world-dialogue-v1",
   lines: [
     {
-      speaker: "npc",
-      text: "欢迎进站。我这班车的方向就一句话：{title}。这站台上它最响——当前材料里 {support} 的赞同度，全城最高。",
+      speaker: "guide",
+      text: "你看到这个塞满纸张的申请箱了吗？它对应当前材料里最强的一种声音：{title}。这组观点的支持度是 {support}。",
     },
     {
-      speaker: "npc",
-      text: "产品经理 {author} 留过一张病历式的记录：「{excerpt}」（{upvotes} 人赞同）",
+      speaker: "guide",
+      text: "其中一份记录来自 {author}：「{excerpt}」（{upvotes} 人赞同）。先把它当作具体经历，而不是对所有人的结论。",
       actions: [{ type: "show-source", sourceId: "s1" }],
     },
     {
-      speaker: "npc",
-      text: "做 HR 的阿柴说得更直：硬扛出病来，公司不会替你买单。这不是吓唬人，是离职面谈里一年年看出来的。",
+      speaker: "guide",
+      text: "另一条材料来自 HR 的离职面谈观察：当身心状态已经明显恶化时，继续硬扛的代价可能比离开更高。它强调的是“已经到临界点”的情况。",
       actions: [{ type: "show-source", sourceId: "s2" }],
     },
     {
-      speaker: "npc",
-      text: "但我得提醒一句：我这班车只发给'真的已经崩了'的人。只是累了、只是想歇，那是另一趟车，别上错。",
-    },
-    {
-      speaker: "npc",
-      text: "认同的话，收下这张观点卡当车票；拿不准，就先标个态度，车不等人但站台一直在。",
+      speaker: "guide",
+      text: "所以这个箱子不是“所有人都该辞职”的出口，而是一条有条件的止损路线。你可以收下这张观点卡，之后和别的路线比较。",
       actions: [
         { type: "collect-opinion", opinionId: "o_stoploss" },
         { type: "open-stance", opinionId: "o_stoploss" },
