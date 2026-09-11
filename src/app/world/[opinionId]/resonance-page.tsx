@@ -14,20 +14,17 @@ import {
   fetchWorldConfig,
   fetchWorldProgress,
   patchWorldProgress,
-  postWorldDialogue,
-  type SourceTrace,
   type WorldNpcView,
   type WorldProgressPatch,
   type WorldView,
 } from "@/lib/api/opinion";
-import { buildGenericDialogue, getDialogueScript } from "@/lib/opinion/dialogue";
-import type { DialogueAction, DialogueScript, ExplorationProgressDto, Poi } from "@/lib/opinion/types";
+import { postPlanetDialogue } from "@/lib/api/planet-dialogue";
+import type { DialogueAction, ExplorationProgressDto, OpinionSource, Poi } from "@/lib/opinion/types";
 import { getViewerId } from "@/lib/opinion/viewer-id";
 import { loadLocalWorldProgress, saveLocalWorldProgress } from "@/lib/opinion/world-progress-cache";
 import { loadOpinionWorldEntry, type OpinionWorldEntry } from "@/lib/opinion/world-session";
 import { OPINION_WORLD_THEMES } from "@/lib/opinion/world-theme";
 import { distance, TILE_SIZE, type GridPos } from "@/lib/world/geometry";
-import { interpolateDialogueText } from "@/lib/world/interpolate";
 import { emptyProgress, mergeProgressPatch } from "@/lib/world/progress-merge";
 import {
   buildResonanceChapters,
@@ -57,24 +54,21 @@ const LEAVING_MS = 1000;
 const TOAST_MS = 2600;
 
 type InteractTarget =
-  | { type: "npc"; id: string; npc: WorldNpcView }
+  | { type: "object"; id: string; object: WorldNpcView }
   | { type: "poi"; id: string; poi: Poi };
 
 type DialogueState = {
-  kind: "npc" | "guide";
-  npc?: WorldNpcView;
-  script?: DialogueScript;
-  lines?: ResolvedDialogueLine[];
-  aiLines?: ResolvedDialogueLine[];
-  openedAt?: number;
-  after?: () => void;
+  lines: ResolvedDialogueLine[];
+  openedAt: number;
 };
 
 function emitSfx(name: string) {
-  if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent("sfx", { detail: name }));
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent("sfx", { detail: name }));
+  }
 }
 
-function runtimeFogsFromWorldState(worldState: Record<string, unknown>): { id: string; pos: GridPos }[] {
+function runtimeFogsFromWorldState(worldState: Record<string, unknown>) {
   const fogs: { id: string; pos: GridPos }[] = [];
   for (const [key, value] of Object.entries(worldState)) {
     if (!key.startsWith("fog_rt:")) continue;
@@ -97,6 +91,75 @@ function comparedPairsFromWorldState(worldState: Record<string, unknown>): [stri
     .filter((pair) => pair.length === 2 && pair[0] && pair[1]);
 }
 
+function currentSource(entry: OpinionWorldEntry): OpinionSource | null {
+  return (
+    entry.sources.find((source) => entry.opinion.sourceIds.includes(source.id)) ??
+    null
+  );
+}
+
+function localKanshanLines(entry: OpinionWorldEntry, locale: "zh-CN" | "en-US"): ResolvedDialogueLine[] {
+  const source = currentSource(entry);
+  const opinion = entry.opinion;
+  if (locale === "en-US") {
+    return [
+      {
+        speaker: "guide",
+        text: `Look at this place first. This planet formed around one claim: “${opinion.title}”. What in the scene feels most connected to that claim?`,
+      },
+      {
+        speaker: "guide",
+        text: opinion.reason
+          ? `The supplied reason is: ${opinion.reason}`
+          : "The material does not yet contain a complete reason, so this part should remain unresolved.",
+      },
+      ...(source
+        ? [{
+            speaker: "guide" as const,
+            text: "There is an original excerpt here. Read it before deciding how much the claim can support.",
+            actions: [{ type: "show-source" as const, sourceId: source.id }],
+          }]
+        : [{
+            speaker: "guide" as const,
+            text: "No traceable original excerpt is attached yet. The scenery cannot replace missing evidence.",
+          }]),
+      {
+        speaker: "guide",
+        text: "One more question: what condition would have to change before you stopped applying this claim?",
+        actions: [{ type: "collect-opinion", opinionId: opinion.id }],
+      },
+    ];
+  }
+
+  return [
+    {
+      speaker: "guide",
+      text: `先看看这里。整颗星球只围绕一条观点形成：「${opinion.title}」。你觉得眼前的环境最想提醒你什么？`,
+    },
+    {
+      speaker: "guide",
+      text: opinion.reason
+        ? `材料里明确留下的理由是：${opinion.reason}`
+        : "目前材料没有留下完整理由，这一块先不要替它补齐。",
+    },
+    ...(source
+      ? [{
+          speaker: "guide" as const,
+          text: "这里还留着一份原文。先读它，再判断这条经历究竟能支撑多大的结论。",
+          actions: [{ type: "show-source" as const, sourceId: source.id }],
+        }]
+      : [{
+          speaker: "guide" as const,
+          text: "目前没有能回到原文的来源，所以依据这一块仍然应该留在雾里。",
+        }]),
+    {
+      speaker: "guide",
+      text: "最后想一个问题：什么条件一旦改变，你就不会再把这条观点直接套用到那个情境？",
+      actions: [{ type: "collect-opinion", opinionId: opinion.id }],
+    },
+  ];
+}
+
 export default function ResonancePlanetPage() {
   const { t } = useTranslation();
   const router = useRouter();
@@ -111,7 +174,6 @@ export default function ResonancePlanetPage() {
   const [toasts, setToasts] = useState<{ id: number; text: string }[]>([]);
   const [hint, setHint] = useState<InteractTarget | null>(null);
   const [foundSourceIds, setFoundSourceIds] = useState<string[]>([]);
-  const [traceCache, setTraceCache] = useState<Record<string, SourceTrace>>({});
   const [wsVersion, setWsVersion] = useState(0);
 
   const phaseRef = useRef<WorldPhase>("loading");
@@ -121,7 +183,6 @@ export default function ResonancePlanetPage() {
   const camRef = useRef({ x: 0, y: 0 });
   const worldStateRef = useRef<Record<string, unknown>>({});
   const progressRef = useRef<ExplorationProgressDto | null>(null);
-  const dialogueRef = useRef<DialogueState | null>(null);
   const progressOfflineNotifiedRef = useRef(false);
   const lastBlockedToastRef = useRef(0);
   const hintIdRef = useRef<string | null>(null);
@@ -224,10 +285,21 @@ export default function ResonancePlanetPage() {
     stanceCount: 0,
   }), [comparedPairs, foundSourceIds, wsVersion]);
 
-  const planetNpcs = useMemo(
-    () => (world?.npcs ?? []).filter((npc) => npc.opinion.id === opinionId),
-    [opinionId, world],
-  );
+  const planetObjects = useMemo(() => {
+    const configured = (world?.npcs ?? []).filter((object) => object.opinion.id === opinionId);
+    if (configured.length || !entry || !world) return configured;
+    const spawn = world.config.spawn;
+    return [{
+      id: `planet_object_${opinionId}`,
+      opinion: entry.opinion,
+      sourceCount: entry.opinion.sourceIds.length,
+      pos: { x: Math.min(world.config.size.w - 2, spawn.x + 2), y: spawn.y },
+      sprite: "",
+      role: entry.opinion.kind === "ai" ? "看山 · 推演装置" : "看山 · 观点遗迹",
+      translucent: entry.opinion.kind === "ai",
+    } satisfies WorldNpcView];
+  }, [entry, opinionId, world]);
+
   const runtimeFogs = useMemo(() => runtimeFogsFromWorldState(worldStateRef.current), [wsVersion]);
   const fragments = useMemo(() => collectedResonanceFragments(worldStateRef.current, opinionId), [opinionId, wsVersion]);
   const resonant = useMemo(() => hasResonated(worldStateRef.current, opinionId), [opinionId, wsVersion]);
@@ -249,19 +321,23 @@ export default function ResonancePlanetPage() {
     goto("explore");
     emitSfx("sfx.rocket.land");
     const lines: ResolvedDialogueLine[] = [
-      { speaker: "guide", text: t("world.resonance.planetIntro", {
-        defaultValue: `我们到了。这颗星球围绕「${entry.opinion.title}」形成。先别急着赞同它，看看这里为什么变成这样。`,
-        title: entry.opinion.title,
-      }) },
-      { speaker: "guide", text: t("world.resonance.fragmentIntro", {
-        defaultValue: "找到主张、理由和依据三块核心碎片后，这颗星球会与你产生共鸣。共鸣不是判定对错。",
-      }) },
+      {
+        speaker: "guide",
+        text: t("world.resonance.planetIntro", {
+          defaultValue: `我们到了。这颗星球围绕「${entry.opinion.title}」形成。先别急着赞同它，看看这里为什么变成这样。`,
+          title: entry.opinion.title,
+        }),
+      },
+      {
+        speaker: "guide",
+        text: t("world.resonance.fragmentIntro", {
+          defaultValue: "找到主张、理由和依据三块核心碎片后，这颗星球会与你产生共鸣。共鸣不是判定对错。",
+        }),
+      },
     ];
     window.setTimeout(() => {
       if (phaseRef.current !== "explore") return;
-      const opened: DialogueState = { kind: "guide", lines, openedAt: Date.now() };
-      dialogueRef.current = opened;
-      setDialogue(opened);
+      setDialogue({ lines, openedAt: Date.now() });
       goto("dialogue");
     }, 180);
   }, [entry, goto, t]);
@@ -284,50 +360,20 @@ export default function ResonancePlanetPage() {
     return () => window.clearTimeout(timer);
   }, [phase, router]);
 
-  const resolveTrace = useCallback((opId: string) => {
-    if (entry && opId === entry.opinion.id) return { sources: entry.sources, authors: entry.authors };
-    const cached = traceCache[opId];
-    return cached ? { sources: cached.sources, authors: cached.authors } : null;
-  }, [entry, traceCache]);
-
-  const dialogueLines = useMemo<ResolvedDialogueLine[]>(() => {
-    if (!dialogue) return [];
-    if (dialogue.kind === "guide") return dialogue.lines ?? [];
-    const npc = dialogue.npc;
-    if (!npc) return [];
-    const trace = resolveTrace(npc.opinion.id);
-    const source = trace?.sources.find((candidate) => npc.opinion.sourceIds.includes(candidate.id)) ?? trace?.sources[0] ?? null;
-    const author = source ? trace?.authors.find((candidate) => candidate.id === source.authorId) ?? null : null;
-    const baseLines = dialogue.aiLines ?? dialogue.script?.lines ?? [];
-    return baseLines.map((line) => ({
-      ...line,
-      text: interpolateDialogueText(line.text, { opinion: npc.opinion, source, author }),
-      actions: line.actions?.map((action) =>
-        action.type === "show-source" && action.sourceId === "__first__" && source
-          ? { ...action, sourceId: source.id }
-          : action,
-      ).filter((action) =>
-        action.type !== "show-source" || action.sourceId === "__first__" ||
-        (trace?.sources.some((candidate) => candidate.id === action.sourceId) ?? false),
-      ),
-    }));
-  }, [dialogue, resolveTrace]);
-
   const resolveSource = useCallback((sourceId: string) => {
-    if (!dialogue?.npc) return null;
-    const trace = resolveTrace(dialogue.npc.opinion.id);
-    const source = trace?.sources.find((candidate) => candidate.id === sourceId);
+    if (!entry) return null;
+    const source = entry.sources.find((candidate) => candidate.id === sourceId && entry.opinion.sourceIds.includes(candidate.id));
     if (!source) return null;
-    return { source, author: trace?.authors.find((candidate) => candidate.id === source.authorId) };
-  }, [dialogue, resolveTrace]);
+    return { source, author: entry.authors.find((candidate) => candidate.id === source.authorId) };
+  }, [entry]);
 
   const nearestInteractable = useCallback((): InteractTarget | null => {
     if (!world) return null;
     const center = { x: posRef.current.x + 0.5, y: posRef.current.y + 0.5 };
     let best: { target: InteractTarget; d: number } | null = null;
-    for (const npc of planetNpcs) {
-      const d = distance(center, { x: npc.pos.x + 0.5, y: npc.pos.y + 0.5 });
-      if (d <= INTERACT_RANGE && (!best || d < best.d)) best = { target: { type: "npc", id: npc.id, npc }, d };
+    for (const object of planetObjects) {
+      const d = distance(center, { x: object.pos.x + 0.5, y: object.pos.y + 0.5 });
+      if (d <= INTERACT_RANGE && (!best || d < best.d)) best = { target: { type: "object", id: object.id, object }, d };
     }
     for (const poi of world.config.pois) {
       if (poi.kind === "fog" || poi.kind === "chest") continue;
@@ -335,38 +381,34 @@ export default function ResonancePlanetPage() {
       if (d <= INTERACT_RANGE && (!best || d < best.d)) best = { target: { type: "poi", id: poi.id, poi }, d };
     }
     return best?.target ?? null;
-  }, [planetNpcs, world]);
+  }, [planetObjects, world]);
 
-  const openNpcDialogue = useCallback((npc: WorldNpcView) => {
-    if (!world) return;
-    const cfgNpc = world.config.npcs.find((item) => item.id === npc.id);
-    const script = (cfgNpc && getDialogueScript(cfgNpc.dialogueId)) ?? buildGenericDialogue(npc.id, npc.opinion.id);
+  const openObjectDialogue = useCallback((object: WorldNpcView) => {
+    if (!entry) return;
     tapTargetRef.current = null;
     markFragment("claim");
-    const opened: DialogueState = { kind: "npc", npc, script, openedAt: Date.now() };
-    dialogueRef.current = opened;
-    setDialogue(opened);
+    const fallbackLines = localKanshanLines(entry, locale);
+    const openedAt = Date.now();
+    setDialogue({ lines: fallbackLines, openedAt });
     goto("dialogue");
     emitSfx("sfx.guide.appear");
-    applyProgressPatch({ addVisitedNpc: [npc.id] });
+    applyProgressPatch({ addVisitedNpc: [object.id] });
 
-    if (!traceCache[npc.opinion.id] && entry && npc.opinion.id !== entry.opinion.id) {
-      fetchSourceTrace(npc.opinion.id).then((trace) => {
-        if (trace?.opinion) setTraceCache((cache) => ({ ...cache, [npc.opinion.id]: trace }));
-      }).catch(() => {});
-    }
-
-    postWorldDialogue({ npcId: npc.id, trigger: "talk", locale, history: [], worldState: worldStateRef.current })
-      .then((reply) => {
-        if (!reply || reply.source !== "ai") return;
-        const current = dialogueRef.current;
-        if (!current || current.kind !== "npc" || current.npc?.id !== npc.id || Date.now() - (current.openedAt ?? 0) > 6000) return;
-        const next: DialogueState = { ...current, aiLines: reply.lines };
-        dialogueRef.current = next;
-        setDialogue(next);
-      })
-      .catch(() => {});
-  }, [applyProgressPatch, entry, goto, locale, markFragment, traceCache, world]);
+    postPlanetDialogue({
+      questionId: entry.opinion.questionId,
+      opinionId: entry.opinion.id,
+      trigger: "inspect",
+      locale,
+      history: [],
+      worldState: worldStateRef.current,
+    }).then((reply) => {
+      if (!reply || reply.source !== "ai") return;
+      setDialogue((current) => {
+        if (!current || current.openedAt !== openedAt || Date.now() - openedAt > 6000) return current;
+        return { ...current, lines: reply.lines };
+      });
+    }).catch(() => {});
+  }, [applyProgressPatch, entry, goto, locale, markFragment]);
 
   const startLeave = useCallback(() => {
     if (phaseRef.current !== "explore") return;
@@ -382,13 +424,16 @@ export default function ResonancePlanetPage() {
   }, [t]);
 
   const interactWithPoi = useCallback((poi: Poi) => {
-    if (poi.kind === "rocket") { startLeave(); return; }
+    if (poi.kind === "rocket") {
+      startLeave();
+      return;
+    }
     if ((poi.kind === "bridge" || poi.kind === "gate") && !isPoiRequirementMet(poi, walkCtx)) {
       emitSfx("sfx.blocked");
       pushToast(blockedText(poiRequirementReason(poi, walkCtx)));
       return;
     }
-    pushToast(t("world.resonance.keepExploring", { defaultValue: "这个地点会在下一轮场景交互设计中绑定新的碎片玩法。" }));
+    pushToast(t("world.resonance.keepExploring", { defaultValue: "先继续观察这颗星球；这里还没有绑定新的碎片交互。" }));
   }, [blockedText, pushToast, startLeave, t, walkCtx]);
 
   const interactRef = useRef<() => void>(() => {});
@@ -397,7 +442,7 @@ export default function ResonancePlanetPage() {
       if (phaseRef.current !== "explore") return;
       const target = nearestInteractable();
       if (!target) return;
-      if (target.type === "npc") openNpcDialogue(target.npc);
+      if (target.type === "object") openObjectDialogue(target.object);
       else interactWithPoi(target.poi);
     };
   });
@@ -427,8 +472,10 @@ export default function ResonancePlanetPage() {
     const blockedAt = (position: GridPos): BlockReason | null => {
       const r = PLAYER_RADIUS;
       for (const corner of [
-        { x: position.x - r, y: position.y - r }, { x: position.x + r, y: position.y - r },
-        { x: position.x - r, y: position.y + r }, { x: position.x + r, y: position.y + r },
+        { x: position.x - r, y: position.y - r },
+        { x: position.x + r, y: position.y - r },
+        { x: position.x - r, y: position.y + r },
+        { x: position.x + r, y: position.y + r },
       ]) {
         const result = isWalkable(config, ctx, corner);
         if (result.blocked) return result.reason ?? null;
@@ -450,7 +497,8 @@ export default function ResonancePlanetPage() {
       const dt = Math.min((now - last) / 1000, 0.05);
       last = now;
       const pos = posRef.current;
-      let dx = 0, dy = 0;
+      let dx = 0;
+      let dy = 0;
       const keys = keysRef.current;
       if (keys.has("w") || keys.has("arrowup")) dy -= 1;
       if (keys.has("s") || keys.has("arrowdown")) dy += 1;
@@ -464,28 +512,42 @@ export default function ResonancePlanetPage() {
       } else if (tapTargetRef.current) {
         const center = { x: pos.x + 0.5, y: pos.y + 0.5 };
         const target = tapTargetRef.current;
-        const vx = target.x - center.x, vy = target.y - center.y;
+        const vx = target.x - center.x;
+        const vy = target.y - center.y;
         const length = Math.hypot(vx, vy);
         if (length < 0.18) tapTargetRef.current = null;
-        else { dx = (vx / length) * SPEED * dt; dy = (vy / length) * SPEED * dt; }
+        else {
+          dx = (vx / length) * SPEED * dt;
+          dy = (vy / length) * SPEED * dt;
+        }
       }
       if (dx !== 0 || dy !== 0) {
         const tryX = { x: pos.x + dx, y: pos.y };
         const reasonX = blockedAt(tryX);
-        if (!reasonX) posRef.current = tryX; else notifyBlocked(reasonX);
+        if (!reasonX) posRef.current = tryX;
+        else notifyBlocked(reasonX);
         const tryY = { x: posRef.current.x, y: posRef.current.y + dy };
         const reasonY = blockedAt(tryY);
-        if (!reasonY) posRef.current = tryY; else notifyBlocked(reasonY);
+        if (!reasonY) posRef.current = tryY;
+        else notifyBlocked(reasonY);
         if (tapTargetRef.current && reasonX && reasonY) tapTargetRef.current = null;
       }
-      if (playerElRef.current) playerElRef.current.style.transform = `translate(${posRef.current.x * TILE_SIZE}px, ${posRef.current.y * TILE_SIZE}px)`;
-      const viewportEl = viewportElRef.current, worldEl = worldElRef.current;
+
+      if (playerElRef.current) {
+        playerElRef.current.style.transform = `translate(${posRef.current.x * TILE_SIZE}px, ${posRef.current.y * TILE_SIZE}px)`;
+      }
+      const viewportEl = viewportElRef.current;
+      const worldEl = worldElRef.current;
       if (viewportEl && worldEl) {
-        const vw = viewportEl.clientWidth, vh = viewportEl.clientHeight;
-        const worldW = config.size.w * TILE_SIZE, worldH = config.size.h * TILE_SIZE;
-        const px = (posRef.current.x + 0.5) * TILE_SIZE, py = (posRef.current.y + 0.5) * TILE_SIZE;
+        const vw = viewportEl.clientWidth;
+        const vh = viewportEl.clientHeight;
+        const worldW = config.size.w * TILE_SIZE;
+        const worldH = config.size.h * TILE_SIZE;
+        const px = (posRef.current.x + 0.5) * TILE_SIZE;
+        const py = (posRef.current.y + 0.5) * TILE_SIZE;
         const cam = camRef.current;
-        let targetX = cam.x, targetY = cam.y;
+        let targetX = cam.x;
+        let targetY = cam.y;
         if (worldW <= vw) targetX = (worldW - vw) / 2;
         else {
           if (px - targetX < vw * 0.2) targetX = px - vw * 0.2;
@@ -499,25 +561,27 @@ export default function ResonancePlanetPage() {
           targetY = Math.max(0, Math.min(worldH - vh, targetY));
         }
         const lerp = Math.min(1, dt * 9);
-        cam.x += (targetX - cam.x) * lerp; cam.y += (targetY - cam.y) * lerp;
+        cam.x += (targetX - cam.x) * lerp;
+        cam.y += (targetY - cam.y) * lerp;
         worldEl.style.transform = `translate3d(${-cam.x}px, ${-cam.y}px, 0)`;
       }
       const target = nearestInteractable();
       const targetId = target ? `${target.type}:${target.id}` : null;
-      if (targetId !== hintIdRef.current) { hintIdRef.current = targetId; setHint(target); }
+      if (targetId !== hintIdRef.current) {
+        hintIdRef.current = targetId;
+        setHint(target);
+      }
       raf = requestAnimationFrame(step);
     };
+
     raf = requestAnimationFrame(step);
     return () => cancelAnimationFrame(raf);
   }, [blockedText, nearestInteractable, phase, pushToast, walkCtx, world]);
 
   const closeDialogue = useCallback(() => {
-    const after = dialogue?.after;
-    dialogueRef.current = null;
     setDialogue(null);
     goto("explore");
-    after?.();
-  }, [dialogue, goto]);
+  }, [goto]);
 
   const handleDialogueAction = useCallback((action: DialogueAction) => {
     if (!entry) return;
@@ -533,17 +597,8 @@ export default function ResonancePlanetPage() {
     }
     if (action.type === "collect-opinion" && action.opinionId === entry.opinion.id) {
       markFragment("reason");
-      pushToast(t("world.resonance.cardReplaced", { defaultValue: "观点卡已被碎片主线替代：你收下的是理解这条观点的一部分。" }));
-      return;
     }
-    if (action.type === "open-compare") {
-      pushToast(t("world.resonance.compareInOrbit", { defaultValue: "跨观点比较将放在返航后的 AI 空间中转站完成。" }));
-      return;
-    }
-    if (action.type === "open-stance") {
-      pushToast(t("world.resonance.noVerdict", { defaultValue: "先保留你的判断。理解这条观点，不要求你赞同它。" }));
-    }
-  }, [applyProgressPatch, entry, markFragment, pushToast, t]);
+  }, [applyProgressPatch, entry, markFragment]);
 
   const completeResonance = useCallback(() => {
     if (phaseRef.current === "resonance") goto("explore");
@@ -561,20 +616,37 @@ export default function ResonancePlanetPage() {
   }, [applyProgressPatch, entry]);
 
   if (phase === "error") {
-    return <ErrorPageShell><div className={styles.errorCard}><h1>{t("world.notFound")}</h1><button type="button" onClick={() => router.push("/")}>{t("cosmos.returnUniverse")}</button></div></ErrorPageShell>;
+    return (
+      <ErrorPageShell>
+        <div className={styles.errorCard}>
+          <h1>{t("world.notFound")}</h1>
+          <button type="button" onClick={() => router.push("/")}>{t("cosmos.returnUniverse")}</button>
+        </div>
+      </ErrorPageShell>
+    );
   }
   if (!world || !entry || !theme) return <main className={styles.loading}>{t("world.loading")}</main>;
 
   const worldStyle = {
-    "--world-sky": theme.sky, "--world-ground": theme.ground, "--world-road": theme.road,
-    "--world-accent": theme.accent, "--world-mist": theme.mist,
+    "--world-sky": theme.sky,
+    "--world-ground": theme.ground,
+    "--world-road": theme.road,
+    "--world-accent": theme.accent,
+    "--world-mist": theme.mist,
   } as CSSProperties;
-  const hintLabel = hint?.type === "npc"
-    ? t("world.hud.inspect", { name: hint.npc.role })
-    : hint?.type === "poi" && hint.poi.kind === "rocket" ? t("world.hud.board")
-    : hint?.type === "poi" ? t("world.hud.inspect", { name: hint.poi.label?.[locale] ?? hint.poi.label?.["zh-CN"] ?? hint.poi.id }) : null;
+
+  const hintLabel = hint?.type === "object"
+    ? t("world.hud.inspect", { name: hint.object.role.replace(/^看山\s*·\s*/, "") })
+    : hint?.type === "poi" && hint.poi.kind === "rocket"
+      ? t("world.hud.board")
+      : hint?.type === "poi"
+        ? t("world.hud.inspect", { name: hint.poi.label?.[locale] ?? hint.poi.label?.["zh-CN"] ?? hint.poi.id })
+        : null;
+
   const mantra = t("world.resonance.mantra", {
-    defaultValue: locale === "en-US" ? "Resonance means understanding an opinion — not proving it." : "共鸣意味着理解了观点，不意味着证明了观点。",
+    defaultValue: locale === "en-US"
+      ? "Resonance means understanding an opinion — not proving it."
+      : "共鸣意味着理解了观点，不意味着证明了观点。",
   });
 
   return (
@@ -587,41 +659,79 @@ export default function ResonancePlanetPage() {
 
       <div ref={viewportElRef} className={styles.sceneViewport}>
         <WorldScene
-          config={world.config} npcs={planetNpcs} theme={theme} locale={locale} walkCtx={walkCtx}
-          runtimeFogs={runtimeFogs} resonant={resonant} worldElRef={worldElRef} playerElRef={playerElRef}
+          config={world.config}
+          npcs={planetObjects}
+          theme={theme}
+          locale={locale}
+          walkCtx={walkCtx}
+          runtimeFogs={runtimeFogs}
+          resonant={resonant}
+          worldElRef={worldElRef}
+          playerElRef={playerElRef}
           highlightId={hint?.id ?? null}
           onTap={(pos, npcId) => {
             if (phaseRef.current !== "explore") return;
             if (npcId) {
-              const npc = planetNpcs.find((candidate) => candidate.id === npcId);
-              if (npc) openNpcDialogue(npc);
+              const object = planetObjects.find((candidate) => candidate.id === npcId);
+              if (object) openObjectDialogue(object);
               return;
             }
-            tapTargetRef.current = { x: Math.max(0, Math.min(world.config.size.w, pos.x)), y: Math.max(0, Math.min(world.config.size.h, pos.y)) };
+            tapTargetRef.current = {
+              x: Math.max(0, Math.min(world.config.size.w, pos.x)),
+              y: Math.max(0, Math.min(world.config.size.h, pos.y)),
+            };
           }}
         />
       </div>
 
-      {phase === "landing" && <div className={styles.landing} onClick={enterExplore} data-el="world-landing"><div className={styles.landingRocket} aria-hidden><Rocket size={44} /></div><p>{entry.opinion.title}</p><small>{t("world.landingHint")}</small></div>}
-      {phase === "leaving" && <div className={styles.leaving} data-el="world-leaving"><div className={styles.leavingRocket} aria-hidden><Rocket size={44} /></div><p>{t("world.leavingHint")}</p></div>}
-      {phase === "explore" && hint && hintLabel && <button type="button" className={styles.interact} onClick={() => interactRef.current()}>E · {hintLabel}</button>}
-      {phase === "dialogue" && dialogue && dialogueLines.length > 0 && (
+      {phase === "landing" && (
+        <div className={styles.landing} onClick={enterExplore} data-el="world-landing">
+          <div className={styles.landingRocket} aria-hidden><Rocket size={44} /></div>
+          <p>{entry.opinion.title}</p>
+          <small>{t("world.landingHint")}</small>
+        </div>
+      )}
+
+      {phase === "leaving" && (
+        <div className={styles.leaving} data-el="world-leaving">
+          <div className={styles.leavingRocket} aria-hidden><Rocket size={44} /></div>
+          <p>{t("world.leavingHint")}</p>
+        </div>
+      )}
+
+      {phase === "explore" && hint && hintLabel && (
+        <button type="button" className={styles.interact} onClick={() => interactRef.current()}>E · {hintLabel}</button>
+      )}
+
+      {phase === "dialogue" && dialogue && dialogue.lines.length > 0 && (
         <DialogueOverlay
-          key={`${dialogue.kind}:${dialogue.npc?.id ?? "guide"}:${dialogue.aiLines ? "ai" : "static"}`}
-          lines={dialogueLines} npcLabel={dialogue.npc?.role ?? t("world.guideName")}
-          subtitle={dialogue.npc?.opinion.title ?? entry.opinion.title} npcSprite={dialogue.npc?.sprite}
-          accent={theme.accent} onAction={handleDialogueAction} onClose={closeDialogue} resolveSource={resolveSource}
+          key={`guide:${dialogue.openedAt}`}
+          lines={dialogue.lines}
+          npcLabel={t("world.guideName")}
+          subtitle={entry.opinion.title}
+          accent={theme.accent}
+          onAction={handleDialogueAction}
+          onClose={closeDialogue}
+          resolveSource={resolveSource}
+          surfaceMode="fragments"
         />
       )}
+
       {phase === "resonance" && (
         <ResonanceOverlay
-          title={entry.opinion.title} chapters={resonanceChapters} mantra={mantra}
+          title={entry.opinion.title}
+          chapters={resonanceChapters}
+          mantra={mantra}
           scrollLabel={t("world.resonance.scrollLabel", { defaultValue: "观点共鸣 · 探索画卷" })}
           unresolvedLabel={t("world.resonance.unresolved", { defaultValue: "仍然未知" })}
-          onTransform={transformWorld} onComplete={completeResonance}
+          onTransform={transformWorld}
+          onComplete={completeResonance}
         />
       )}
-      <div className={styles.toasts} aria-live="polite">{toasts.map((toast) => <div key={toast.id} className={styles.toast}>{toast.text}</div>)}</div>
+
+      <div className={styles.toasts} aria-live="polite">
+        {toasts.map((toast) => <div key={toast.id} className={styles.toast}>{toast.text}</div>)}
+      </div>
     </main>
   );
 }
