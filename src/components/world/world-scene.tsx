@@ -8,6 +8,7 @@ import type { Poi, WorldConfig, Zone } from "@/lib/opinion/types";
 import type { OpinionWorldTheme } from "@/lib/opinion/world-theme";
 import { TILE_SIZE, type GridPos } from "@/lib/world/geometry";
 import { isPoiRequirementMet, type WalkContext } from "@/lib/world/walkability";
+import resonanceStyles from "./world-resonance.module.css";
 import styles from "./world-scene.module.css";
 
 // 世界渲染层。
@@ -16,6 +17,8 @@ import styles from "./world-scene.module.css";
 // diorama-v1：用于“环境优先”的议题世界。数据层继续复用 NpcConfig，
 // 但固定观点不再画成人，而画成可调查的场景物件；点击/靠近仍复用成熟的
 // 来源追溯、观点卡、比较和 AI 对话流程。
+// resonant：不是“观点被证明”，只表示用户完成了这一轮核心理解；世界用
+// 朝阳、局部雾退与亮度变化回应这次理解，未知仍然保留。
 
 interface WorldSceneProps {
   config: WorldConfig;
@@ -23,8 +26,8 @@ interface WorldSceneProps {
   theme: OpinionWorldTheme;
   locale: "zh-CN" | "en-US";
   walkCtx: WalkContext;
-  /** 比较衍生的运行时迷雾标记（§5.4：missing 非空 → 两区之间放迷雾带）。 */
   runtimeFogs?: { id: string; pos: GridPos }[];
+  resonant?: boolean;
   worldElRef: RefObject<HTMLDivElement | null>;
   playerElRef: RefObject<HTMLDivElement | null>;
   highlightId: string | null;
@@ -107,6 +110,7 @@ export function WorldScene({
   locale,
   walkCtx,
   runtimeFogs,
+  resonant = false,
   worldElRef,
   playerElRef,
   highlightId,
@@ -138,8 +142,9 @@ export function WorldScene({
     <div className={styles.viewport} aria-label="world scene">
       <div
         ref={worldElRef}
-        className={styles.worldGrid}
+        className={`${styles.worldGrid} ${resonant ? resonanceStyles.resonant : ""}`}
         data-tileset={config.tileset}
+        data-resonant={resonant ? "true" : "false"}
         style={{
           width: config.size.w * TILE_SIZE,
           height: config.size.h * TILE_SIZE,
@@ -169,6 +174,7 @@ export function WorldScene({
           <div
             key={fog.id}
             className={`${styles.zone} ${styles.fog} ${styles.runtimeFog}`}
+            data-terrain="fog"
             style={{
               left: (fog.pos.x - 1.5) * TILE_SIZE,
               top: (fog.pos.y - 0.5) * TILE_SIZE,
