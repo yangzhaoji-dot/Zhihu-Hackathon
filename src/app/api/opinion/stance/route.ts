@@ -8,7 +8,7 @@ const VALID: Stance[] = ["agree", "disagree", "neutral"];
 // GET /api/opinion/stance — the viewer's stance profile (opinion portrait).
 export async function GET(request: NextRequest) {
   const viewerId = resolveViewerId(request);
-  return NextResponse.json({ ok: true, profile: getStanceProfile(viewerId) });
+  return NextResponse.json({ ok: true, profile: await getStanceProfile(viewerId) });
 }
 
 // POST /api/opinion/stance { opinionId, stance }
@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
   if (!opinionId || !VALID.includes(stance)) {
     return NextResponse.json({ ok: false, error: "invalid_input" }, { status: 400 });
   }
-  const profile = setStance(viewerId, opinionId, stance);
+  const profile = await setStance(viewerId, opinionId, stance);
   if (!profile) {
     return NextResponse.json({ ok: false, error: "opinion_not_found" }, { status: 404 });
   }

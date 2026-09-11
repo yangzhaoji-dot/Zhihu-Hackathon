@@ -126,7 +126,7 @@ function fallbackBlurb(m: {
 
 // ── Public: match the viewer against the explorer pool ──────────────────────
 export async function matchExplorers(userId: string): Promise<MatchResult> {
-  const profile = getStanceProfile(userId);
+  const profile = await getStanceProfile(userId);
   const viewer = {
     agree: new Set(profile.agree),
     disagree: new Set(profile.disagree),

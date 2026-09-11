@@ -6,6 +6,7 @@ import type {
   QuestionNetwork,
   Stance,
 } from "./types";
+import { getStancesByUser, upsertStance } from "@/lib/db/queries/stances";
 import { AUTHORS, SOURCES } from "./seed-sources";
 import {
   CORE_QUESTION_ID,
@@ -16,10 +17,12 @@ import {
   RELATIONS,
 } from "./seed";
 
-// In-memory store. Seed data is immutable; runtime additions (fused AI
-// candidate opinions) and per-user stances live in module-level maps. This is
-// intentionally swappable for a real Zhihu-backed data source or the managed
-// database without changing the API surface.
+// In-memory store for the opinion graph. Seed data is immutable; runtime
+// additions (fused AI candidate opinions) live in module-level maps. Per-user
+// stances are persisted to the stances table when DATABASE_URL is configured,
+// with the module-level map kept as a graceful-degradation fallback.
+// This is intentionally swappable for a real Zhihu-backed data source without
+// changing the API surface.
 
 // Runtime opinions added by fusion, keyed by opinion id.
 const runtimeOpinions = new Map<string, Opinion>();
@@ -80,26 +83,71 @@ export function getSourcesForOpinion(opinionId: string) {
 }
 
 // ── Personal stance ────────────────────────────────────────────────────────
-export function setStance(userId: string, opinionId: string, stance: Stance) {
-  if (!getOpinion(opinionId) && !/^o_live_\d+$/.test(opinionId)) return null;
+// Persistence: the stances table is the source of truth (world-design-v0.2
+// §3.3 / D7). The in-memory map below remains as a fallback layer so the local
+// no-database demo keeps working: when DATABASE_URL is not configured, or a
+// database call throws, reads/writes degrade to memory with a console.warn.
+// When the database works, its rows win over the cache.
+function isStanceDbConfigured(): boolean {
+  return Boolean(process.env.DATABASE_URL);
+}
+
+function setStanceInMemory(userId: string, opinionId: string, stance: Stance) {
   let map = stanceByUser.get(userId);
   if (!map) {
     map = new Map();
     stanceByUser.set(userId, map);
   }
   map.set(opinionId, stance);
-  return getStanceProfile(userId);
 }
 
-export function getStances(userId: string): Record<string, Stance> {
+function getStancesFromMemory(userId: string): Record<string, Stance> {
   const map = stanceByUser.get(userId);
   if (!map) return {};
   return Object.fromEntries(map.entries());
 }
 
+export async function setStance(
+  userId: string,
+  opinionId: string,
+  stance: Stance,
+) {
+  if (!getOpinion(opinionId) && !/^o_live_\d+$/.test(opinionId)) return null;
+  // Keep the fallback cache warm so a later DB outage still serves this write.
+  setStanceInMemory(userId, opinionId, stance);
+  if (isStanceDbConfigured()) {
+    try {
+      await upsertStance({ userId, opinionId, stance });
+    } catch (err) {
+      console.warn(
+        "[opinion/store] stance DB write failed; falling back to memory",
+        err,
+      );
+    }
+  }
+  return getStanceProfile(userId);
+}
+
+export async function getStances(
+  userId: string,
+): Promise<Record<string, Stance>> {
+  if (isStanceDbConfigured()) {
+    try {
+      const rows = await getStancesByUser(userId);
+      return Object.fromEntries(rows.map((r) => [r.opinionId, r.stance]));
+    } catch (err) {
+      console.warn(
+        "[opinion/store] stance DB read failed; falling back to memory",
+        err,
+      );
+    }
+  }
+  return getStancesFromMemory(userId);
+}
+
 /** A lightweight "opinion profile" derived from the user's marked stances. */
-export function getStanceProfile(userId: string) {
-  const stances = getStances(userId);
+export async function getStanceProfile(userId: string) {
+  const stances = await getStances(userId);
   const entries = Object.entries(stances);
   const agree = entries.filter(([, s]) => s === "agree").map(([id]) => id);
   const disagree = entries.filter(([, s]) => s === "disagree").map(([id]) => id);
