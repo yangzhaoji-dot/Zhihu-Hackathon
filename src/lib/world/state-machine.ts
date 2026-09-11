@@ -1,23 +1,23 @@
-// 世界运行时纯逻辑 —— 运行时状态机（world-design-v0.2 §5.1）。
+// 世界运行时纯逻辑 —— 运行时状态机。
 //
-// loading → landing（降落下落动画，≤1.2s，可跳过）
-//         → explore（自由移动）
-//             ⇄ dialogue（NPC/看山对话，锁定移动）
-//             ⇄ compare（比较面板，锁定移动）   —— M2 占位，M3 实现
-//             ⇄ judgement（观测站面板，锁定移动）—— M2 占位，M4 实现
+// loading → landing → explore（自由移动）
+//             ⇄ dialogue（刘看山 / 场景交互，锁定移动）
+//             ⇄ compare（旧版比较面板，逐步迁往宇宙层）
+//             ⇄ judgement（观测站面板）
+//             → resonance（碎片覆盖完成后的画卷 / 世界蜕变仪式）→ explore
 //         → leaving（火箭返回动画）→ router.back() 回宇宙
 //
-// error：加载失败终态（entry / config 任一下发失败）。leaving 为终态，
-// 动画结束后由页面执行 router.back()。
-// 本文件不依赖 React/DOM。
+// error：加载失败终态。leaving 为终态；resonance 不是“观点被证明”，
+// 它只表示用户完成了这一轮核心理解，随后回到仍可继续探索的世界。
 
 export type WorldPhase =
   | "loading"
   | "landing"
   | "explore"
   | "dialogue"
-  | "compare"    // M2 占位（M3 实现面板）
-  | "judgement"  // M2 占位（M4 实现面板）
+  | "compare"
+  | "judgement"
+  | "resonance"
   | "leaving"
   | "error";
 
@@ -25,10 +25,11 @@ export type WorldPhase =
 export const WORLD_PHASE_TRANSITIONS: Readonly<Record<WorldPhase, readonly WorldPhase[]>> = {
   loading: ["landing", "error"],
   landing: ["explore", "error"],
-  explore: ["dialogue", "compare", "judgement", "leaving"],
+  explore: ["dialogue", "compare", "judgement", "resonance", "leaving"],
   dialogue: ["explore"],
   compare: ["explore"],
   judgement: ["explore"],
+  resonance: ["explore"],
   leaving: [],
   error: [],
 };
