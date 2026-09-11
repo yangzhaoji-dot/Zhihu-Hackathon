@@ -1,29 +1,27 @@
 import type { DialogueScript } from "../../types";
 
-// 迷雾带 · 雾中旅人（o_window, support 41 —— 止损派观点，人站在迷雾带边缘）
-// 性格：神秘但坦白，主动报出自己赞同数低的事实；反复强调"适用窗口"很窄。
-// 台词事实锚点：s10 @阿柴（手握 near-offer 或行业扩招时，裸辞窗口风险很小）。
+// v0.3：雾里的机会时刻表承载“裸辞存在窄窗口”的条件性观点。
 export const dlgLuociWindow: DialogueScript = {
   id: "dlg_luoci_window",
   npcId: "npc_window",
   aiPromptId: "world-dialogue-v1",
   lines: [
     {
-      speaker: "npc",
-      text: "雾这么大，你也找过来了。我长话短说：{title}。",
+      speaker: "guide",
+      text: "雾里只有几班车的时间还能看清。它对应一个适用范围很窄的观点：{title}。",
     },
     {
-      speaker: "npc",
-      text: "做 HR 的 {author} 在雾里喊过一句：「{excerpt}」（{upvotes} 人赞同）",
+      speaker: "guide",
+      text: "HR {author} 的原话是：「{excerpt}」（{upvotes} 人赞同）。先注意它谈的是特定招聘窗口，而不是一般情况。",
       actions: [{ type: "show-source", sourceId: "s10" }],
     },
     {
-      speaker: "npc",
-      text: "听清条件再动身：手里已经握着 near-offer，或者行业正在扩招。两条都不占的话，这句话对你来说就是雾本身。",
+      speaker: "guide",
+      text: "这条观点依赖的条件包括手里已有 near-offer，或者行业正处在扩招阶段。条件不存在时，前面的路仍然应该保持成雾。",
     },
     {
-      speaker: "npc",
-      text: "我的赞同度只有 {support}——不是这话错了，是适用范围窄。收下这张卡，去稳健区找账房先生对一对账就明白了。",
+      speaker: "guide",
+      text: "它的支持度是 {support}。支持度低不等于错误，也可能只是适用人群更窄。收下它，再拿去和现金流路线比较。",
       actions: [
         { type: "collect-opinion", opinionId: "o_window" },
         { type: "open-stance", opinionId: "o_window" },
