@@ -1,29 +1,27 @@
 import type { DialogueScript } from "../../types";
 
-// 稳健派 · 在职工匠（o_inwork, support 64）
-// 性格：手艺人思维，"先打样再量产"；不反对离开，反对裸奔式离开。
-// 台词事实锚点：s5 @Kira（在职窗口先跑投递/面试/作品集，4 周冲刺方法论）。
+// v0.3：亮着的在职试验工坊承载“先用真实反馈校准，再决定退出”的观点。
 export const dlgLuociInwork: DialogueScript = {
   id: "dlg_luoci_inwork",
   npcId: "npc_inwork",
   aiPromptId: "world-dialogue-v1",
   lines: [
     {
-      speaker: "npc",
-      text: "我手艺人的规矩：新活儿没打样验收，旧台子先别拆。我的主张是——{title}。",
+      speaker: "guide",
+      text: "这间工坊一直亮着灯，因为有些回答并不反对离开，而是主张先在旧环境里测试下一步：{title}。",
     },
     {
-      speaker: "npc",
-      text: "咨询顾问 {author} 跟我想一块去了：「{excerpt}」（{upvotes} 人赞同）",
+      speaker: "guide",
+      text: "咨询顾问 {author} 留下的做法是：「{excerpt}」（{upvotes} 人赞同）。它把投递、面试和作品集当成现实反馈。",
       actions: [{ type: "show-source", sourceId: "s5" }],
     },
     {
-      speaker: "npc",
-      text: "投递、面试、作品集，这三件家伙什先转起来。市场给不给你反馈、给什么价位的反馈，比自己关在屋里猜准得多。",
+      speaker: "guide",
+      text: "这里的隐喻只是系统解释：工作台还没拆，新的样品已经在做。可验证的是原回答提出了“先试再退”的路径。",
     },
     {
-      speaker: "npc",
-      text: "我这法子适合还没想清楚的人：先拿真实反馈校准，再决定退不退。卡收下吧，态度可以慢慢标，不急。",
+      speaker: "guide",
+      text: "如果你觉得这种路径值得保留，就把观点卡收下。之后可以拿它和“直接止损”或“整块时间转型”比较。",
       actions: [
         { type: "collect-opinion", opinionId: "o_inwork" },
         { type: "open-stance", opinionId: "o_inwork" },
