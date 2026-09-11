@@ -1,0 +1,50 @@
+.resonant {
+  filter: saturate(1.04) brightness(1.08) contrast(0.98);
+  transition: filter 1800ms ease;
+}
+
+.resonant::before {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  content: "";
+  background:
+    linear-gradient(180deg, rgba(246, 197, 126, 0.24), transparent 36%),
+    radial-gradient(circle at 62% 8%, rgba(255, 223, 163, 0.26), transparent 34%);
+  mix-blend-mode: screen;
+  opacity: 1;
+  animation: dawnArrive 2200ms ease both;
+}
+
+.resonant [data-terrain="fog"] {
+  opacity: 0.22 !important;
+  filter: blur(7px);
+  transition: opacity 2200ms ease, filter 2200ms ease;
+}
+
+.resonant [data-terrain="plaza"],
+.resonant [data-terrain="station"],
+.resonant [data-terrain="road"] {
+  filter: brightness(1.08) saturate(1.03);
+  transition: filter 1800ms ease;
+}
+
+.resonant [data-object-kind] {
+  filter: brightness(1.08) drop-shadow(0 12px 18px rgba(0, 0, 0, 0.2));
+  transition: filter 1800ms ease;
+}
+
+@keyframes dawnArrive {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .resonant,
+  .resonant::before,
+  .resonant [data-terrain="fog"] {
+    animation: none;
+    transition: none;
+  }
+}
