@@ -254,3 +254,26 @@ export interface WorldTrigger {
   guideLineKey: string;               // 看山台词：i18n 键或 AI 提示模板 id（§5.6）
   once?: boolean;                     // true = 触发一次后写入 progress.firedTriggerIds
 }
+
+// ── Dialogue scripts (world-design-v0.2 §3.2) ───────────────────────────────
+
+/** 单个 NPC 的静态对话脚本：fallback 必用，AI 不可用时的完整体验。 */
+export interface DialogueScript {
+  id: string;                         // 与 NpcConfig.dialogueId 对应
+  npcId: string;
+  lines: DialogueLine[];
+  aiPromptId?: string;                // AI 增强提示词 id（M3），无 AI 时整段忽略
+}
+
+export interface DialogueLine {
+  speaker: "npc" | "guide" | "player";
+  /** 支持插值：{title} {summary} {excerpt} {condition} {upvotes} {author} {support} {camp} */
+  text: string;
+  actions?: DialogueAction[];
+}
+
+export type DialogueAction =
+  | { type: "show-source"; sourceId: string }       // 弹出原文卡（直接读 OpinionSource，不经 AI）
+  | { type: "collect-opinion"; opinionId: string }  // 收下观点卡进背包（M3）
+  | { type: "open-compare" }                        // 打开比较面板（M3）
+  | { type: "open-stance"; opinionId: string };     // 对该观点标记态度（M4）

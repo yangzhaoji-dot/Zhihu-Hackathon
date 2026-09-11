@@ -232,6 +232,75 @@
       "crossroads": "The road splits here. The reason we can currently verify is: {{reason}}",
       "rocket": "Exploration will not decide for you. When ready, return to the universe and visit another opinion planet."
     },
+    "landingHint": "Landing… press any key or tap to skip",
+    "leavingHint": "Ignition. Returning to the opinion universe…",
+    "comingSoon": "\"{{feature}}\" is coming soon",
+    "monumentToast": "Monument: the most upvoted opinion in the current material is \"{{title}}\" ({{support}} support)",
+    "hud": {
+      "controlsHint": "WASD / arrow keys to move · E to talk · tap ground to walk",
+      "talkTo": "Talk to {{name}}",
+      "board": "Board the rocket back to the universe",
+      "inspect": "Inspect: {{name}}"
+    },
+    "blocked": {
+      "generic": "This way is blocked for now",
+      "sources": "More material needed: read {{count}} original source(s) first",
+      "compare": "The bridge is dark: compare the cards \"{{a}}\" and \"{{b}}\" first",
+      "stance": "Mark your stance on at least {{count}} opinion(s) first"
+    },
+    "features": {
+      "collect": "Collect opinion card",
+      "compare": "Opinion collision",
+      "stance": "Mark stance",
+      "observatory": "Build an observatory"
+    },
+    "dialogueUi": {
+      "you": "You",
+      "close": "Close",
+      "nextHint": "Press any key / tap to continue",
+      "closeHint": "Press any key / tap to end the conversation"
+    },
+    "actions": {
+      "show-source": "Read the original",
+      "collect-opinion": "Collect this card",
+      "open-compare": "Collide & compare",
+      "open-stance": "Mark stance"
+    },
+    "q_luoci": {
+      "guide": {
+        "first-land": [
+          "Smooth landing. This is \"{{name}}\" — one question compressed into three districts.",
+          "Eight opinions live here now, in three camps: the stop-loss camp, the steady camp, and the rights camp.",
+          "The monument to the north only marks the most upvoted voice in the current material; the fog belt marks where the material cannot reach. Neither is a conclusion.",
+          "Talk to the station keeper first, or walk straight into any district. Press E to talk to residents."
+        ],
+        "enter-mist": [
+          "You noticed the fog — this is the Long-term Fog Belt.",
+          "Among the discussions we collected, there is almost no follow-up evidence three to five years after a bare resignation.",
+          "That does not mean there is no answer here — only that the current material cannot illuminate it. The fog is not an opinion; it is the unknown.",
+          "A traveler lives in the mist; his claim holds only under strict conditions. Go listen, or remember this place and come back when more material arrives."
+        ],
+        "before-leave": [
+          "Heading back to the universe?",
+          "The city right now: 8 opinions, 3 camps, and one fog belt nobody has lit up yet.",
+          "Remember, the terrain only reflects the material collected so far — new voices may reshape it.",
+          "Tap the rocket when you are ready; close my chatter if you want to wander more."
+        ]
+      }
+    },
+    "fallback": {
+      "guide": {
+        "first-land": [
+          "Smooth landing. This is \"{{name}}\".",
+          "Districts are drawn automatically from opinion camps; every resident carries a real or inferred opinion.",
+          "Press E to talk to them and hear their reasons."
+        ],
+        "before-leave": [
+          "Heading back? This city only reflects the material collected so far.",
+          "Tap the rocket when you are ready; close my chatter if you want to wander more."
+        ]
+      }
+    },
     "themes": {
       "crossroads": { "name": "City of Crossroads", "hint": "Different answers may be aiming for different destinations." },
       "archive": { "name": "The Lost Archive", "hint": "Truth is scattered across incomplete records." },

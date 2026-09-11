@@ -1,0 +1,198 @@
+.viewport {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.worldGrid {
+  position: absolute;
+  left: 0;
+  top: 0;
+  will-change: transform;
+  background-color: color-mix(in srgb, var(--world-ground) 88%, black);
+  background-image:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+}
+
+.zone {
+  position: absolute;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 8px;
+  pointer-events: none;
+}
+
+.zoneLabel {
+  position: absolute;
+  top: 6px;
+  left: 8px;
+  z-index: 1;
+  padding: 3px 9px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  background: rgba(5, 8, 12, 0.68);
+  color: #f5f1e8;
+  font-size: 11px;
+  font-weight: 550;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  backdrop-filter: blur(6px);
+}
+
+.fog {
+  z-index: 3;
+  border-style: dashed;
+  animation: fogPulse 4.2s ease-in-out infinite;
+}
+
+.fogLifted {
+  opacity: 0.12;
+  animation: none;
+}
+
+@keyframes fogPulse {
+  0%, 100% { opacity: 0.9; }
+  50% { opacity: 0.65; }
+}
+
+.poi {
+  position: absolute;
+  z-index: 4;
+  display: grid;
+  width: 48px;
+  height: 48px;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--world-accent) 45%, transparent);
+  border-radius: 12px;
+  background: rgba(6, 9, 13, 0.62);
+  color: var(--world-accent);
+  pointer-events: none;
+}
+
+.poi_rocket {
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, color-mix(in srgb, var(--world-accent) 38%, transparent), rgba(6, 9, 13, 0.78));
+}
+
+.poi_bridge .bridgeDeck {
+  display: block;
+  width: 34px;
+  height: 22px;
+  border: 2px solid var(--world-accent);
+  border-radius: 4px;
+  background: repeating-linear-gradient(90deg, color-mix(in srgb, var(--world-road) 80%, white) 0 5px, transparent 5px 9px);
+}
+
+.poiLocked {
+  border-style: dashed;
+  opacity: 0.78;
+  background: repeating-linear-gradient(135deg, rgba(6, 9, 13, 0.7) 0 6px, color-mix(in srgb, var(--world-mist) 22%, transparent) 6px 12px);
+}
+
+.poi .chest {
+  width: 24px;
+  height: 18px;
+  border: 2px solid var(--world-accent);
+  border-radius: 4px;
+}
+
+.npc {
+  position: absolute;
+  z-index: 5;
+  display: grid;
+  width: 48px;
+  height: 48px;
+  place-items: end center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #f5f1e8;
+  cursor: pointer;
+}
+
+.npcSprite {
+  width: auto;
+  height: 78px;
+  margin-bottom: -8px;
+  object-fit: contain;
+  filter: drop-shadow(6px 8px 6px rgba(0, 0, 0, 0.45));
+  transition: transform 150ms ease, filter 150ms ease;
+}
+
+.npc:hover .npcSprite,
+.npc:focus-visible .npcSprite {
+  transform: translateY(-3px);
+  filter: drop-shadow(0 0 8px color-mix(in srgb, var(--world-accent) 70%, transparent)) drop-shadow(6px 8px 6px rgba(0, 0, 0, 0.45));
+}
+
+.npcBlob {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  margin-bottom: 8px;
+  place-items: center;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-radius: 50%;
+  background: var(--blob-color, var(--world-accent));
+  color: #0b0f14;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.translucent {
+  opacity: 0.55;
+}
+
+.translucent .npcSprite,
+.translucent .npcBlob {
+  outline: 1px dashed rgba(255, 255, 255, 0.6);
+  outline-offset: 3px;
+}
+
+.npcName {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translate(-50%, -2px);
+  padding: 2px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  background: rgba(5, 8, 12, 0.72);
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.highlight .npcSprite,
+.highlight .npcBlob {
+  outline: 2px solid var(--world-accent);
+  outline-offset: 3px;
+}
+
+.poi.highlight {
+  outline: 2px solid var(--world-accent);
+  outline-offset: 3px;
+}
+
+.player {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 8;
+  width: 48px;
+  height: 48px;
+  will-change: transform;
+  pointer-events: none;
+}
+
+.player img {
+  width: 46px;
+  height: 69px;
+  margin: -21px 0 0 1px;
+  object-fit: contain;
+  filter: drop-shadow(6px 7px 6px rgba(0, 0, 0, 0.5));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fog { animation: none; }
+  .npcSprite { transition: none; }
+}

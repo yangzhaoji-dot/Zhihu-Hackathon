@@ -16,6 +16,8 @@ import type {
   SearchResult,
   Stance,
   TintAnalysis,
+  WorldConfig,
+  Zone,
 } from "@/lib/opinion/types";
 
 export interface ZhihuQuestionCandidate {
@@ -37,6 +39,33 @@ export interface SourceTrace {
   sources: OpinionSource[];
   authors: Author[];
   related: { type: RelationType; opinion: Opinion }[];
+}
+
+// ── 世界运行时视图（world-design-v0.2 §4.1，M2） ───────────────────────────
+
+export interface WorldNpcView {
+  id: string;
+  opinion: Opinion;
+  sourceCount: number;
+  pos: { x: number; y: number };
+  sprite: string;
+  role: string;
+  translucent: boolean;
+}
+
+export interface WorldZoneView {
+  id: string;
+  camp?: string;
+  opinionCount: number;
+  terrain: Zone["terrain"];
+  label: { "zh-CN": string; "en-US": string };
+}
+
+export interface WorldView {
+  config: WorldConfig;
+  npcs: WorldNpcView[];
+  zones: WorldZoneView[];
+  unconfigured: boolean;
 }
 
 export interface BuildOpinionSpaceSelection {
@@ -79,6 +108,15 @@ export async function fetchOpinionGraph(questionId: string): Promise<OpinionGrap
 export async function fetchSourceTrace(opinionId: string): Promise<SourceTrace> {
   const res = await request(`/api/opinion/opinions/${encodeURIComponent(opinionId)}/source`);
   return json<SourceTrace>(res);
+}
+
+export async function fetchWorldConfig(questionId: string): Promise<WorldView> {
+  const res = await request(
+    `/api/opinion/world/config?questionId=${encodeURIComponent(questionId)}`,
+  );
+  const data = await json<{ world: WorldView } & { error?: string }>(res);
+  if (!res.ok) throw new Error(data.error || "world_config_failed");
+  return data.world;
 }
 
 export async function fetchStanceProfile(): Promise<StanceProfile> {
