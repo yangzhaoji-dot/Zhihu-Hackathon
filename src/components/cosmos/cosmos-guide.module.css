@@ -1,0 +1,56 @@
+.guide {
+  position: fixed;
+  right: max(92px, env(safe-area-inset-right));
+  bottom: max(104px, calc(env(safe-area-inset-bottom) + 84px));
+  z-index: 18;
+  display: flex;
+  width: min(330px, calc(100vw - 120px));
+  align-items: flex-end;
+  gap: 12px;
+  pointer-events: none;
+}
+
+.bubble {
+  flex: 1;
+  padding: 14px 15px;
+  border: 1px solid rgba(230, 207, 160, 0.28);
+  border-radius: 18px 18px 6px 18px;
+  background: rgba(7, 12, 24, 0.9);
+  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.38);
+  color: #f2ede1;
+  backdrop-filter: blur(14px);
+  pointer-events: auto;
+}
+
+.name {
+  display: block;
+  margin-bottom: 5px;
+  color: #e6cfa0;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.bubble p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.bubble button {
+  width: 100%;
+  margin-top: 11px;
+  padding: 9px 12px;
+  border: 1px solid rgba(230, 207, 160, 0.44);
+  border-radius: 999px;
+  background: rgba(230, 207, 160, 0.14);
+  color: #f6e3c3;
+  cursor: pointer;
+}
+
+.bubble button:disabled { cursor: wait; opacity: 0.55; }
+
+@media (max-width: 720px) {
+  .guide { right: 62px; bottom: 86px; width: min(300px, calc(100vw - 76px)); }
+  .bubble { padding: 12px; }
+}

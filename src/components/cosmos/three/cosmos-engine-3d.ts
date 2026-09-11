@@ -6,6 +6,7 @@ import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js"
 import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
 
 import type { Opinion, Relation, Stance } from "@/lib/opinion/types";
+import { getOpinionWorldTheme } from "@/lib/opinion/world-theme";
 import { nodeSize, nodeWeight, sparkCount } from "@/lib/opinion/physics";
 import {
   colorGoldBright,
@@ -223,7 +224,11 @@ export class CosmosEngine3D {
 
   private mountNode(o: Opinion, stance?: Stance) {
     const radius = nodeSize(o.support) * NODE_UNIT;
-    const baseColor = nodeColor(o.kind, o.nodeType);
+    const provenanceColor = nodeColor(o.kind, o.nodeType);
+    const theme = getOpinionWorldTheme(o);
+    const themedOpinion = !o.nodeType || o.nodeType === "opinion";
+    const baseColor = themedOpinion ? new THREE.Color(theme.planet) : provenanceColor;
+    const accentColor = themedOpinion ? new THREE.Color(theme.accent) : colorGoldBright;
     const group = new THREE.Group();
 
     // core gem — icosahedron reads as a faceted "archive gem"
@@ -234,8 +239,8 @@ export class CosmosEngine3D {
         : new THREE.IcosahedronGeometry(radius, 1);
     const coreMat = new THREE.MeshStandardMaterial({
       color: baseColor,
-      emissive: baseColor.clone().multiplyScalar(0.55),
-      emissiveIntensity: 0.9,
+      emissive: baseColor.clone().multiplyScalar(0.42),
+      emissiveIntensity: 0.72,
       metalness: 0.45,
       roughness: 0.32,
       flatShading: true,
@@ -263,7 +268,7 @@ export class CosmosEngine3D {
     // gold inner shell (thin faceted skin catching the rim light)
     const shellGeo = new THREE.IcosahedronGeometry(radius * 1.06, 1);
     const shellMat = new THREE.MeshBasicMaterial({
-      color: colorGoldBright,
+      color: accentColor,
       transparent: true,
       opacity: 0.1,
       wireframe: true,
@@ -275,7 +280,7 @@ export class CosmosEngine3D {
     const glow = new THREE.Sprite(
       new THREE.SpriteMaterial({
         map: glowTexture(),
-        color: baseColor,
+        color: provenanceColor,
         transparent: true,
         opacity: 0.5,
         depthWrite: false,

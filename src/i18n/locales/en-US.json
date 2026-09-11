@@ -195,5 +195,49 @@
     "tintStance_against": "Against",
     "tintStance_conditional": "Conditional",
     "tintStance_neutral": "Neutral"
+  },
+  "world": {
+    "guideName": "Kanshan",
+    "guidePlaceholder": "concept placeholder",
+    "guideAvatarLabel": "Kanshan concept placeholder avatar",
+    "cosmosGuidePrompt": "Which opinion planet should we visit? Select one and I will prepare the route.",
+    "cosmosGuideSelected": "You selected “{{title}}”. Travel to this planet now?",
+    "cosmosGuideLaunch": "Launch rocket",
+    "loading": "Passing through the planet's atmosphere…",
+    "notFound": "No surface data was found for this opinion planet.",
+    "mapLabel": "2D surface of the opinion planet",
+    "playerLabel": "Planet explorer",
+    "openSource": "Open original Zhihu source",
+    "leavePlanet": "Return to opinion space",
+    "interact": "Explore: {{place}}",
+    "interactButton": "Explore nearby place",
+    "controlsLabel": "Movement and interaction controls",
+    "moveUp": "Move up",
+    "moveDown": "Move down",
+    "moveLeft": "Move left",
+    "moveRight": "Move right",
+    "hotspots": {
+      "guide": "Landing guidepost",
+      "archive": "Source archive",
+      "barren": "Sparse voices",
+      "crossroads": "Condition crossroads",
+      "rocket": "Return rocket"
+    },
+    "dialogue": {
+      "guide": "Welcome. This landscape grew from one opinion: {{title}}. Look around and I will explain why the world took this shape.",
+      "archive": "This archive holds {{count}} sources linked to the opinion. A count is not a verdict, but it shows what material supports this planet.",
+      "archiveEmpty": "There is no original source to return to yet. Treat this planet as a candidate inference, not a human Zhihu opinion.",
+      "barren": "This place is sparse because the opinion currently links to {{count}} sources. That does not make it wrong; it means the included voices are limited.",
+      "crossroadsCondition": "The road splits here because this opinion depends on a condition: {{condition}}",
+      "crossroads": "The road splits here. The reason we can currently verify is: {{reason}}",
+      "rocket": "Exploration will not decide for you. When ready, return to the universe and visit another opinion planet."
+    },
+    "themes": {
+      "crossroads": { "name": "City of Crossroads", "hint": "Different answers may be aiming for different destinations." },
+      "archive": { "name": "The Lost Archive", "hint": "Truth is scattered across incomplete records." },
+      "theater": { "name": "The Innocence Theater", "hint": "Hear each position before assigning responsibility." },
+      "forest": { "name": "Echo Forest", "hint": "The same words echo differently through different lives." },
+      "machine": { "name": "Perpetual Machine City", "hint": "Every efficiency has conditions and possible costs." }
+    }
   }
 }

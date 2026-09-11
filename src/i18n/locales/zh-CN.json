@@ -195,5 +195,49 @@
     "tintStance_against": "反对",
     "tintStance_conditional": "有条件",
     "tintStance_neutral": "中立"
+  },
+  "world": {
+    "guideName": "看山",
+    "guidePlaceholder": "概念占位",
+    "guideAvatarLabel": "看山角色概念占位头像",
+    "cosmosGuidePrompt": "想前往哪颗观点星球？先点击一颗星球，我会为你准备航线。",
+    "cosmosGuideSelected": "你选中了「{{title}}」。要现在前往这颗星球吗？",
+    "cosmosGuideLaunch": "发射火箭",
+    "loading": "正在穿过星球大气层…",
+    "notFound": "没有找到这颗观点星球的地表资料。",
+    "mapLabel": "观点星球二维地表",
+    "playerLabel": "星球探索者",
+    "openSource": "查看知乎原文",
+    "leavePlanet": "返回观点宇宙",
+    "interact": "探索：{{place}}",
+    "interactButton": "探索附近地点",
+    "controlsLabel": "移动与探索控制",
+    "moveUp": "向上移动",
+    "moveDown": "向下移动",
+    "moveLeft": "向左移动",
+    "moveRight": "向右移动",
+    "hotspots": {
+      "guide": "登陆引导站",
+      "archive": "来源档案室",
+      "barren": "稀少声音区",
+      "crossroads": "条件岔路",
+      "rocket": "返回火箭"
+    },
+    "dialogue": {
+      "guide": "欢迎来到这颗星球。这里的地貌来自一个观点：{{title}}。先四处看看，我会解释它为什么会变成这样。",
+      "archive": "这间档案室保存着当前观点关联的 {{count}} 条来源。数量不是结论，但它告诉我们这颗星球建立在什么材料上。",
+      "archiveEmpty": "这里还没有能够回到原文的档案。这颗星球目前只能被视为候选推演，不能当作知乎真人观点。",
+      "barren": "这里很荒凉，因为当前观点只关联到 {{count}} 条来源。这不代表它是错的，只说明当前纳入的声音有限。",
+      "crossroadsCondition": "道路在这里分开，因为这个观点需要一个条件才能成立：{{condition}}",
+      "crossroads": "道路在这里分开。当前能够确认的理由是：{{reason}}",
+      "rocket": "探索不会替你做出判断。准备好以后，我们可以返回宇宙，再去看看另一颗观点星球。"
+    },
+    "themes": {
+      "crossroads": { "name": "分岔之城", "hint": "不同答案可能在追求不同的终点。" },
+      "archive": { "name": "失落档案馆", "hint": "真相散落在不完整的记录中。" },
+      "theater": { "name": "无罪剧场", "hint": "判断责任以前，先听清每个位置上的陈述。" },
+      "forest": { "name": "回声森林", "hint": "相同的话会在不同经历里产生不同回声。" },
+      "machine": { "name": "永动机械城", "hint": "每种效率都需要条件，也可能付出代价。" }
+    }
   }
 }

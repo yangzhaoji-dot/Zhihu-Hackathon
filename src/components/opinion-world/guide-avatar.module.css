@@ -1,0 +1,56 @@
+.avatar {
+  position: relative;
+  display: grid;
+  width: 64px;
+  height: 64px;
+  flex: 0 0 64px;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--guide-accent, #ddb36a) 58%, white 8%);
+  border-radius: 22px;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(207, 216, 214, 0.94));
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.28);
+  color: #253139;
+}
+
+.ear,
+.earRight {
+  position: absolute;
+  top: -8px;
+  width: 22px;
+  height: 26px;
+  border: 1px solid color-mix(in srgb, var(--guide-accent, #ddb36a) 45%, white 12%);
+  background: #edf1ef;
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+}
+
+.ear { left: 7px; transform: rotate(-12deg); }
+.earRight { right: 7px; transform: rotate(12deg); }
+
+.face {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-top: 4px;
+}
+
+.eye {
+  width: 6px;
+  height: 8px;
+  border-radius: 50%;
+  background: #253139;
+}
+
+.badge {
+  position: absolute;
+  right: -5px;
+  bottom: -5px;
+  z-index: 2;
+  width: 22px;
+  height: 22px;
+  border: 3px solid #eef2f0;
+  border-radius: 50%;
+  background: var(--guide-accent, #ddb36a);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}

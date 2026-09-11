@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { ArrowLeft, Pickaxe, Rocket } from "lucide-react";
 import {
@@ -19,12 +20,15 @@ import { useOpinionSpace } from "./use-opinion-space";
 import { QuestionLayer } from "./question-layer";
 import { DetailPanel, type PanelData } from "./detail-panel";
 import { CosmosChrome } from "./cosmos-chrome";
+import { CosmosGuide } from "./cosmos-guide";
 import type { OpinionEngine, OpinionNodeLike } from "./three/engine-contract";
 import { createOpinionEngine } from "./three/create-opinion-engine";
 import { createQuestionSpace, type QuestionEngineHandle } from "./three/create-question-space";
+import { saveOpinionWorldEntry } from "@/lib/opinion/world-session";
 
 export function CosmosApp() {
   const { t } = useTranslation();
+  const router = useRouter();
   const space = useOpinionSpace();
   const {
     mode,
@@ -120,6 +124,27 @@ export function CosmosApp() {
   const launchIntoPlanet = useCallback(async (opinionId: string) => {
     const engine = engineRef.current;
     if (!engine || focusStageRef.current === "launching") return;
+    const currentGraph = graph;
+    if (!currentGraph) return;
+    const opinion = currentGraph.opinions.find((item) => item.id === opinionId);
+    if (!opinion) return;
+    const sourceIds = new Set(opinion.sourceIds);
+    const sources = currentGraph.sources.filter((source) => sourceIds.has(source.id));
+    const authorIds = new Set(sources.map((source) => source.authorId));
+    const related = currentGraph.relations
+      .filter((relation) => relation.from === opinionId || relation.to === opinionId)
+      .flatMap((relation) => {
+        const relatedOpinion = currentGraph.opinions.find((item) =>
+          item.id === (relation.from === opinionId ? relation.to : relation.from));
+        return relatedOpinion ? [{ type: relation.type, opinion: relatedOpinion }] : [];
+      });
+    saveOpinionWorldEntry({
+      opinion,
+      questionTitle: currentGraph.questionTitle,
+      sources,
+      authors: currentGraph.authors.filter((author) => authorIds.has(author.id)),
+      related,
+    });
     focusedIdRef.current = opinionId;
     focusStageRef.current = "launching";
     setFocusedId(opinionId);
@@ -133,7 +158,8 @@ export function CosmosApp() {
     focusStageRef.current = "surface";
     setFocusStage("surface");
     setHint(t("cosmos.planetSurfaceHint"));
-  }, [t]);
+    router.push(`/world/${encodeURIComponent(opinionId)}`);
+  }, [graph, router, t]);
 
   // ── collision → AI analysis ─────────────────────────────────────────────
   const runCollision = useCallback(
@@ -448,6 +474,10 @@ export function CosmosApp() {
     setHint(t("cosmos.hintDrag3D"));
   }, [t]);
 
+  const selectedOpinion = focusedId
+    ? graph?.opinions.find((opinion) => opinion.id === focusedId) ?? null
+    : null;
+
   return (
     <div className="cosmos" ref={rootRef} data-el="cosmos-root">
       <div className="bg" aria-hidden />
@@ -509,6 +539,14 @@ export function CosmosApp() {
             <div className="canvas q-galaxy" ref={qMountRef} aria-label="问题网络" />
             {!use3DQuestions && <QuestionLayer network={network} onEnter={enterQuestion} />}
           </>
+        )}
+
+        {mode === "views" && !loading && (
+          <CosmosGuide
+            selectedTitle={selectedOpinion?.title ?? null}
+            launching={focusStage === "launching"}
+            onLaunch={selectedOpinion ? () => launchIntoPlanet(selectedOpinion.id) : null}
+          />
         )}
 
         <DetailPanel
