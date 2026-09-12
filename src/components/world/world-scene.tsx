@@ -110,6 +110,58 @@ function EnvironmentObject({ kind, collected }: { kind: EnvironmentObjectKind; c
   );
 }
 
+function ExplorationRoutes({
+  config,
+  npcs,
+}: {
+  config: WorldConfig;
+  npcs: WorldNpcView[];
+}) {
+  const fragmentSites = npcs
+    .map((npc) => ({ npc, kind: fragmentKindFromId(npc.id) }))
+    .filter((item): item is { npc: WorldNpcView; kind: FragmentKind } => Boolean(item.kind));
+  if (!fragmentSites.length) return null;
+
+  const center = {
+    x: (config.spawn.x + 0.5) * TILE_SIZE,
+    y: (config.spawn.y + 0.5) * TILE_SIZE,
+  };
+  const rocket = config.pois.find((poi) => poi.kind === "rocket");
+  const width = config.size.w * TILE_SIZE;
+  const height = config.size.h * TILE_SIZE;
+
+  return (
+    <svg
+      className={grammarStyles.routeVeins}
+      viewBox={`0 0 ${width} ${height}`}
+      width={width}
+      height={height}
+      aria-hidden
+    >
+      {fragmentSites.map(({ npc, kind }, index) => {
+        const endX = (npc.pos.x + 0.5) * TILE_SIZE;
+        const endY = (npc.pos.y + 0.5) * TILE_SIZE;
+        const bend = index === 0 ? -58 : index === 1 ? 72 : 46;
+        const midX = (center.x + endX) / 2 + bend;
+        const midY = (center.y + endY) / 2 - bend * 0.28;
+        return (
+          <path
+            key={npc.id}
+            data-route-kind={kind}
+            d={`M ${center.x} ${center.y} Q ${midX} ${midY} ${endX} ${endY}`}
+          />
+        );
+      })}
+      {rocket ? (
+        <path
+          data-route-kind="return"
+          d={`M ${center.x} ${center.y} Q ${(center.x + (rocket.pos.x + 0.5) * TILE_SIZE) / 2} ${center.y + 180} ${(rocket.pos.x + 0.5) * TILE_SIZE} ${(rocket.pos.y + 0.5) * TILE_SIZE}`}
+        />
+      ) : null}
+    </svg>
+  );
+}
+
 export function WorldScene({
   config,
   npcs,
@@ -173,6 +225,15 @@ export function WorldScene({
         style={worldStyle}
         onClick={handleClick}
       >
+        {planetMode && (
+          <>
+            <div className={grammarStyles.scenicBackdrop} aria-hidden />
+            <ExplorationRoutes config={config} npcs={npcs} />
+            <div className={grammarStyles.scenicAtmosphere} aria-hidden />
+            <div className={grammarStyles.scenicForeground} aria-hidden />
+          </>
+        )}
+
         {groundZones.map((zone) => (
           <div
             key={zone.id}
@@ -256,6 +317,7 @@ export function WorldScene({
               } ${collected ? fragmentStyles.collected : ""} ${highlightId === npc.id ? styles.highlight : ""}`}
               data-object-kind={objectKind ?? undefined}
               data-planet-object={objectKind ? undefined : "true"}
+              data-fragment-kind={fragmentKind ?? undefined}
               data-fragment-collected={collected ? "true" : "false"}
               style={{ left: npc.pos.x * TILE_SIZE, top: npc.pos.y * TILE_SIZE }}
               onClick={(event) => {
