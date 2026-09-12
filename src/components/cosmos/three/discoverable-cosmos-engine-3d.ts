@@ -4,27 +4,78 @@ import {
   loadDiscoveredOpinionIds,
   markOpinionDiscovered,
 } from "@/lib/opinion/opinion-discovery";
+import { getViewerId } from "@/lib/opinion/viewer-id";
+import { loadLocalWorldProgress } from "@/lib/opinion/world-progress-cache";
 import { getOpinionWorldTheme } from "@/lib/opinion/world-theme";
+import { resonanceCompleteKey } from "@/lib/world/resonance";
 import { ThemedCosmosEngine3D } from "./themed-cosmos-engine-3d";
 
 /**
- * Galaxy-level discovery layer.
- * Only traceable HUMAN opinions can become faint signals. AI stations are
- * excluded. "Buried" means structurally easy to overlook in the retrieved
- * graph, never an accusation that Zhihu intentionally suppressed content.
+ * Two-stage galaxy exploration.
+ *
+ * Stage A — normal question galaxy:
+ *   show the higher-visibility opinions normally. Low-visibility candidates are
+ *   not rendered yet, so the opening view is not a universe full of dim stars.
+ *
+ * Stage B — deep view:
+ *   after the seeker resonates with one initially visible human opinion, the
+ *   camera pulls back and a few traceable low-visibility opinions enter the
+ *   outer field as weak signals. Focusing one reveals its title and records it
+ *   as discovered.
+ *
+ * "Buried" here only means structurally easy to overlook inside the CURRENT
+ * retrieved graph. It never claims that Zhihu intentionally suppressed it.
  */
 export class DiscoverableCosmosEngine3D extends ThemedCosmosEngine3D {
   private signalIds = new Set<string>();
   private questionId = "";
+  private deepView = false;
 
   override setData(opinions: Opinion[], relations: Relation[], stances: Record<string, Stance>) {
-    super.setData(opinions, relations, stances);
     this.questionId = opinions.find((opinion) => opinion.questionId)?.questionId ?? "";
     const discovered = this.questionId ? loadDiscoveredOpinionIds(this.questionId) : new Set<string>();
-    this.signalIds = chooseGalaxySignals(opinions, relations, discovered);
+    const candidateSignals = chooseGalaxySignals(opinions, relations, discovered);
+    const progress = this.questionId
+      ? loadLocalWorldProgress(getViewerId(), this.questionId)
+      : null;
+    const worldState = progress?.worldState ?? {};
+
+    this.deepView = hasUnlockedDeepView(opinions, candidateSignals, worldState);
+
+    if (!this.deepView) {
+      // Opening galaxy: only the main visible field exists. Weak signals are
+      // deliberately outside the current observable field, not merely dimmed.
+      const visibleOpinions = opinions.filter((opinion) => !candidateSignals.has(opinion.id));
+      const visibleRelations = relations.filter(
+        (relation) => !candidateSignals.has(relation.from) && !candidateSignals.has(relation.to),
+      );
+      this.signalIds.clear();
+      super.setData(visibleOpinions, visibleRelations, stances);
+      return;
+    }
+
+    // Deep view: restore the complete retrieved graph and reveal only a small
+    // number of outer weak signals so exploration remains legible.
+    super.setData(opinions, relations, stances);
+    this.signalIds = candidateSignals;
     for (const node of this.nodes) {
-      if (this.signalIds.has(node.id)) applySignalAppearance(node);
-      else clearSignalAppearance(node);
+      if (this.signalIds.has(node.id)) {
+        moveSignalToOuterField(node);
+        applySignalAppearance(node);
+      } else {
+        clearSignalAppearance(node);
+      }
+    }
+
+    if (this.signalIds.size > 0) {
+      // Public zoom API keeps this layer independent of private camera fields.
+      // factor < 1 means pull the camera back to expose a larger galaxy field.
+      this.zoom(0.78);
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("galaxy:deep-view", {
+          detail: { questionId: this.questionId, signalCount: this.signalIds.size },
+        }));
+      }
     }
   }
 
@@ -34,17 +85,40 @@ export class DiscoverableCosmosEngine3D extends ThemedCosmosEngine3D {
       this.signalIds.delete(id);
       const node = this.nodes.find((candidate) => candidate.id === id);
       if (node) revealDiscoveredPlanet(node);
-      window.dispatchEvent(new CustomEvent("opinion:discovered", { detail: { opinionId: id } }));
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("opinion:discovered", {
+          detail: { opinionId: id, questionId: this.questionId },
+        }));
+      }
     }
     super.locate(id);
   }
 
   override resetFocus() {
     super.resetFocus();
+    if (!this.deepView) return;
     for (const node of this.nodes) {
       if (this.signalIds.has(node.id)) applySignalAppearance(node);
     }
   }
+}
+
+/**
+ * Deep view is earned by understanding one opinion in the INITIAL visible
+ * field. Since signal candidates are absent before unlock, this produces the
+ * intended loop: mainstream exploration -> resonance -> larger galaxy view.
+ */
+function hasUnlockedDeepView(
+  opinions: Opinion[],
+  signalCandidates: ReadonlySet<string>,
+  worldState: Record<string, unknown>,
+) {
+  return opinions.some((opinion) => {
+    if (signalCandidates.has(opinion.id)) return false;
+    if (opinion.kind !== "human") return false;
+    if (opinion.nodeType && opinion.nodeType !== "opinion") return false;
+    return Boolean(worldState[resonanceCompleteKey(opinion.id)]);
+  });
 }
 
 function chooseGalaxySignals(
@@ -84,6 +158,32 @@ function chooseGalaxySignals(
 
   const count = Math.min(2, Math.max(1, Math.floor(ranked.length * 0.22)));
   return new Set(ranked.slice(0, count).map((item) => item.id));
+}
+
+function moveSignalToOuterField(
+  node: InstanceType<typeof ThemedCosmosEngine3D>["nodes"][number],
+) {
+  // Push weak signals beyond the original main cluster so "larger view" has a
+  // spatial meaning, not just a cosmetic opacity change.
+  const direction = node.home.clone();
+  if (direction.lengthSq() < 0.01) {
+    const seed = stableAngle(node.id);
+    direction.set(Math.cos(seed), Math.sin(seed * 0.7) * 0.4, Math.sin(seed));
+  }
+  direction.normalize();
+  const outerDistance = Math.max(node.home.length() * 1.42, 34);
+  node.home.copy(direction.multiplyScalar(outerDistance));
+  node.pos.copy(node.home);
+  node.group.position.copy(node.pos);
+}
+
+function stableAngle(value: string) {
+  let hash = 2166136261;
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return ((hash >>> 0) / 0xffffffff) * Math.PI * 2;
 }
 
 function signalName(opinionId: string) {
