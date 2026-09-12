@@ -34,7 +34,25 @@
   box-shadow: 0 24px 80px rgba(0,0,0,.45);
   transform-origin: 50% 100%;
   animation: carrierStageIn 360ms cubic-bezier(.18,.78,.2,1) both;
-  transition: opacity 420ms ease, transform 420ms cubic-bezier(.2,.75,.2,1), filter 420ms ease;
+  transition: opacity 420ms ease, transform 420ms cubic-bezier(.2,.75,.2,1), filter 420ms ease, background 260ms ease;
+}
+
+.overlay[data-action="open-source"] {
+  background: linear-gradient(180deg, rgba(2,5,8,.04), rgba(2,5,8,.5));
+  backdrop-filter: blur(1px);
+}
+.overlay[data-action="open-source"] .stage {
+  width: min(780px, calc(100vw - 28px));
+  background: rgba(8, 12, 14, .87);
+}
+.overlay[data-action="open-source"] .carrierWindow {
+  display: none;
+}
+.overlay[data-action="open-source"] .step {
+  margin-top: 14px;
+}
+.overlay[data-action="open-source"] .step > p {
+  color: rgba(245,241,232,.72);
 }
 
 .overlay[data-distilling="true"] .focusField {
