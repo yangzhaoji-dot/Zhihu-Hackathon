@@ -4,6 +4,10 @@ import { useEffect, useRef, useState } from "react";
 import type { CarrierActionKind, CarrierInteractionStep } from "@/lib/world/carrier-interactions";
 import styles from "./carrier-action-control.module.css";
 
+function tactile(pattern: number | number[] = 7) {
+  if (typeof navigator !== "undefined" && "vibrate" in navigator) navigator.vibrate(pattern);
+}
+
 export function CarrierActionControl({
   action,
   step,
@@ -45,9 +49,13 @@ export function CarrierActionControl({
               aria-label={`${zh ? "观察点" : "inspection point"} ${spot}`}
               onClick={() => {
                 if (observedSpots.includes(index)) return;
+                tactile(6);
                 const next = [...observedSpots, index];
                 setObservedSpots(next);
-                if (next.length >= 2) window.setTimeout(onAdvance, 220);
+                if (next.length >= 2) {
+                  tactile([6, 18, 10]);
+                  window.setTimeout(onAdvance, 220);
+                }
               }}
             >
               {spot}
@@ -60,6 +68,11 @@ export function CarrierActionControl({
   }
 
   if (action === "toggle") {
+    const moveLever = (nextState: "left" | "right") => {
+      tactile([7, 20, 8]);
+      setToggle(nextState);
+      window.setTimeout(onAdvance, 260);
+    };
     return (
       <div className={styles.toggleRig} data-state={toggle}>
         <div className={styles.routePreview} aria-hidden>
@@ -67,23 +80,9 @@ export function CarrierActionControl({
           <b />
         </div>
         <div className={styles.leverRow}>
-          <button
-            type="button"
-            aria-label={zh ? "假设不满足" : "assume absent"}
-            onClick={() => {
-              setToggle("left");
-              window.setTimeout(onAdvance, 260);
-            }}
-          >−</button>
+          <button type="button" aria-label={zh ? "假设不满足" : "assume absent"} onClick={() => moveLever("left")}>−</button>
           <span className={styles.lever}><i /></span>
-          <button
-            type="button"
-            aria-label={zh ? "假设满足" : "assume present"}
-            onClick={() => {
-              setToggle("right");
-              window.setTimeout(onAdvance, 260);
-            }}
-          >＋</button>
+          <button type="button" aria-label={zh ? "假设满足" : "assume present"} onClick={() => moveLever("right")}>＋</button>
         </div>
         <small>{zh ? "拨动前提，观察路线怎样响应" : "Move the assumption and watch the route respond"}</small>
       </div>
@@ -93,9 +92,13 @@ export function CarrierActionControl({
   if (action === "align") {
     const align = (side: "left" | "right") => {
       if (alignedSides.includes(side)) return;
+      tactile(7);
       const next = [...alignedSides, side];
       setAlignedSides(next);
-      if (next.length >= 2) window.setTimeout(onAdvance, 260);
+      if (next.length >= 2) {
+        tactile([8, 20, 10]);
+        window.setTimeout(onAdvance, 260);
+      }
     };
     return (
       <div
@@ -124,6 +127,7 @@ export function CarrierActionControl({
             style={{ "--beacon-index": index } as React.CSSProperties}
             onClick={() => {
               if (index !== beacon) return;
+              tactile(index === 3 ? [7, 18, 10] : 6);
               const next = beacon + 1;
               setBeacon(next);
               if (next >= 4) window.setTimeout(onAdvance, 240);
@@ -148,6 +152,7 @@ export function CarrierActionControl({
             data-fixed={index < restored ? "true" : "false"}
             onClick={() => {
               if (index !== restored) return;
+              tactile(index === 2 ? [9, 18, 12] : 8);
               const next = restored + 1;
               setRestored(next);
               if (next >= 3) window.setTimeout(onAdvance, 260);
@@ -169,8 +174,10 @@ export function CarrierActionControl({
     };
     const start = () => {
       if (holding) return;
+      tactile(5);
       setHolding(true);
       holdTimer.current = setTimeout(() => {
+        tactile([8, 30, 12]);
         setHolding(false);
         onAdvance();
       }, 900);
@@ -195,7 +202,7 @@ export function CarrierActionControl({
   if (action === "open-source") {
     return (
       <div className={styles.archiveDrawer}>
-        <button type="button" onClick={onAdvance}>
+        <button type="button" onClick={() => { tactile([8, 20, 10]); onAdvance(); }}>
           <span />
           <i />
           <b />
@@ -216,6 +223,7 @@ export function CarrierActionControl({
           type="button"
           data-selected={choice === option ? "true" : "false"}
           onClick={() => {
+            tactile(7);
             setChoice(option);
             window.setTimeout(onAdvance, 220);
           }}
