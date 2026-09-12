@@ -37,8 +37,6 @@
   line-height: 1.55;
 }
 
-/* When a planet is focused, the only actions live in one flight dock. Kanshan
-   stays explanatory and never duplicates the launch action. */
 :global(.cosmos.planet-focus .focus-controls) {
   top: auto;
   right: auto;
@@ -71,6 +69,11 @@
 
 :global(.cosmos.planet-focus .focus-controls button:not(.primary):hover) {
   background: rgba(255,255,255,.045);
+}
+
+:global(.cosmos.planet-focus .focus-controls button.primary:not(:disabled):hover) {
+  transform: translateY(-1px);
+  box-shadow: 0 0 28px rgba(230,207,160,.28);
 }
 
 @media (max-width: 720px) {
