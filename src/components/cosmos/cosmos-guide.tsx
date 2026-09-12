@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { GuideAvatar } from "@/components/opinion-world/guide-avatar";
 import styles from "./cosmos-guide.module.css";
@@ -11,6 +12,14 @@ export function CosmosGuide({
 }) {
   const { t, i18n } = useTranslation();
   const locale = i18n.resolvedLanguage === "en-US" ? "en-US" : "zh-CN";
+  const guideRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    const root = guideRef.current?.closest(".cosmos");
+    if (!(root instanceof HTMLElement)) return;
+    root.classList.toggle("planet-focus", Boolean(selectedTitle));
+    return () => root.classList.remove("planet-focus");
+  }, [selectedTitle]);
 
   const prompt = selectedTitle
     ? (locale === "en-US"
@@ -21,7 +30,7 @@ export function CosmosGuide({
         : "寻知者，这里是这个问题的主星系。先选择一颗清晰的观点星球，看看它，再决定要不要登陆。");
 
   return (
-    <aside className={styles.guide} data-el="cosmos-guide">
+    <aside ref={guideRef} className={styles.guide} data-el="cosmos-guide">
       <div className={styles.bubble}>
         <span className={styles.name}>
           {t("world.guideName")} · {locale === "en-US" ? "Seeker Navigation" : "寻知者导航"}
