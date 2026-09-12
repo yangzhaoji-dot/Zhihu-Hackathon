@@ -8,6 +8,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { UserSyncEffect } from "@/components/user-profile/user-sync-effect";
 import { I18nProvider } from "@/components/i18n/i18n-provider";
 import { LocaleSyncEffect } from "@/components/i18n/locale-sync-effect";
+import { AiStationDock } from "@/components/cosmos/ai-station-dock";
 import { InteractionSoundscape } from "@/components/world/interaction-soundscape";
 import { getServerLocale } from "@/lib/i18n/server-preference";
 
@@ -78,6 +79,7 @@ export default async function RootLayout({
             <LocaleSyncEffect />
             <UserSyncEffect />
             <InteractionSoundscape />
+            <AiStationDock />
             {children}
             <Toaster />
           </EazoProvider>
