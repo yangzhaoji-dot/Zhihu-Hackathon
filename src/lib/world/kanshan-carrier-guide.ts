@@ -1,10 +1,16 @@
 import type { CognitionFragmentSpec } from "@/lib/world/cognition-fragment-plan";
 import type { CarrierInteractionDefinition } from "@/lib/world/carrier-interactions";
 
+export interface KanshanChoice {
+  id: string;
+  label: { "zh-CN": string; "en-US": string };
+  response?: { "zh-CN": string; "en-US": string };
+}
+
 export interface KanshanPrompt {
   id: string;
   line: { "zh-CN": string; "en-US": string };
-  choices?: Array<{ id: string; label: { "zh-CN": string; "en-US": string } }>;
+  choices?: KanshanChoice[];
 }
 
 const MODE_QUESTIONS: Record<CognitionFragmentSpec["mode"], { "zh-CN": string; "en-US": string }> = {
@@ -19,7 +25,8 @@ const MODE_QUESTIONS: Record<CognitionFragmentSpec["mode"], { "zh-CN": string; "
 
 /**
  * Liu Kanshan frames the carrier before interaction. Choices are hypotheses or
- * actions, never graded answers. The player may always investigate first.
+ * actions, never graded answers. The player's choice changes Kanshan's response
+ * but never gates access to the carrier.
  */
 export function buildKanshanCarrierPrompts(
   fragment: CognitionFragmentSpec,
@@ -34,16 +41,37 @@ export function buildKanshanCarrierPrompts(
         "en-US": `Look at the ${fragment.carrier}. ${question["en-US"]}`,
       },
       choices: [
-        { id: "guess", label: { "zh-CN": "我先猜一猜", "en-US": "I want to make a guess" } },
-        { id: "inspect", label: { "zh-CN": "先让我调查它", "en-US": "Let me investigate first" } },
-        { id: "unknown", label: { "zh-CN": "我还看不出来", "en-US": "I can't tell yet" } },
+        {
+          id: "guess",
+          label: { "zh-CN": "我先猜一猜", "en-US": "I want to make a guess" },
+          response: {
+            "zh-CN": "可以。先把这个猜测留在心里，看看接下来的实物会不会支持它。",
+            "en-US": "Good. Keep that guess provisional and see whether the carrier actually supports it.",
+          },
+        },
+        {
+          id: "inspect",
+          label: { "zh-CN": "先让我调查它", "en-US": "Let me investigate first" },
+          response: {
+            "zh-CN": "好。先让眼前的结构和留下来的材料自己说话。",
+            "en-US": "Good. Let the structure and surviving material speak before you decide.",
+          },
+        },
+        {
+          id: "unknown",
+          label: { "zh-CN": "我还看不出来", "en-US": "I can't tell yet" },
+          response: {
+            "zh-CN": "看不出来也很重要。先把未知保留下来，不用急着填一个答案。",
+            "en-US": "Not knowing yet matters. Keep the unknown intact instead of filling it with an answer.",
+          },
+        },
       ],
     },
     {
       id: "action",
       line: {
-        "zh-CN": `不用急着回答。按照这个载体自己的方式去读它：${interaction.steps[0]?.prompt["zh-CN"] ?? fragment.intent}`,
-        "en-US": `No need to answer yet. Read the carrier on its own terms: ${interaction.steps[0]?.prompt["en-US"] ?? fragment.intent}`,
+        "zh-CN": `那就按照这个载体自己的方式去读它：${interaction.steps[0]?.prompt["zh-CN"] ?? fragment.intent}`,
+        "en-US": `Then read this carrier on its own terms: ${interaction.steps[0]?.prompt["en-US"] ?? fragment.intent}`,
       },
     },
   ];
