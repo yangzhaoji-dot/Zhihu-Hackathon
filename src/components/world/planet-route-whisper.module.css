@@ -1,0 +1,70 @@
+.routes {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.routes path {
+  fill: none;
+  stroke-linecap: round;
+  stroke-width: 1.4;
+  transition: opacity 620ms ease, stroke 620ms ease, filter 620ms ease, stroke-width 620ms ease;
+}
+
+.routes path[data-state="distant"] {
+  stroke: color-mix(in srgb, var(--world-mist) 32%, transparent);
+  stroke-dasharray: 2 24;
+  opacity: .08;
+}
+
+.routes path[data-state="calling"] {
+  stroke: color-mix(in srgb, var(--world-accent) 58%, transparent);
+  stroke-width: 1.8;
+  stroke-dasharray: 3 18;
+  opacity: .28;
+  filter: drop-shadow(0 0 5px color-mix(in srgb, var(--world-accent) 26%, transparent));
+  animation: routeCall 8s linear infinite;
+}
+
+.routes path[data-state="understood"] {
+  stroke: color-mix(in srgb, var(--world-accent) 34%, var(--world-mist));
+  stroke-width: 1.25;
+  stroke-dasharray: none;
+  opacity: .2;
+  filter: drop-shadow(0 0 3px color-mix(in srgb, var(--world-accent) 17%, transparent));
+}
+
+.routes path[data-state="return-hidden"] {
+  opacity: 0;
+}
+
+.routes path[data-state="return"] {
+  stroke: color-mix(in srgb, var(--world-accent) 42%, white 4%);
+  stroke-width: 1.35;
+  stroke-dasharray: 2 19;
+  opacity: .2;
+  animation: routeReturn 10s linear infinite;
+}
+
+.routes path[data-role="evidence"] {
+  stroke: color-mix(in srgb, var(--world-mist) 46%, var(--world-accent));
+}
+
+.routes path[data-role="boundary"] {
+  opacity: .12;
+}
+.routes path[data-role="boundary"][data-state="calling"] { opacity: .23; }
+
+@keyframes routeCall {
+  to { stroke-dashoffset: -84; }
+}
+
+@keyframes routeReturn {
+  to { stroke-dashoffset: 84; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .routes path { transition: none; animation: none !important; }
+}
