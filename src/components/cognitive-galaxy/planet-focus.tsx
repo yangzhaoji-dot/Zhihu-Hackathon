@@ -8,7 +8,14 @@ import { useTranslation } from "react-i18next";
 import { safeSourceUrl, type Galaxy, type GalaxyNode } from "@/lib/cognitive-galaxy/model";
 import styles from "./galaxy.module.css";
 
-const INTERACTIVE_PLANETS = new Set(["o_stoploss"]);
+const INTERACTIVE_PLANET_ROUTES: Record<string, string> = {
+  o_stoploss: "o_stoploss",
+  // The first health opinion in the authored demo is the visual stand-in for
+  // the stop-loss sample planet. Route it into the same internal-interaction
+  // prototype so the main demo path reaches the feature instead of the old
+  // phase-boundary placeholder.
+  "demo-health-0": "o_stoploss",
+};
 
 export function PlanetFocus({ node, galaxy, onClose }: { node: GalaxyNode; galaxy: Galaxy; onClose: () => void }) {
   const { t } = useTranslation("galaxy");
@@ -19,8 +26,9 @@ export function PlanetFocus({ node, galaxy, onClose }: { node: GalaxyNode; galax
   const sources = galaxy.graph.sources.filter((source) => opinion.sourceIds.includes(source.id));
   const related = galaxy.graph.relations.filter((relation) => relation.from === opinion.id || relation.to === opinion.id);
   const land = () => {
-    if (INTERACTIVE_PLANETS.has(opinion.id)) {
-      router.push(`/world/${encodeURIComponent(opinion.id)}`);
+    const targetOpinionId = INTERACTIVE_PLANET_ROUTES[opinion.id];
+    if (targetOpinionId) {
+      router.push(`/world/${encodeURIComponent(targetOpinionId)}`);
       return;
     }
     setLanded(true);
