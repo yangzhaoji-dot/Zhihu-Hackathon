@@ -10,6 +10,8 @@ interface ConditionExperimentProps {
   locale: "zh-CN" | "en-US";
   onComplete: () => void;
   onCancel: () => void;
+  /** 只驱动本地场景反馈，不代表现实概率或观点置信度。 */
+  onCueChange?: (cue: number) => void;
 }
 
 const NEXT_STATE: Record<ConditionState, ConditionState> = {
@@ -18,11 +20,20 @@ const NEXT_STATE: Record<ConditionState, ConditionState> = {
   breaks: "unknown",
 };
 
+function cueFromStates(states: readonly ConditionState[], count: number) {
+  if (!count) return 0;
+  const fits = states.filter((state) => state === "fits").length;
+  const breaks = states.filter((state) => state === "breaks").length;
+  // 0.15 keeps the route faintly visible even when assumptions are mostly absent.
+  return Math.max(0.15, Math.min(1, (fits + (count - fits - breaks) * 0.18) / count));
+}
+
 export function ConditionExperiment({
   conditions,
   locale,
   onComplete,
   onCancel,
+  onCueChange,
 }: ConditionExperimentProps) {
   const normalized = useMemo(
     () => conditions.map((value) => value.trim()).filter(Boolean).slice(0, 3),
@@ -64,9 +75,11 @@ export function ConditionExperiment({
               className={styles.condition}
               data-state={states[index]}
               onClick={() => {
-                setStates((current) => current.map((state, stateIndex) =>
+                const next = states.map((state, stateIndex) =>
                   stateIndex === index ? NEXT_STATE[state] : state,
-                ));
+                );
+                setStates(next);
+                onCueChange?.(cueFromStates(next, normalized.length));
               }}
               aria-label={`${condition} · ${stateLabel(states[index])}`}
             >
@@ -89,7 +102,14 @@ export function ConditionExperiment({
       </p>
 
       <footer className={styles.actions}>
-        <button type="button" className={styles.secondary} onClick={onCancel}>
+        <button
+          type="button"
+          className={styles.secondary}
+          onClick={() => {
+            onCueChange?.(0);
+            onCancel();
+          }}
+        >
           {zh ? "先不判断" : "Not yet"}
         </button>
         <button
