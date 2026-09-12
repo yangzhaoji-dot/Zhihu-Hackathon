@@ -1,0 +1,217 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  padding: 24px;
+  background:
+    radial-gradient(circle at 50% 45%, rgba(121,92,214,.13), transparent 34%),
+    rgba(3,6,12,.82);
+  backdrop-filter: blur(10px) saturate(.78);
+  animation: stationIn 280ms ease both;
+}
+
+.space {
+  position: absolute;
+  left: 50%;
+  top: 42%;
+  width: min(66vw, 660px);
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.orbitA,
+.orbitB,
+.core {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.orbitA,
+.orbitB {
+  width: 68%;
+  height: 28%;
+  border: 1px solid rgba(191,171,255,.22);
+  border-radius: 50%;
+  animation: orbit 10s linear infinite;
+}
+
+.orbitB {
+  width: 48%;
+  height: 72%;
+  border-color: rgba(230,207,160,.2);
+  animation-direction: reverse;
+  animation-duration: 14s;
+}
+
+.core {
+  display: grid;
+  width: 64px;
+  height: 64px;
+  place-items: center;
+  border: 1px solid rgba(210,193,255,.32);
+  transform: translate(-50%, -50%) rotate(45deg);
+  background: rgba(104,75,175,.2);
+  color: #f1e9ff;
+  box-shadow: 0 0 42px rgba(122,77,255,.24);
+}
+.core svg { transform: rotate(-45deg); }
+
+.dock {
+  position: relative;
+  z-index: 2;
+  width: min(620px, calc(100vw - 28px));
+  max-height: min(78dvh, 720px);
+  overflow: auto;
+  padding: 22px;
+  border: 1px solid rgba(191,171,255,.18);
+  border-radius: 26px;
+  background:
+    linear-gradient(180deg, rgba(17,18,34,.95), rgba(7,10,19,.96));
+  box-shadow: 0 34px 120px rgba(0,0,0,.52), inset 0 1px 0 rgba(255,255,255,.05);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.kicker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #cdbdff;
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: .14em;
+}
+
+.close {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  place-items: center;
+  border: 1px solid rgba(255,255,255,.09);
+  border-radius: 50%;
+  background: rgba(255,255,255,.025);
+  color: rgba(244,240,250,.7);
+  cursor: pointer;
+}
+
+.badge {
+  width: fit-content;
+  margin-top: 18px;
+  padding: 5px 8px;
+  border: 1px solid rgba(154,126,238,.3);
+  border-radius: 999px;
+  background: rgba(122,77,255,.1);
+  color: #d8cbff;
+  font-size: 9px;
+  letter-spacing: .08em;
+}
+
+.dock h2 {
+  margin: 14px 0 8px;
+  color: #f7f1ff;
+  font-size: clamp(22px, 4vw, 34px);
+  line-height: 1.18;
+  font-weight: 620;
+}
+
+.summary {
+  margin: 0 0 18px;
+  color: rgba(241,237,248,.62);
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.section {
+  margin-top: 14px;
+  padding: 14px 15px;
+  border-left: 2px solid rgba(194,171,255,.5);
+  background: rgba(255,255,255,.025);
+}
+.section > span {
+  color: #cdbdff;
+  font-size: 9px;
+  letter-spacing: .12em;
+}
+.section p {
+  margin: 7px 0 0;
+  color: rgba(244,241,249,.82);
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.route {
+  display: flex;
+  gap: 12px;
+  margin-top: 14px;
+  padding: 13px 14px;
+  border: 1px solid rgba(230,207,160,.12);
+  border-radius: 16px;
+  background: rgba(230,207,160,.035);
+  color: #ead8af;
+}
+.route div { display: grid; gap: 4px; }
+.route strong { font-size: 12px; font-weight: 650; }
+.route small { color: rgba(241,235,221,.5); font-size: 10px; line-height: 1.55; }
+
+.conditions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 14px;
+}
+.conditions span {
+  padding: 6px 9px;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 999px;
+  color: rgba(241,237,248,.64);
+  font-size: 10px;
+}
+
+.dock footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-top: 20px;
+  padding-top: 15px;
+  border-top: 1px solid rgba(255,255,255,.06);
+}
+.dock footer button {
+  padding: 9px 13px;
+  border: 1px solid rgba(191,171,255,.28);
+  border-radius: 999px;
+  background: rgba(122,77,255,.08);
+  color: #eee7ff;
+  cursor: pointer;
+}
+.dock footer span { color: rgba(241,237,248,.34); font-size: 9px; }
+
+@keyframes stationIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes orbit {
+  to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+@media (max-width: 640px) {
+  .overlay { padding: 12px; }
+  .dock { padding: 18px; border-radius: 22px; }
+  .dock footer { align-items: flex-start; flex-direction: column; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .overlay, .orbitA, .orbitB { animation: none; }
+}
