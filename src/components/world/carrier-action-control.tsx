@@ -76,10 +76,7 @@ export function CarrierActionControl({
     };
     return (
       <div className={styles.toggleRig} data-state={toggle}>
-        <div className={styles.routePreview} aria-hidden>
-          <i />
-          <b />
-        </div>
+        <div className={styles.routePreview} aria-hidden><i /><b /></div>
         <div className={styles.leverRow}>
           <button type="button" aria-label={zh ? "假设不满足" : "assume absent"} onClick={() => moveLever("left")}>−</button>
           <span className={styles.lever}><i /></span>
@@ -185,13 +182,7 @@ export function CarrierActionControl({
     };
     return (
       <div className={styles.listenGame} data-holding={holding ? "true" : "false"}>
-        <button
-          type="button"
-          onPointerDown={start}
-          onPointerUp={stop}
-          onPointerCancel={stop}
-          onPointerLeave={stop}
-        >
+        <button type="button" onPointerDown={start} onPointerUp={stop} onPointerCancel={stop} onPointerLeave={stop}>
           <span />
         </button>
         <i /><b /><em />
@@ -201,68 +192,82 @@ export function CarrierActionControl({
   }
 
   if (action === "open-source") {
-    const excerpt = step.sourceExcerpt?.trim();
     return (
       <div className={styles.sourceReading}>
-        <article className={styles.sourcePaper}>
-          <header>
+        <div className={styles.sourcePaper}>
+          <div className={styles.sourceHead}>
             <span>{zh ? "知乎原文片段" : "ZHIHU SOURCE EXCERPT"}</span>
-            {typeof step.sourceUpvotes === "number" ? <small>{step.sourceUpvotes.toLocaleString()} {zh ? "赞同" : "upvotes"}</small> : null}
-          </header>
-          {excerpt ? <blockquote>“{excerpt}”</blockquote> : <p>{zh ? "这份来源没有留下可展示的原文片段。" : "No displayable excerpt survived for this source."}</p>}
-          {step.sourceUrl ? (
-            <a href={step.sourceUrl} target="_blank" rel="noreferrer" onClick={(event) => event.stopPropagation()}>
-              {zh ? "在新标签页查看原回答 ↗" : "Open original answer ↗"}
-            </a>
-          ) : null}
-        </article>
+            {typeof step.sourceUpvotes === "number" && (
+              <small>{zh ? `${step.sourceUpvotes.toLocaleString("zh-CN")} 赞同` : `${step.sourceUpvotes.toLocaleString("en-US")} upvotes`}</small>
+            )}
+          </div>
+          <blockquote>{step.sourceExcerpt || step.reveal || (zh ? "原文片段缺失" : "Source excerpt unavailable")}</blockquote>
+          <div className={styles.sourceFoot}>
+            <span>{zh ? "先读原话，再判断它能支持到哪里。" : "Read the original words before judging how far they support the claim."}</span>
+            {step.sourceUrl ? (
+              <a href={step.sourceUrl} target="_blank" rel="noreferrer">{zh ? "查看原回答 ↗" : "Open source ↗"}</a>
+            ) : null}
+          </div>
+        </div>
         <button
           type="button"
-          className={styles.readContinue}
+          className={styles.readDone}
           onClick={() => {
             tactile([8, 20, 10]);
             onAdvance();
           }}
         >
-          {zh ? "我读完了，继续" : "I have read it — continue"}
+          {zh ? "我读完了" : "I finished reading"}
         </button>
-        <small>{zh ? "先读原文，再看系统如何提炼这段材料" : "Read the source before seeing how the system distills it"}</small>
       </div>
     );
   }
 
-  const configuredChoices = step.choices?.map((item) => ({
-    id: item.id,
-    label: item.label[locale],
-    feedback: item.feedback?.[locale],
-    grounded: item.grounded,
-  }));
-  const fallbackChoices = zh
-    ? ["它提供了支撑", "它限定了适用范围", "现在还无法判断"]
-    : ["It supports the claim", "It limits the claim", "I still cannot tell"];
-  const options = configuredChoices ?? fallbackChoices.map((label) => ({ id: label, label }));
+  const fallbackOptions = zh
+    ? [
+        { id: "support", label: { "zh-CN": "它提供了支撑", "en-US": "It provides support" } },
+        { id: "boundary", label: { "zh-CN": "它限定了适用范围", "en-US": "It limits the scope" } },
+        { id: "uncertain", label: { "zh-CN": "现在还无法判断", "en-US": "I still cannot tell" } },
+      ]
+    : [
+        { id: "support", label: { "zh-CN": "它提供了支撑", "en-US": "It provides support" } },
+        { id: "boundary", label: { "zh-CN": "它限定了适用范围", "en-US": "It limits the scope" } },
+        { id: "uncertain", label: { "zh-CN": "现在还无法判断", "en-US": "I still cannot tell" } },
+      ];
+  const options = step.choices?.length ? step.choices : fallbackOptions;
 
   return (
     <div className={styles.choiceGame} data-mode={step.choiceMode ?? "interpretive"}>
-      {options.map((option) => (
-        <button
-          key={option.id}
-          type="button"
-          data-selected={choice === option.id ? "true" : "false"}
-          disabled={choice !== null}
-          onClick={() => {
-            tactile(option.grounded ? [7, 16, 11] : 7);
-            setChoice(option.id);
-            setFeedback(option.feedback ?? null);
-            window.setTimeout(onAdvance, option.feedback ? 1150 : 420);
-          }}
-        >{option.label}</button>
-      ))}
-      {feedback ? <p className={styles.choiceFeedback} aria-live="polite">{feedback}</p> : null}
+      <div className={styles.choiceList}>
+        {options.map((option) => {
+          const selected = choice === option.id;
+          const wrongGrounded = selected && step.choiceMode === "grounded" && !option.grounded;
+          const correctGrounded = selected && step.choiceMode === "grounded" && option.grounded;
+          return (
+            <button
+              key={option.id}
+              type="button"
+              data-selected={selected ? "true" : "false"}
+              data-correct={correctGrounded ? "true" : undefined}
+              data-wrong={wrongGrounded ? "true" : undefined}
+              onClick={() => {
+                tactile(option.grounded ? [7, 18, 10] : 7);
+                setChoice(option.id);
+                setFeedback(option.feedback?.[locale] ?? null);
+                if (step.choiceMode === "grounded" && !option.grounded) return;
+                window.setTimeout(onAdvance, step.choiceMode === "grounded" ? 520 : 360);
+              }}
+            >
+              {option.label[locale]}
+            </button>
+          );
+        })}
+      </div>
+      {feedback ? <p className={styles.choiceFeedback}>{feedback}</p> : null}
       <small>
         {step.choiceMode === "grounded"
-          ? (zh ? "这一步区分“原文留下了什么”和“我们推断了什么”" : "This step separates what the source says from what we infer")
-          : (zh ? "这里记录的是你的当前判断，不是标准答案" : "This records your current reading; it is not a scored answer")}
+          ? (zh ? "这一步只判断原文明确能支持什么；选错可以继续重试。" : "This step checks only what the source explicitly supports; retry is allowed.")
+          : (zh ? "这里没有唯一答案；记录你当前的理解。" : "There is no single right answer here; this records your current reading.")}
       </small>
     </div>
   );
