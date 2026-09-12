@@ -8,6 +8,13 @@
   align-items: flex-end;
   gap: 12px;
   pointer-events: none;
+  transition: opacity 420ms ease, transform 420ms cubic-bezier(.2,.72,.2,1), filter 420ms ease;
+}
+
+.guide[data-launching="true"] {
+  opacity: .28;
+  filter: blur(.8px);
+  transform: translateY(12px) scale(.98);
 }
 
 .bubble {
@@ -91,4 +98,8 @@
     min-width: 0;
     flex: 1;
   }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .guide { transition: none; }
 }
