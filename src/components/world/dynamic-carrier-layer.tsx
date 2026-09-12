@@ -88,6 +88,7 @@ export function DynamicCarrierLayer({
             data-role={site.fragment.role}
             data-mode={site.fragment.mode}
             data-biome={biome ?? undefined}
+            data-carrier-name={site.fragment.carrier}
             data-fragment-id={site.fragment.id}
             data-collected={collected ? "true" : "false"}
             style={{
