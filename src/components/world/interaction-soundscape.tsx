@@ -27,6 +27,11 @@ const PATTERNS: Record<string, Tone[]> = {
     { frequency: 260, duration: .13, delay: .08, gain: .021 },
     { frequency: 390, duration: .2, delay: .18, gain: .018 },
   ],
+  "sfx.resonance.prepare": [
+    { frequency: 196, duration: .42, gain: .014 },
+    { frequency: 294, duration: .5, delay: .04, gain: .012 },
+    { frequency: 392, duration: .58, delay: .08, gain: .01 },
+  ],
   "sfx.resonance.world": [
     { frequency: 220, duration: .36, gain: .018 },
     { frequency: 330, duration: .42, delay: .04, gain: .015 },
