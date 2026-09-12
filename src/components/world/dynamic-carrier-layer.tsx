@@ -6,6 +6,7 @@ import type { PlanetBiomeId } from "@/lib/opinion/planet-scene-spec";
 import type { CognitionFragmentSpec } from "@/lib/world/cognition-fragment-plan";
 import { cognitionFragmentKey } from "@/lib/world/cognition-fragment-plan";
 import { TILE_SIZE, type GridPos } from "@/lib/world/geometry";
+import discoveryStyles from "./carrier-discovery.module.css";
 import styles from "./dynamic-carrier-layer.module.css";
 
 export interface DynamicCarrierSite {
@@ -84,7 +85,7 @@ export function DynamicCarrierLayer({
           <button
             key={site.id}
             type="button"
-            className={styles.carrier}
+            className={`${styles.carrier} ${discoveryStyles.discoverable}`}
             data-role={site.fragment.role}
             data-mode={site.fragment.mode}
             data-biome={biome ?? undefined}
