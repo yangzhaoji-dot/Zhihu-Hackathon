@@ -1,0 +1,29 @@
+.discoverable .label {
+  opacity: 0;
+  transform: translateY(-3px);
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+
+.discoverable:hover .label,
+.discoverable:focus-visible .label {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.discoverable[data-collected="true"] .label {
+  opacity: .34;
+}
+
+:global([data-world-theme][data-carrier-active="true"]) .discoverable[data-fragment-id] .label {
+  opacity: .82;
+  transform: translateY(0);
+}
+
+@media (hover: none) {
+  .discoverable .label { opacity: .18; }
+  .discoverable:active .label { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .discoverable .label { transition: none; }
+}
