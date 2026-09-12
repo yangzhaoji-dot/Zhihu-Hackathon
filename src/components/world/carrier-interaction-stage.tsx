@@ -47,6 +47,7 @@ export function CarrierInteractionStage({
 }) {
   const [stepIndex, setStepIndex] = useState(0);
   const [revealed, setRevealed] = useState<string[]>([]);
+  const [distilling, setDistilling] = useState(false);
   const current = interaction.steps[stepIndex] ?? null;
   const completed = stepIndex >= interaction.steps.length;
   const zh = locale !== "en-US";
@@ -78,8 +79,26 @@ export function CarrierInteractionStage({
     emitCarrierProgress(interaction, next);
   };
 
+  const distill = () => {
+    if (distilling) return;
+    setDistilling(true);
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("carrier:distill", {
+        detail: { fragmentId: interaction.fragmentId, carrier: interaction.carrier },
+      }));
+    }
+    window.setTimeout(onComplete, 520);
+  };
+
   return (
-    <div className={styles.overlay} data-mode={interaction.mode} role="dialog" aria-label={interaction.carrier}>
+    <div
+      className={styles.overlay}
+      data-mode={interaction.mode}
+      data-distilling={distilling ? "true" : "false"}
+      role="dialog"
+      aria-label={interaction.carrier}
+    >
+      <div className={styles.focusField} aria-hidden />
       <section className={styles.stage}>
         <header className={styles.header}>
           <div>
@@ -112,10 +131,12 @@ export function CarrierInteractionStage({
           </div>
         ) : (
           <div className={styles.completion}>
-            <div className={styles.distillPreview} aria-hidden><i /><b /><em /></div>
+            <div className={styles.distillPreview} data-active={distilling ? "true" : "false"} aria-hidden><i /><b /><em /></div>
             <p>{interaction.completionLine[locale]}</p>
-            <button type="button" onClick={onComplete}>
-              {zh ? "让认知从载体中析出" : "Distill cognition from this carrier"}
+            <button type="button" disabled={distilling} onClick={distill}>
+              {distilling
+                ? (zh ? "认知正在析出…" : "Distilling cognition…")
+                : (zh ? "让认知从载体中析出" : "Distill cognition from this carrier")}
             </button>
           </div>
         )}
@@ -127,7 +148,7 @@ export function CarrierInteractionStage({
         )}
 
         <footer className={styles.footer}>
-          <button type="button" onClick={onCancel}>{zh ? "先离开这个载体" : "Leave this carrier for now"}</button>
+          <button type="button" disabled={distilling} onClick={onCancel}>{zh ? "先离开这个载体" : "Leave this carrier for now"}</button>
           <span>{zh ? "交互完成之前，不会生成认知碎片" : "No cognition shard exists until the carrier interaction is complete"}</span>
         </footer>
       </section>
