@@ -67,6 +67,13 @@
   font-size: 9px;
   cursor: pointer;
   box-shadow: 0 0 0 5px color-mix(in srgb, var(--world-accent) 7%, transparent), 0 0 16px color-mix(in srgb, var(--world-accent) 24%, transparent);
+  transition: opacity 180ms ease, transform 180ms ease, background 180ms ease;
+}
+.hotspot[data-seen="true"] {
+  opacity: .4;
+  transform: scale(.78);
+  background: color-mix(in srgb, var(--world-accent) 24%, rgba(7,11,16,.9));
+  cursor: default;
 }
 
 .toggleRig { grid-template-rows: 1fr auto 34px; }
@@ -151,12 +158,21 @@
   background: rgba(255,255,255,.035);
   color: #fff6e8;
   cursor: pointer;
-  transition: transform 260ms ease, box-shadow 260ms ease;
+  transition: transform 260ms ease, box-shadow 260ms ease, background 260ms ease;
 }
-.alignGame[data-aligned="true"] .plateLeft { transform: translateX(42px); }
-.alignGame[data-aligned="true"] .plateRight { transform: translateX(-42px); }
+.alignGame[data-left="true"] .plateLeft {
+  transform: translateX(42px);
+  background: color-mix(in srgb, var(--world-accent) 10%, rgba(255,255,255,.035));
+  box-shadow: 0 0 14px color-mix(in srgb, var(--world-accent) 24%, transparent);
+}
+.alignGame[data-right="true"] .plateRight {
+  transform: translateX(-42px);
+  background: color-mix(in srgb, var(--world-accent) 10%, rgba(255,255,255,.035));
+  box-shadow: 0 0 14px color-mix(in srgb, var(--world-accent) 24%, transparent);
+}
 .alignAxis { position: relative; width: 1px; height: 92px; background: rgba(255,255,255,.1); }
 .alignAxis i { position: absolute; inset: 44px -22px auto; height: 1px; background: var(--world-accent); box-shadow: 0 0 10px var(--world-accent); }
+.alignGame[data-aligned="true"] .alignAxis i { box-shadow: 0 0 18px var(--world-accent); }
 
 .beaconField svg {
   position: absolute;
@@ -310,6 +326,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .inspectObject,
+  .hotspot,
   .lever i,
   .plateLeft,
   .plateRight,
