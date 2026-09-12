@@ -9,11 +9,9 @@ export interface EngineHandle {
 
 /**
  * Build the best available opinion-space engine for this device:
- *   • WebGL present → the 3D CosmosEngine3D (dynamically imported so Three.js
- *     stays out of the initial bundle and never runs during SSR);
- *   • otherwise      → the existing 2D DOM CosmosEngine, unchanged.
- *
- * Both satisfy OpinionEngine, so the caller is agnostic to which it holds.
+ *   • WebGL present → semantic 3D planets whose space appearance previews the
+ *     scene grammar users will encounter after landing;
+ *   • otherwise      → the existing 2D DOM CosmosEngine.
  */
 export async function createOpinionEngine(
   mount: HTMLElement,
@@ -22,13 +20,12 @@ export async function createOpinionEngine(
 ): Promise<EngineHandle> {
   if (hasWebGL()) {
     try {
-      const { CosmosEngine3D } = await import("./cosmos-engine-3d");
+      const { ThemedCosmosEngine3D } = await import("./themed-cosmos-engine-3d");
       const profile = profileFor(detectTier());
-      const engine = new CosmosEngine3D(mount, root, cb, profile) as unknown as OpinionEngine;
+      const engine = new ThemedCosmosEngine3D(mount, root, cb, profile) as unknown as OpinionEngine;
       return { engine, is3D: true };
     } catch (err) {
-      // WebGL context creation can still fail (driver, blacklist) — fall back.
-      console.warn("[cosmos] 3D engine unavailable, falling back to 2D", err);
+      console.warn("[cosmos] themed 3D engine unavailable, falling back to 2D", err);
     }
   }
   const engine = new CosmosEngine(mount, root, cb) as unknown as OpinionEngine;
