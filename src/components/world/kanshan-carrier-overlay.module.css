@@ -1,0 +1,112 @@
+.overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-items: end center;
+  padding: 0 22px 28px;
+  pointer-events: none;
+}
+
+.box {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 14px;
+  width: min(760px, calc(100vw - 32px));
+  padding: 15px;
+  border: 1px solid color-mix(in srgb, var(--world-accent) 32%, transparent);
+  border-radius: 22px;
+  background: rgba(7, 11, 16, .9);
+  box-shadow: 0 22px 70px rgba(0,0,0,.46);
+  backdrop-filter: blur(14px);
+  pointer-events: auto;
+}
+
+.body { min-width: 0; }
+
+.body header {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.body header span {
+  color: var(--world-accent);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .13em;
+}
+
+.body header small {
+  overflow: hidden;
+  color: rgba(245,241,232,.48);
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.body > p {
+  margin: 8px 0 12px;
+  color: #f5f1e8;
+  font-size: 14px;
+  line-height: 1.72;
+}
+
+.choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.choices button,
+.investigate {
+  padding: 8px 12px;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 999px;
+  background: rgba(255,255,255,.025);
+  color: rgba(245,241,232,.8);
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.choices button:hover,
+.choices button[data-selected="true"],
+.investigate:hover {
+  border-color: color-mix(in srgb, var(--world-accent) 56%, transparent);
+  background: color-mix(in srgb, var(--world-accent) 13%, rgba(255,255,255,.02));
+  color: #fff8ea;
+}
+
+.investigate {
+  border-color: color-mix(in srgb, var(--world-accent) 42%, transparent);
+}
+
+.body footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.body footer button {
+  border: 0;
+  background: transparent;
+  color: rgba(245,241,232,.43);
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.body footer span {
+  color: rgba(245,241,232,.34);
+  font-size: 9px;
+}
+
+@media (max-width: 640px) {
+  .overlay { padding: 0 12px 74px; }
+  .box { grid-template-columns: 1fr; }
+  .box > :first-child { display: none; }
+  .choices { display: grid; }
+  .choices button,
+  .investigate { width: 100%; text-align: left; }
+}
