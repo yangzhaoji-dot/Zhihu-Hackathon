@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { CarrierActionKind, CarrierChoice, CarrierInteractionStep } from "@/lib/world/carrier-interactions";
+import comparisonStyles from "./source-comparison.module.css";
 import styles from "./carrier-action-control.module.css";
 
 function tactile(pattern: number | number[] = 7) {
@@ -232,6 +233,16 @@ export function CarrierActionControl({
 
   return (
     <div className={styles.choiceGame} data-mode={step.choiceMode ?? "interpretive"}>
+      {step.comparisonExcerpts ? (
+        <div className={comparisonStyles.comparison} aria-label={zh ? "原文对照" : "Source comparison"}>
+          {step.comparisonExcerpts.map((excerpt, index) => (
+            <article key={`${index}-${excerpt.slice(0, 12)}`}>
+              <small>{zh ? `原文 ${index + 1}` : `SOURCE ${index + 1}`}</small>
+              <blockquote>{excerpt}</blockquote>
+            </article>
+          ))}
+        </div>
+      ) : null}
       <div className={styles.choiceList}>
         {options.map((option) => {
           const selected = choice === option.id;
