@@ -4,6 +4,11 @@ import { useEffect, useState } from "react";
 import { GuideAvatar } from "@/components/opinion-world/guide-avatar";
 import styles from "./first-carrier-cue.module.css";
 
+type CallingCarrierDetail = {
+  opinionId?: string;
+  carrier?: string;
+};
+
 function tactile(pattern: number | number[] = 6) {
   if (typeof navigator !== "undefined" && "vibrate" in navigator) navigator.vibrate(pattern);
 }
@@ -23,34 +28,44 @@ export function FirstCarrierCue({ opinionId }: { opinionId: string }) {
     if (window.sessionStorage.getItem(storageKey) === "seen") return;
 
     let raf = 0;
+    let hideTimer = 0;
+    let clearTimer = 0;
+    let pendingCarrier: string | null = null;
     const deadline = performance.now() + 45_000;
-    const scan = () => {
-      if (performance.now() > deadline) return;
-      const root = document.querySelector<HTMLElement>('[data-el="world-runtime"]');
-      const action = root
-        ? Array.from(root.querySelectorAll<HTMLButtonElement>("button")).find((button) => {
-            const text = button.textContent?.trim() ?? "";
-            return text.startsWith("E ·") && (text.includes("调查") || text.includes("Investigate"));
-          })
-        : null;
 
-      if (!action) {
-        raf = window.requestAnimationFrame(scan);
+    const showWhenArrivalEnds = () => {
+      if (!pendingCarrier || performance.now() > deadline) return;
+      if (document.querySelector('[data-el="planet-arrival-guide"]')) {
+        raf = window.requestAnimationFrame(showWhenArrivalEnds);
         return;
       }
 
-      const text = action.textContent?.trim() ?? "";
-      const name = text.split("·").at(-1)?.trim() || (zh ? "认知载体" : "cognition carrier");
+      const nextCarrier = pendingCarrier;
+      pendingCarrier = null;
       window.sessionStorage.setItem(storageKey, "seen");
       tactile(7);
-      setCarrier(name);
-      window.setTimeout(() => setLeaving(true), 3000);
-      window.setTimeout(() => setCarrier(null), 3420);
+      setCarrier(nextCarrier);
+      hideTimer = window.setTimeout(() => setLeaving(true), 3000);
+      clearTimer = window.setTimeout(() => setCarrier(null), 3420);
     };
 
-    raf = window.requestAnimationFrame(scan);
-    return () => window.cancelAnimationFrame(raf);
-  }, [opinionId, zh]);
+    const onCalling = (event: Event) => {
+      const detail = (event as CustomEvent<CallingCarrierDetail>).detail ?? {};
+      if (detail.opinionId && detail.opinionId !== opinionId) return;
+      if (!detail.carrier || window.sessionStorage.getItem(storageKey) === "seen") return;
+      pendingCarrier = detail.carrier;
+      window.cancelAnimationFrame(raf);
+      raf = window.requestAnimationFrame(showWhenArrivalEnds);
+    };
+
+    window.addEventListener("carrier:calling", onCalling);
+    return () => {
+      window.removeEventListener("carrier:calling", onCalling);
+      window.cancelAnimationFrame(raf);
+      window.clearTimeout(hideTimer);
+      window.clearTimeout(clearTimer);
+    };
+  }, [opinionId]);
 
   if (!carrier) return null;
 
@@ -61,8 +76,8 @@ export function FirstCarrierCue({ opinionId }: { opinionId: string }) {
         <strong>{zh ? "刘看山" : "LIU KANSHAN"}</strong>
         <p>
           {zh
-            ? `信号稳定了。眼前的「${carrier}」保存着一段认知。靠近后按 E，或者直接轻触它。`
-            : `The signal is stable. The ${carrier} carries preserved cognition. Press E nearby, or tap it directly.`}
+            ? `信号稳定了。「${carrier}」正在回应你。沿着较亮的那段路径靠近它，按 E 或直接轻触即可调查。`
+            : `The signal is stable. The ${carrier} is answering you. Follow the brighter route, then press E nearby or tap it directly.`}
         </p>
       </div>
     </aside>
