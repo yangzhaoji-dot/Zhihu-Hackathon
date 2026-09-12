@@ -97,8 +97,6 @@ try {
   assert.match(await page.locator('[data-el="planet-focus"] h2').innerText(),/退出成本/);
   await page.unroute("**/api/opinion/collide");
 
-  // Reset must remove both the fork and fusion, then the alternative merge
-  // path must update the same source planet rather than creating a 49th node.
   await page.locator('[data-el="reset-galaxy"]').click();
   await page.waitForURL(url=>url.pathname.endsWith("/galaxy/demo-luoci") && !url.searchParams.has("cluster"));
   await page.locator('[data-el="opinion-planet"]').first().waitFor();
@@ -122,7 +120,7 @@ try {
   await page.waitForURL(url=>url.pathname.includes("/galaxy/demo-luoci") && url.searchParams.get("opinion")==="demo-health-0");
   await page.locator('[data-el="planet-focus"]').waitFor();
   assert.match(await page.locator('[data-el="planet-focus"] h2').innerText(),/适用边界/);
-  assert.equal(await page.locator('[data-el="opinion-planet"]').count(),8);
+  assert.equal(await page.locator('[data-el="opinion-planet"]').count(),48);
   await shot("05-merge-result.png");
   await page.unroute("**/api/opinion/synthesize");
 
