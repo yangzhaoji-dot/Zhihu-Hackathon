@@ -38,6 +38,17 @@ export function AiStationDock() {
     return () => window.removeEventListener("station:open", onOpen);
   }, []);
 
+  useEffect(() => {
+    if (!station) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      tactile(5);
+      setStation(null);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [station]);
+
   if (!station) return null;
 
   const close = () => {
@@ -50,7 +61,15 @@ export function AiStationDock() {
     : "This station preserves AI synthesis over known human-opinion relations.");
 
   return (
-    <div className={styles.overlay} role="dialog" aria-modal="true" aria-label={zh ? "AI 认知中转站" : "AI cognition transit station"}>
+    <div
+      className={styles.overlay}
+      role="dialog"
+      aria-modal="true"
+      aria-label={zh ? "AI 认知中转站" : "AI cognition transit station"}
+      onPointerDown={(event) => {
+        if (event.target === event.currentTarget) close();
+      }}
+    >
       <div className={styles.space} aria-hidden>
         <span className={styles.orbitA} />
         <span className={styles.orbitB} />
