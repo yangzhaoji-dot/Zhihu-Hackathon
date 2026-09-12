@@ -85,9 +85,6 @@ function routeTargets(
     ? normalized(spawn, rocket)
     : { x: Math.cos(seed * Math.PI * 2), y: Math.sin(seed * Math.PI * 2) };
 
-  // Every opinion gets a stable but slightly different route through the same
-  // question-sized canvas. The route still loosely bends toward the rocket so
-  // the final walk home feels spatially coherent rather than a teleport.
   const jitter = (seed - 0.5) * 1.05;
   const cos = Math.cos(jitter);
   const sin = Math.sin(jitter);
@@ -168,7 +165,7 @@ export function layoutCognitionSites(
   config: WorldConfig,
   spawn: GridPos,
   plan: readonly CognitionFragmentSpec[],
-  routeSeed = config.questionId,
+  routeSeed = plan[0]?.opinionId || config.questionId,
 ): CognitionSiteLayout[] {
   const placed: GridPos[] = [];
   const targets = routeTargets(config, spawn, plan.length, routeSeed);
