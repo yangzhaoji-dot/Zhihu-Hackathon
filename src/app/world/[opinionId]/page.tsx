@@ -1,6 +1,6 @@
 "use client";
 
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { EnvironmentGuidanceLayer } from "@/components/world/environment-guidance-layer";
 import { FirstCarrierCue } from "@/components/world/first-carrier-cue";
 import { FirstFragmentCue } from "@/components/world/first-fragment-cue";
@@ -17,9 +17,13 @@ const SYNTHESIS_MVP_OPINIONS = new Set(["o_stoploss"]);
 
 export default function PlanetPage() {
   const params = useParams<{ opinionId: string }>();
+  const search = useSearchParams();
   const opinionId = decodeURIComponent(params.opinionId);
 
-  if (SYNTHESIS_MVP_OPINIONS.has(opinionId)) {
+  // Any planet entered from the cognitive galaxy carries its graph id. This
+  // keeps live searched and user-evolved planets on the same internal-reading
+  // interaction instead of falling back to the legacy free-roaming runtime.
+  if (SYNTHESIS_MVP_OPINIONS.has(opinionId) || search.has("galaxy")) {
     return <PlanetSynthesisMvp opinionId={opinionId} />;
   }
 
