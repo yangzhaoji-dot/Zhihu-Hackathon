@@ -1,48 +1,261 @@
-A minimal Next.js starter for building apps inside the [Eazo](https://eazo.ai) platform. Includes a working example of the Eazo session token flow: the app requests the encrypted user token from the host via `postMessage`, sends it to a Next.js API route, decrypts it server-side with `@eazo/node-sdk`, and returns the user profile.
+# 知乎宇宙 / Cognitive Universe
 
-## Getting Started
+> **让一个问题变成可以探索的认知空间。**
 
-Install dependencies with Bun:
+知乎宇宙是面向知乎黑客松构建的 AI-native 观点探索产品。
 
-```bash
-bun install
+我们不把知乎回答简单总结成列表，而是把：
+
+- **问题**组织成星系
+- **思考方向**组织成星群
+- **观点**组织成星球
+- **真实回答片段**作为星球内部的认知材料
+
+用户不只是“看观点”，而是可以进入一个观点、阅读相关原文、选择真正影响自己判断的文本，再让 AI 帮助这些材料形成新的观点。
+
+新的观点可以：
+
+- **Merge**：补充 / 修正原星球
+- **Fork**：形成新的观点星球
+- **Collision**：和另一颗星球比较共识、分歧、条件和证据
+- **Fusion**：融合出第三颗星球
+
+最终，这不是一张静态观点图，而是一片会随着用户继续思考而生长的认知宇宙。
+
+---
+
+## 当前核心流程
+
+```text
+世界观开场
+  ↓
+搜索 / 推荐问题
+  ↓
+问题星系
+  ↓
+选择思考方向
+  ↓
+具体观点星球
+  ↓
+登陆星球
+  ↓
+阅读来源文本
+  ↓
+划选并收集认知片段
+  ↓
+AI 形成新观点
+  ↓
+AI 独立评价
+  ↓
+Merge / Fork
+  ↓
+返回星系看到变化
+  ↓
+观点碰撞 / Fusion
 ```
 
-If dependency installation stalls on this machine during `sharp` setup, use:
+完整产品设计见：
+
+> [`docs/cognitive-universe-v1.md`](./docs/cognitive-universe-v1.md)
+
+---
+
+## 三层交互
+
+### 1. 星系层：发现观点
+
+用户先看到一个问题的整体认知结构，而不是直接进入长回答。
+
+- 中央问题核心
+- 多个思考方向 cluster
+- 大量具体观点星球
+- Semantic Zoom 逐级深入
+
+Cluster 不是“支持 / 反对”阵营，而是不同的思考维度，例如身心、经济、职业、价值、环境、证据等。
+
+### 2. 星球内部：形成 / 修正观点
+
+进入一颗已有观点星球后：
+
+1. 阅读与它相关的来源文本
+2. 直接划选真正影响自己判断的一句 / 一段
+3. 收集为自己的认知片段
+4. AI **仅根据选中的文本**形成新观点
+5. 独立 AI 再评估 grounding / coherence / specificity / boundary / novelty
+6. 用户决定合并原星球还是生成新星球
+
+AI 建议关系，但最终决定权属于用户。
+
+### 3. 星球之间：碰撞 / 融合
+
+同一星群内可以选择两颗观点进行碰撞。
+
+AI 会展示：
+
+- 共识
+- 核心分歧
+- 双方成立条件
+- 证据差异
+- 缺失信息
+- 可能的综合观点
+
+用户确认后，可以生成一颗新的融合星球。
+
+---
+
+## AI 的角色
+
+AI 不是一个悬浮聊天框，而是整个系统背后的认知引擎：
+
+- 构建问题的观点空间
+- 把用户真正选中的材料凝结成观点
+- 评价观点是否有材料支撑
+- 分析观点之间的关系
+- 帮助宇宙继续演化
+
+核心原则：
+
+> **AI 不替代知乎的人类内容，而是重新组织人类内容。**
+
+---
+
+## 数据可信度原则
+
+当前项目严格区分 Demo 与真实来源：
+
+- Demo 内容明确标记为“演示材料”
+- 不把演示作者 / 赞同数冒充真实知乎数据
+- 真实检索模式才显示可追溯来源
+- 用户提交给模型的 excerpt 必须是允许来源文本的真实子串
+- AI 生成阶段看不到原星球观点，避免直接复述目标
+- AI 生成阶段不使用赞同数作为输入
+- AI 不可用时不伪造生成结果
+- 不暴露或依赖模型私有 Chain-of-Thought
+
+---
+
+## 视觉方向
+
+当前视觉原则：
+
+> **深邃但不昏暗，空旷但不空洞，科幻但不赛博，丰富但不杂乱。**
+
+技术路线保持 Web-native：
+
+- 2D / 2.5D
+- SVG / CSS / Canvas
+- Semantic Zoom
+- 星云 / 光场 / 粒子 / 视差
+- 点击 / Hover / 拖动 / 滚动 / 文本选择
+
+不做自由移动的 3D / 2.5D 游戏控制。
+
+---
+
+## 当前实现分支
+
+当前完整闭环：
 
 ```bash
-SHARP_IGNORE_GLOBAL_LIBVIPS=1 bun install
+cognitive-universe-v1
 ```
 
-Then start the development server:
+当前已经跑通：
+
+- Opening / Home
+- 搜索 / 推荐
+- Question Galaxy
+- Cluster Zoom
+- Opinion Focus
+- Planet Landing
+- 来源文本阅读
+- 文本划选 / 收集
+- AI Viewpoint Synthesis
+- AI Evaluation
+- Merge / Fork
+- 新星球回到星系并可再次登陆
+- Planet Collision
+- Fusion
+- Session Persistence
+- Demo Reset
+- Desktop / Mobile 基础适配
+
+---
+
+## 本地运行
+
+推荐 Bun 版本见 `package.json`。
 
 ```bash
+git fetch origin
+git switch cognitive-universe-v1
+bun install --frozen-lockfile
 bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+浏览器打开：
 
-## Environment Variables
+```text
+http://localhost:3000
+```
 
-Copy `.env.example` to `.env` and fill in your private key:
+### 环境变量
+
+复制：
 
 ```bash
 cp .env.example .env
 ```
 
-| Variable | Description |
-|---|---|
-| `EAZO_PRIVATE_KEY` | Your Eazo developer private key (hex, 64 chars). Used server-side to decrypt the user session token. |
+与当前认知宇宙主流程最相关的是：
 
-You can generate a keypair in the Eazo developer settings. Never expose the private key to the browser.
+- `EAZO_APP_ID`
+- `EAZO_PRIVATE_KEY`
+- `OPINION_AI_PROVIDER`
+- `ZHIHU_ACCESS_SECRET`
+- `ZHIHU_ZHIDA_MODEL`
+- Eazo / BYOK AI 配置
 
-## Learn More
+完整变量说明见 [`.env.example`](./.env.example)。
 
-- [Eazo Documentation](https://docs.eazo.ai)
-- [Next.js Documentation](https://nextjs.org/docs)
+---
 
-## Deploy on Vercel
+## 验证
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+当前整合分支已经覆盖：
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- 单元测试
+- ESLint
+- Next.js production build / TypeScript
+- Chromium 主流程验收
+- Merge / Fork / Collision / Fusion
+- Session 演化与 Demo Reset
+- 手机端横向溢出检查
+
+---
+
+## 下一阶段
+
+当前 hackathon 主闭环已经成立，下一阶段可以继续扩展：
+
+- 云端持久化个人认知宇宙
+- 多用户共同演化
+- 观点匹配 / 社交
+- 社会统计与阵营分布
+- 跨问题星系跳转
+- 更丰富的星球之间交互
+- 自部署模型后的 token-level / hidden-state 实验
+
+---
+
+## 核心表达
+
+我们不想做：
+
+> **“把知乎回答画成一堆星球。”**
+
+我们真正想做的是：
+
+> **知乎留下人类真实的思考素材；用户选择自己真正读进去的内容；AI 帮助这些材料凝结成新的观点；新的观点重新回到宇宙里，继续与其他思想发生关系。**
+
+> **这个宇宙会随着人继续思考而生长。**
