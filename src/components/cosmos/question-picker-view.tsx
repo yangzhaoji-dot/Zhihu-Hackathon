@@ -4,6 +4,10 @@ import { useTranslation } from "react-i18next";
 import type { ZhihuQuestionCandidate } from "@/lib/api/opinion";
 import styles from "./question-picker-view.module.css";
 
+function tactile(pattern: number | number[] = 8) {
+  if (typeof navigator !== "undefined" && "vibrate" in navigator) navigator.vibrate(pattern);
+}
+
 export function QuestionPickerView({
   questions,
   loading,
@@ -23,7 +27,10 @@ export function QuestionPickerView({
           <button
             key={question.url}
             disabled={loading}
-            onClick={() => onSelect(question)}
+            onClick={() => {
+              tactile([8, 28, 12]);
+              onSelect(question);
+            }}
             data-el="question-choice"
             className={styles.signal}
           >
