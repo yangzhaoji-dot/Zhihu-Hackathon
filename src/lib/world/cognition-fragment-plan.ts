@@ -5,6 +5,8 @@ export type CognitionFragmentRole = "claim" | "reason" | "condition" | "evidence
 
 export interface CognitionFragmentSpec {
   id: string;
+  /** Carries route identity without turning the fragment key itself into a UI label. */
+  opinionId?: string;
   role: CognitionFragmentRole;
   label: { "zh-CN": string; "en-US": string };
   carrier: string;
@@ -58,6 +60,7 @@ export function buildCognitionFragmentPlan(
   const plan: CognitionFragmentSpec[] = [
     {
       id: "claim",
+      opinionId: opinion.id,
       role: "claim",
       label: LABELS.claim,
       carrier: sceneSpec.fragments.claim.artifact,
@@ -66,6 +69,7 @@ export function buildCognitionFragmentPlan(
     },
     {
       id: "reason",
+      opinionId: opinion.id,
       role: "reason",
       label: LABELS.reason,
       carrier: sceneSpec.fragments.reason.artifact,
@@ -77,6 +81,7 @@ export function buildCognitionFragmentPlan(
   if ((opinion.conditions?.filter(Boolean).length ?? 0) > 0) {
     plan.push({
       id: "condition",
+      opinionId: opinion.id,
       role: "condition",
       label: LABELS.condition,
       carrier: conditionCarrier(sceneSpec),
@@ -87,6 +92,7 @@ export function buildCognitionFragmentPlan(
 
   plan.push({
     id: "evidence",
+    opinionId: opinion.id,
     role: "evidence",
     label: LABELS.evidence,
     carrier: sceneSpec.fragments.evidence.artifact,
@@ -101,6 +107,7 @@ export function buildCognitionFragmentPlan(
   if (hasSeparateBoundary) {
     plan.push({
       id: "boundary",
+      opinionId: opinion.id,
       role: "boundary",
       label: LABELS.boundary,
       carrier: boundaryCarrier(sceneSpec),
