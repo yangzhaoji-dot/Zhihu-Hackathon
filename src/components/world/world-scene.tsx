@@ -8,6 +8,7 @@ import type { Poi, WorldConfig, Zone } from "@/lib/opinion/types";
 import { getOpinionWorldTheme, type OpinionWorldTheme } from "@/lib/opinion/world-theme";
 import { TILE_SIZE, type GridPos } from "@/lib/world/geometry";
 import { isPoiRequirementMet, type WalkContext } from "@/lib/world/walkability";
+import grammarStyles from "./world-grammar.module.css";
 import resonanceStyles from "./world-resonance.module.css";
 import styles from "./world-scene.module.css";
 
@@ -104,7 +105,6 @@ export function WorldScene({
   highlightId,
   onTap,
 }: WorldSceneProps) {
-  // The selected planet opinion, not the question-level config, owns the visual grammar.
   const activeTheme = npcs[0]?.opinion ? getOpinionWorldTheme(npcs[0].opinion) : theme;
   const fogLifted = (zone: Zone) =>
     Boolean(zone.stateKey && walkCtx.worldState && walkCtx.worldState[zone.stateKey]);
@@ -143,7 +143,7 @@ export function WorldScene({
     <div className={styles.viewport} aria-label="world scene">
       <div
         ref={worldElRef}
-        className={`${styles.worldGrid} ${resonant ? resonanceStyles.resonant : ""}`}
+        className={`${styles.worldGrid} ${grammarStyles.grammar} ${resonant ? resonanceStyles.resonant : ""}`}
         data-tileset={config.tileset}
         data-world-theme={activeTheme.id}
         data-scene-motif={activeTheme.surface.motif}
@@ -259,14 +259,7 @@ export function WorldScene({
         })}
 
         <div ref={playerElRef} className={styles.player} aria-hidden>
-          <Image
-            src="/worlds/crossroads/player-explorer-v1.png"
-            alt=""
-            width={46}
-            height={69}
-            sizes="46px"
-            priority
-          />
+          <Image src="/worlds/crossroads/player-explorer-v1.png" alt="" width={46} height={69} sizes="46px" priority />
         </div>
       </div>
     </div>
