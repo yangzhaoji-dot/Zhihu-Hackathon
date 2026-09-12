@@ -27,6 +27,7 @@ export interface CarrierInteractionStep {
   sourceExcerpt?: string;
   sourceUrl?: string;
   sourceUpvotes?: number;
+  comparisonExcerpts?: [string, string];
   choiceMode?: "grounded" | "interpretive";
   choices?: CarrierChoice[];
 }
@@ -106,6 +107,57 @@ function sourceReadingSteps(source: OpinionSource, index: number): CarrierIntera
   ];
 }
 
+function sourceComparisonStep(sources: readonly OpinionSource[]): CarrierInteractionStep[] {
+  if (sources.length < 2) return [];
+  const [first, second] = sources;
+  return [{
+    id: "source-comparison",
+    action: "choose",
+    choiceMode: "grounded",
+    comparisonExcerpts: [first.excerpt, second.excerpt],
+    prompt: {
+      "zh-CN": "把两段原文放在一起看：它们共同能够支持的、最谨慎的判断是什么？",
+      "en-US": "Read both excerpts together. What is the most careful conclusion they jointly support?",
+    },
+    choices: [
+      {
+        id: "shared-cost",
+        grounded: true,
+        label: {
+          "zh-CN": "持续消耗身心的环境本身也有成本，离开可能是一种止损",
+          "en-US": "A persistently harmful environment has a cost, so leaving can function as damage control",
+        },
+        feedback: {
+          "zh-CN": "对。两段材料都指向‘继续承受也有成本’，但它们仍不足以证明所有人都应该裸辞。",
+          "en-US": "Yes. Both point to a cost of staying, without proving that everyone should resign without another job.",
+        },
+      },
+      {
+        id: "always-resign",
+        label: {
+          "zh-CN": "只要工作难受，就应该立刻裸辞",
+          "en-US": "Whenever work feels bad, one should resign immediately",
+        },
+        feedback: {
+          "zh-CN": "原文没有支持这么强的外推。它们讲的是严重、持续的消耗，不是任何不舒服都等于必须离开。",
+          "en-US": "The sources do not support that broad generalization; they describe serious, sustained harm.",
+        },
+      },
+      {
+        id: "no-relation",
+        label: {
+          "zh-CN": "两段原文与当前观点没有关系",
+          "en-US": "The two excerpts are unrelated to the current opinion",
+        },
+        feedback: {
+          "zh-CN": "它们至少都提供了与身心消耗有关的直接经历或观察，因此不能说完全无关。",
+          "en-US": "Both contain direct experience or observation about sustained harm, so they are not unrelated.",
+        },
+      },
+    ],
+  }];
+}
+
 /**
  * The carrier is the physical/ambient object in the world. A cognition shard
  * only appears AFTER the player completes this sequence.
@@ -152,21 +204,23 @@ export function buildCarrierInteraction(
         completionLine: { "zh-CN": "你恢复的是条件与判断之间的关系，不是现实结果的预测。", "en-US": "You recovered a relationship between assumptions and judgment, not a real-world prediction." },
       };
 
-    case "trace":
+    case "trace": {
+      const readableSources = boundSources.slice(0, 2);
       return {
         fragmentId: fragment.id,
         carrier: fragment.carrier,
         mode: fragment.mode,
-        steps: boundSources.length
+        steps: readableSources.length
           ? [
-              ...boundSources.slice(0, 2).flatMap(sourceReadingSteps),
+              ...readableSources.flatMap(sourceReadingSteps),
+              ...sourceComparisonStep(readableSources),
               {
                 id: "source-interpretation",
                 action: "choose" as const,
                 choiceMode: "interpretive" as const,
                 prompt: {
-                  "zh-CN": "读完这些原文后，你暂时会把它们放在什么位置？",
-                  "en-US": "After reading the sources, how would you provisionally place them?",
+                  "zh-CN": "读完并对照这些原文后，你暂时会把它们放在什么位置？",
+                  "en-US": "After reading and comparing the sources, how would you provisionally place them?",
                 },
                 choices: [
                   {
@@ -188,8 +242,9 @@ export function buildCarrierInteraction(
               },
             ]
           : [{ id: "missing-source", action: "inspect", prompt: { "zh-CN": "检查这个空档案位：没有原文可以继续追。", "en-US": "Inspect the empty archive slot: no original source can be traced." } }],
-        completionLine: { "zh-CN": "你先读到了原文，再决定它能支持到哪里；可追溯到哪里，依据就只恢复到哪里。", "en-US": "You read the source before judging its reach; evidence is recovered only as far as the trace goes." },
+        completionLine: { "zh-CN": "你先读到了原文，再比较它们共同能支持什么，最后才决定证据能走多远。", "en-US": "You read the sources, compared what they jointly support, and only then judged how far the evidence reaches." },
       };
+    }
 
     case "compare":
       return {
