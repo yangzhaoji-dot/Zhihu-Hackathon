@@ -66,7 +66,7 @@ export function CarrierInteractionStage({
 
   const visibleReveals = useMemo(
     () => interaction.steps
-      .filter((step) => revealed.includes(step.id) && step.reveal)
+      .filter((step) => revealed.includes(step.id) && step.reveal && step.action !== "open-source")
       .map((step) => ({ id: step.id, text: step.reveal! })),
     [interaction.steps, revealed],
   );
@@ -96,6 +96,7 @@ export function CarrierInteractionStage({
     <div
       className={styles.overlay}
       data-mode={interaction.mode}
+      data-action={current?.action ?? (completed ? "complete" : "idle")}
       data-distilling={distilling ? "true" : "false"}
       role="dialog"
       aria-label={interaction.carrier}
@@ -121,7 +122,7 @@ export function CarrierInteractionStage({
 
         {!completed && current ? (
           <div className={styles.step}>
-            <small>{zh ? "当前观察" : "CURRENT CUE"}</small>
+            <small>{current.action === "open-source" ? (zh ? "原文阅读" : "SOURCE READING") : (zh ? "当前观察" : "CURRENT CUE")}</small>
             <p>{current.prompt[locale]}</p>
             <CarrierActionControl
               key={current.id}
