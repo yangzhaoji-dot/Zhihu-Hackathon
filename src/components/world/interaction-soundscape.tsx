@@ -18,6 +18,11 @@ const PATTERNS: Record<string, Tone[]> = {
     { frequency: 330, duration: .06, gain: .018 },
     { frequency: 440, duration: .08, delay: .05, gain: .017 },
   ],
+  "sfx.station.open": [
+    { frequency: 392, duration: .09, gain: .015 },
+    { frequency: 587, duration: .12, delay: .055, gain: .014 },
+    { frequency: 784, duration: .18, delay: .12, gain: .011 },
+  ],
   "sfx.rocket.land": [
     { frequency: 112, duration: .18, gain: .025 },
     { frequency: 82, duration: .28, delay: .08, gain: .018 },
