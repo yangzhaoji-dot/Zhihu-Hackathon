@@ -15,10 +15,11 @@ const MODE_LABELS: Record<CarrierInteractionDefinition["mode"], { "zh-CN": strin
   listen: { "zh-CN": "倾听", "en-US": "LISTEN" },
 };
 
-function emitCarrierProgress(
-  interaction: CarrierInteractionDefinition,
-  step: number,
-) {
+function tactile(pattern: number | number[] = 8) {
+  if (typeof navigator !== "undefined" && "vibrate" in navigator) navigator.vibrate(pattern);
+}
+
+function emitCarrierProgress(interaction: CarrierInteractionDefinition, step: number) {
   if (typeof window === "undefined") return;
   window.dispatchEvent(new CustomEvent("carrier:progress", {
     detail: {
@@ -81,6 +82,7 @@ export function CarrierInteractionStage({
 
   const distill = () => {
     if (distilling) return;
+    tactile([10, 24, 16, 36, 22]);
     setDistilling(true);
     if (typeof window !== "undefined") {
       window.dispatchEvent(new CustomEvent("carrier:distill", {
@@ -148,7 +150,7 @@ export function CarrierInteractionStage({
         )}
 
         <footer className={styles.footer}>
-          <button type="button" disabled={distilling} onClick={onCancel}>{zh ? "先离开这个载体" : "Leave this carrier for now"}</button>
+          <button type="button" disabled={distilling} onClick={() => { tactile(5); onCancel(); }}>{zh ? "先离开这个载体" : "Leave this carrier for now"}</button>
           <span>{zh ? "交互完成之前，不会生成认知碎片" : "No cognition shard exists until the carrier interaction is complete"}</span>
         </footer>
       </section>
