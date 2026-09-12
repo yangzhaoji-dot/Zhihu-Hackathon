@@ -10,12 +10,6 @@ import {
 } from "@/lib/world/resonance";
 import { CosmosEngine3D } from "./cosmos-engine-3d";
 
-/**
- * Semantic skin over the stable 3D engine.
- * The base engine owns physics/interaction; this layer makes a planet's space
- * appearance preview the same grammar used after landing and adds personal
- * exploration marks without changing the planet's semantic base color.
- */
 export class ThemedCosmosEngine3D extends CosmosEngine3D {
   override setData(opinions: Opinion[], relations: Relation[], stances: Record<string, Stance>) {
     super.setData(opinions, relations, stances);
@@ -110,13 +104,99 @@ function applyOpinionPlanetGrammar(node: InstanceType<typeof CosmosEngine3D>["no
   if (theme.id === "forest") addOrganicLandmarks(grammar, node.radius, theme.accent);
   if (theme.id === "archive") addArchiveLayers(grammar, node.radius, theme.accent);
   if (theme.id === "crossroads") addCrossroadsSeam(grammar, node.radius, theme.accent);
+
+  // Second semantic axis: biome. These decorations mean something about the
+  // opinion's epistemic situation; they are not just decorative skins.
+  switch (theme.biome) {
+    case "ocean": addOceanSemantics(grammar, node.radius, theme.accent, theme.mist); break;
+    case "desert": addDesertSemantics(grammar, node.radius, theme.accent); break;
+    case "forest": addForestBiomeSemantics(grammar, node.radius, theme.accent); break;
+    case "city": addCitySemantics(grammar, node.radius, theme.accent); break;
+    case "ruins": addRuinsSemantics(grammar, node.radius, theme.accent); break;
+    case "industrial": addIndustrialSemantics(grammar, node.radius, theme.accent); break;
+  }
   node.group.add(grammar);
 }
 
-function applyExplorationMark(
-  node: InstanceType<typeof CosmosEngine3D>["nodes"][number],
-  worldState: Record<string, unknown>,
-) {
+function addOceanSemantics(group: THREE.Group, radius: number, accent: string, mist: string) {
+  for (let index = 0; index < 3; index += 1) {
+    const band = new THREE.Mesh(
+      new THREE.TorusGeometry(radius * (0.76 + index * 0.11), radius * 0.018, 6, 64),
+      new THREE.MeshBasicMaterial({ color: index === 2 ? mist : accent, transparent: true, opacity: 0.22, depthWrite: false }),
+    );
+    band.rotation.x = Math.PI * (0.42 + index * 0.035);
+    band.rotation.z = index * 0.31;
+    group.add(band);
+  }
+  for (let index = 0; index < 5; index += 1) {
+    const beacon = new THREE.Mesh(
+      new THREE.SphereGeometry(radius * 0.035, 8, 6),
+      new THREE.MeshBasicMaterial({ color: accent, transparent: true, opacity: 0.72 }),
+    );
+    const angle = index * 1.31;
+    beacon.position.set(Math.cos(angle) * radius * 1.04, Math.sin(angle * 1.6) * radius * 0.32, Math.sin(angle) * radius * 1.04);
+    group.add(beacon);
+  }
+}
+
+function addDesertSemantics(group: THREE.Group, radius: number, accent: string) {
+  for (let index = 0; index < 3; index += 1) {
+    const arc = new THREE.Mesh(
+      new THREE.TorusGeometry(radius * (0.72 + index * 0.13), radius * 0.014, 5, 48, Math.PI * 1.35),
+      new THREE.MeshBasicMaterial({ color: accent, transparent: true, opacity: 0.18 - index * 0.03, depthWrite: false }),
+    );
+    arc.rotation.x = Math.PI * 0.53;
+    arc.rotation.z = 0.5 + index * 0.8;
+    group.add(arc);
+  }
+  for (let index = 0; index < 4; index += 1) {
+    const trace = new THREE.Mesh(
+      new THREE.BoxGeometry(radius * 0.08, radius * (0.18 + index * 0.035), radius * 0.04),
+      new THREE.MeshBasicMaterial({ color: accent, transparent: true, opacity: 0.46 }),
+    );
+    const angle = 0.35 + index * 1.42;
+    trace.position.set(Math.cos(angle) * radius * 0.92, -radius * 0.35, Math.sin(angle) * radius * 0.92);
+    trace.rotation.z = angle * 0.2;
+    group.add(trace);
+  }
+}
+
+function addForestBiomeSemantics(group: THREE.Group, radius: number, accent: string) {
+  for (let index = 0; index < 7; index += 1) {
+    const seed = new THREE.Mesh(new THREE.IcosahedronGeometry(radius * 0.025, 0), new THREE.MeshBasicMaterial({ color: accent, transparent: true, opacity: 0.55 }));
+    const angle = index * 0.9;
+    seed.position.set(Math.cos(angle) * radius, Math.sin(index * 1.8) * radius * 0.45, Math.sin(angle) * radius);
+    group.add(seed);
+  }
+}
+
+function addCitySemantics(group: THREE.Group, radius: number, accent: string) {
+  for (let index = 0; index < 5; index += 1) {
+    const block = new THREE.Mesh(new THREE.BoxGeometry(radius * 0.08, radius * (0.14 + index * 0.025), radius * 0.06), new THREE.MeshBasicMaterial({ color: accent, transparent: true, opacity: 0.32 }));
+    const angle = index * 1.21;
+    block.position.set(Math.cos(angle) * radius * 0.94, Math.sin(angle * 1.7) * radius * 0.3, Math.sin(angle) * radius * 0.94);
+    group.add(block);
+  }
+}
+
+function addRuinsSemantics(group: THREE.Group, radius: number, accent: string) {
+  const material = new THREE.LineBasicMaterial({ color: accent, transparent: true, opacity: 0.34 });
+  for (let index = 0; index < 3; index += 1) {
+    const points = [new THREE.Vector3(-radius * 0.72, radius * (0.34 - index * 0.28), 0), new THREE.Vector3(-radius * 0.18, radius * (0.12 - index * 0.22), radius * 0.26), new THREE.Vector3(radius * 0.58, radius * (0.25 - index * 0.25), 0)];
+    group.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(points), material.clone()));
+  }
+}
+
+function addIndustrialSemantics(group: THREE.Group, radius: number, accent: string) {
+  for (let index = 0; index < 2; index += 1) {
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(radius * (0.86 + index * 0.18), radius * 0.028, 6, 48), new THREE.MeshBasicMaterial({ color: accent, transparent: true, opacity: 0.34, depthWrite: false }));
+    ring.rotation.x = Math.PI * (0.31 + index * 0.27);
+    ring.rotation.z = index * 0.52;
+    group.add(ring);
+  }
+}
+
+function applyExplorationMark(node: InstanceType<typeof CosmosEngine3D>["nodes"][number], worldState: Record<string, unknown>) {
   const markerName = "opinion-resonance-mark";
   const old = node.group.getObjectByName(markerName);
   if (old) {
@@ -124,9 +204,7 @@ function applyExplorationMark(
     node.group.remove(old);
   }
 
-  const fragmentCount = CORE_RESONANCE_FRAGMENTS.filter((kind) =>
-    Boolean(worldState[resonanceFragmentKey(node.id, kind)]),
-  ).length;
+  const fragmentCount = CORE_RESONANCE_FRAGMENTS.filter((kind) => Boolean(worldState[resonanceFragmentKey(node.id, kind)])).length;
   const resonated = Boolean(worldState[resonanceCompleteKey(node.id)]);
   if (fragmentCount === 0 && !resonated) return;
 
@@ -136,13 +214,7 @@ function applyExplorationMark(
   const ratio = resonated ? 1 : fragmentCount / CORE_RESONANCE_FRAGMENTS.length;
   const arc = new THREE.Mesh(
     new THREE.TorusGeometry(node.radius * 1.7, node.radius * 0.038, 8, 72, Math.PI * 2 * ratio),
-    new THREE.MeshBasicMaterial({
-      color: theme.accent,
-      transparent: true,
-      opacity: resonated ? 0.9 : 0.64,
-      depthWrite: false,
-      blending: THREE.AdditiveBlending,
-    }),
+    new THREE.MeshBasicMaterial({ color: theme.accent, transparent: true, opacity: resonated ? 0.9 : 0.64, depthWrite: false, blending: THREE.AdditiveBlending }),
   );
   arc.rotation.x = Math.PI * 0.46;
   arc.rotation.z = -Math.PI * 0.18;
@@ -151,12 +223,7 @@ function applyExplorationMark(
   if (resonated) {
     const echo = new THREE.Mesh(
       new THREE.TorusGeometry(node.radius * 1.9, node.radius * 0.018, 7, 72),
-      new THREE.MeshBasicMaterial({
-        color: 0xf6e3c3,
-        transparent: true,
-        opacity: 0.48,
-        depthWrite: false,
-      }),
+      new THREE.MeshBasicMaterial({ color: 0xf6e3c3, transparent: true, opacity: 0.48, depthWrite: false }),
     );
     echo.rotation.x = Math.PI * 0.66;
     echo.rotation.z = Math.PI * 0.22;
@@ -168,31 +235,15 @@ function applyExplorationMark(
 function addOrganicLandmarks(group: THREE.Group, radius: number, color: string) {
   for (let index = 0; index < 6; index += 1) {
     const angle = (index / 6) * Math.PI * 2;
-    const bud = new THREE.Mesh(
-      new THREE.IcosahedronGeometry(radius * 0.055, 1),
-      new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.8 }),
-    );
-    bud.position.set(
-      Math.cos(angle) * radius * 0.88,
-      Math.sin(angle * 1.7) * radius * 0.42,
-      Math.sin(angle) * radius * 0.88,
-    );
+    const bud = new THREE.Mesh(new THREE.IcosahedronGeometry(radius * 0.055, 1), new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.8 }));
+    bud.position.set(Math.cos(angle) * radius * 0.88, Math.sin(angle * 1.7) * radius * 0.42, Math.sin(angle) * radius * 0.88);
     group.add(bud);
   }
 }
 
 function addArchiveLayers(group: THREE.Group, radius: number, color: string) {
   for (const scale of [1.12, 1.28]) {
-    group.add(new THREE.Mesh(
-      new THREE.DodecahedronGeometry(radius * scale, 0),
-      new THREE.MeshBasicMaterial({
-        color,
-        transparent: true,
-        opacity: scale === 1.12 ? 0.08 : 0.035,
-        wireframe: true,
-        depthWrite: false,
-      }),
-    ));
+    group.add(new THREE.Mesh(new THREE.DodecahedronGeometry(radius * scale, 0), new THREE.MeshBasicMaterial({ color, transparent: true, opacity: scale === 1.12 ? 0.08 : 0.035, wireframe: true, depthWrite: false })));
   }
 }
 
@@ -202,9 +253,7 @@ function addCrossroadsSeam(group: THREE.Group, radius: number, color: string) {
     [new THREE.Vector3(-radius, 0, 0), new THREE.Vector3(radius, 0, 0)],
     [new THREE.Vector3(0, -radius * 0.82, 0), new THREE.Vector3(0, radius * 0.82, 0)],
   ];
-  for (const points of lines) {
-    group.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(points), material.clone()));
-  }
+  for (const points of lines) group.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(points), material.clone()));
 }
 
 function disposeObject(object: THREE.Object3D) {
