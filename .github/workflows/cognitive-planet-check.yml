@@ -1,50 +1,50 @@
-name: Cognitive planet check
+name: Cognitive universe check
 
 on:
   push:
-    branches: [cognitive-planet-v1]
+    branches: [cognitive-universe-v1]
   pull_request:
-    branches: [cognitive-galaxy-v2]
+    branches: [cognitive-planet-v1]
 
 permissions:
   contents: read
 
 concurrency:
-  group: cognitive-planet-${{ github.ref }}
+  group: cognitive-universe-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 18
     env:
-      EAZO_APP_ID: cognitive-planet-ci
+      EAZO_APP_ID: cognitive-universe-ci
       NEXT_PUBLIC_APP_TITLE: Zhihu Universe
-      NEXT_PUBLIC_APP_DESCRIPTION: Planet synthesis interaction fixture
+      NEXT_PUBLIC_APP_DESCRIPTION: Integrated cognitive universe acceptance fixture
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: 1.3.9
       - run: bun install --frozen-lockfile
-      - run: bun test scripts/planet-synthesis.test.ts scripts/cognitive-galaxy.test.ts
+      - run: bun test scripts/cognitive-universe.test.ts scripts/planet-synthesis.test.ts scripts/cognitive-galaxy.test.ts
       - run: bun run lint
       - run: bun run build
       - name: Install isolated browser test runner
         run: |
           npm install --prefix /tmp/cognitive-browser --no-package-lock playwright@1.51.1
           /tmp/cognitive-browser/node_modules/.bin/playwright install --with-deps chromium
-      - name: Browser excerpt-to-viewpoint acceptance
+      - name: Browser integrated evolution acceptance
         env:
           PLAYWRIGHT_MODULE_PATH: /tmp/cognitive-browser/node_modules/playwright
         run: |
-          mkdir -p test-artifacts/planet
-          bun run start > /tmp/cognitive-planet-server.log 2>&1 &
-          for i in $(seq 1 20); do curl -s http://localhost:3000/world/o_stoploss > /dev/null && break; sleep 1; done
-          node scripts/cognitive-planet-browser.mjs || { tail -n 100 /tmp/cognitive-planet-server.log; cp /tmp/cognitive-planet-server.log test-artifacts/planet/server.log; exit 1; }
+          mkdir -p test-artifacts/universe
+          bun run start > /tmp/cognitive-universe-server.log 2>&1 &
+          for i in $(seq 1 20); do curl -s http://localhost:3000/galaxy/demo-luoci > /dev/null && break; sleep 1; done
+          node scripts/cognitive-universe-browser.mjs || { tail -n 120 /tmp/cognitive-universe-server.log; cp /tmp/cognitive-universe-server.log test-artifacts/universe/server.log; exit 1; }
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: cognitive-planet-preview
-          path: test-artifacts/planet
+          name: cognitive-universe-preview
+          path: test-artifacts/universe
           if-no-files-found: ignore
