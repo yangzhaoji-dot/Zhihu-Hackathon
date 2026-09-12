@@ -109,6 +109,7 @@ export function WorldScene({
   onTap,
 }: WorldSceneProps) {
   const activeTheme = npcs[0]?.opinion ? getOpinionWorldTheme(npcs[0].opinion) : theme;
+  const planetMode = npcs.some((npc) => npc.id.startsWith("fragment_"));
   const fogLifted = (zone: Zone) =>
     Boolean(zone.stateKey && walkCtx.worldState && walkCtx.worldState[zone.stateKey]);
   const ruinMarked = (zone: Zone) =>
@@ -263,6 +264,26 @@ export function WorldScene({
 
         <div ref={playerElRef} className={styles.player} aria-hidden>
           <Image src="/worlds/crossroads/player-explorer-v1.png" alt="" width={46} height={69} sizes="46px" priority />
+          {planetMode && (
+            <Image
+              src="/worlds/crossroads/guide-fox-v1.png"
+              alt=""
+              width={34}
+              height={51}
+              sizes="34px"
+              style={{
+                position: "absolute",
+                left: 34,
+                top: -4,
+                width: 34,
+                height: 51,
+                margin: 0,
+                opacity: 0.9,
+                objectFit: "contain",
+                filter: `drop-shadow(0 0 8px ${activeTheme.accent}55) drop-shadow(4px 6px 5px rgba(0,0,0,.36))`,
+              }}
+            />
+          )}
         </div>
       </div>
     </div>
