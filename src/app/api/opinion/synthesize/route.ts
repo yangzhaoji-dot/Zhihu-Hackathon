@@ -1,9 +1,10 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { getOpinion, getOpinionGraph } from "@/lib/opinion/store";
 import { synthesizePlanetViewpoint } from "@/lib/opinion/planet-synthesis";
+import type { OpinionGraph } from "@/lib/opinion/types";
 import { selectionBelongsToSource, type SelectedExcerptInput } from "@/lib/planet-synthesis/model";
 
-function relatedOpinionIds(opinionId: string, graph: NonNullable<ReturnType<typeof getOpinionGraph>>): Set<string> {
+function relatedOpinionIds(opinionId: string, graph: OpinionGraph): Set<string> {
   const ids = new Set<string>([opinionId]);
   for (const relation of graph.relations) {
     if (relation.from === opinionId) ids.add(relation.to);
@@ -12,8 +13,20 @@ function relatedOpinionIds(opinionId: string, graph: NonNullable<ReturnType<type
   return ids;
 }
 
+function isOpinionGraph(value: unknown): value is OpinionGraph {
+  if (!value || typeof value !== "object") return false;
+  const graph = value as Partial<OpinionGraph>;
+  return typeof graph.questionId === "string" && typeof graph.questionTitle === "string" &&
+    Array.isArray(graph.opinions) && graph.opinions.length <= 100 &&
+    Array.isArray(graph.sources) && graph.sources.length <= 200 &&
+    Array.isArray(graph.authors) && graph.authors.length <= 200 &&
+    Array.isArray(graph.relations) && graph.relations.length <= 300 &&
+    graph.opinions.every((opinion) => opinion && typeof opinion.id === "string" && typeof opinion.title === "string" && Array.isArray(opinion.sourceIds)) &&
+    graph.sources.every((source) => source && typeof source.id === "string" && typeof source.excerpt === "string");
+}
+
 export async function POST(request: NextRequest) {
-  let body: { opinionId?: unknown; selections?: unknown };
+  let body: { opinionId?: unknown; selections?: unknown; graph?: unknown };
   try {
     body = await request.json();
   } catch {
@@ -21,10 +34,11 @@ export async function POST(request: NextRequest) {
   }
 
   const opinionId = typeof body.opinionId === "string" ? body.opinionId : "";
-  const opinion = opinionId ? getOpinion(opinionId) : null;
+  const override = isOpinionGraph(body.graph) ? body.graph : null;
+  const storedOpinion = opinionId ? getOpinion(opinionId) : null;
+  const graph = override ?? (storedOpinion ? getOpinionGraph(storedOpinion.questionId) : null);
+  const opinion = graph?.opinions.find((item) => item.id === opinionId) ?? storedOpinion;
   if (!opinion) return NextResponse.json({ ok: false, error: "opinion_not_found" }, { status: 404 });
-
-  const graph = getOpinionGraph(opinion.questionId);
   if (!graph) return NextResponse.json({ ok: false, error: "graph_not_found" }, { status: 404 });
 
   const raw = Array.isArray(body.selections) ? body.selections : [];
