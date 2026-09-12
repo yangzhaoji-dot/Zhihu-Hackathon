@@ -138,6 +138,44 @@
   backdrop-filter: blur(6px);
 }
 
+/* Carrier interaction now feeds back into the world behind the overlay. */
+:global([data-world-theme][data-carrier-active="true"]) {
+  transition: filter 260ms ease, box-shadow 260ms ease;
+  box-shadow:
+    inset 0 0 var(--carrier-live-glow, 8px) color-mix(in srgb, var(--world-accent) 8%, transparent),
+    inset 0 0 140px rgba(0,0,0,.24);
+}
+
+:global([data-world-theme][data-carrier-mode="experiment"]) :global(path[data-route-kind="reason"]) {
+  opacity: calc(.28 + var(--carrier-live-progress, 0) * .58) !important;
+  stroke-width: calc(2px + var(--carrier-live-progress, 0) * 2px);
+  filter: drop-shadow(0 0 var(--carrier-live-glow, 8px) color-mix(in srgb, var(--world-accent) 62%, transparent));
+}
+
+:global([data-world-theme][data-carrier-mode="navigate"]) :global(path[data-route-kind]) {
+  opacity: calc(.2 + var(--carrier-live-progress, 0) * .46) !important;
+  stroke-dasharray: 4 12;
+}
+
+:global([data-world-theme][data-carrier-mode="trace"]) :global([data-fragment-kind="evidence"]),
+:global([data-world-theme][data-carrier-fragment="evidence"]) :global([data-fragment-kind="evidence"]) {
+  filter: brightness(calc(1 + var(--carrier-live-progress, 0) * .24));
+}
+
+:global([data-world-theme][data-carrier-fragment="condition"]) .carrier[data-role="condition"],
+:global([data-world-theme][data-carrier-fragment="boundary"]) .carrier[data-role="boundary"] {
+  filter: brightness(calc(1 + var(--carrier-live-progress, 0) * .28));
+}
+
+:global([data-world-theme][data-carrier-mode="restore"]) :global([data-terrain="ruin"]) {
+  opacity: calc(.44 + var(--carrier-live-progress, 0) * .4) !important;
+  filter: brightness(calc(.88 + var(--carrier-live-progress, 0) * .22));
+}
+
+:global([data-world-theme][data-carrier-mode="listen"]) {
+  filter: saturate(calc(.88 + var(--carrier-live-progress, 0) * .18));
+}
+
 @keyframes carrierBreathe {
   0%,100% { opacity: .34; transform: translateX(-50%) scale(.92); }
   50% { opacity: .68; transform: translateX(-50%) scale(1.08); }
@@ -146,4 +184,5 @@
 @media (prefers-reduced-motion: reduce) {
   .carrier[data-collected="false"]::before { animation: none; }
   .object { transition: none; }
+  :global([data-world-theme][data-carrier-active="true"]) { transition: none; }
 }
