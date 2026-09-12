@@ -49,7 +49,7 @@ export function CosmosChrome({
         <div className="brand">
           <small>{t("cosmos.brand")}</small>
           <h1 data-el="focus-question">
-            {mode === "questions" ? t("cosmos.questionUniverseTitle") : title}
+            {mode === "questions" ? t("cosmos.modeQuestion") : title}
           </h1>
         </div>
         <div className="mode" role="tablist" aria-label="layer">
