@@ -9,18 +9,18 @@ import { PlanetArrivalGuide } from "@/components/world/planet-arrival-guide";
 import { PlanetArtDirection } from "@/components/world/planet-art-direction";
 import { PlanetBiomeSync } from "@/components/world/planet-biome-sync";
 import { PlanetRouteWhisper } from "@/components/world/planet-route-whisper";
-import { PlanetStoryMvp } from "@/components/world/planet-story-mvp";
+import { PlanetSynthesisMvp } from "@/components/world/planet-synthesis-mvp";
 import { ResonanceHush } from "@/components/world/resonance-hush";
 import PlanetRuntimeV2 from "./planet-runtime-v2";
 
-const STORY_MVP_OPINIONS = new Set(["o_stoploss"]);
+const SYNTHESIS_MVP_OPINIONS = new Set(["o_stoploss"]);
 
 export default function PlanetPage() {
   const params = useParams<{ opinionId: string }>();
   const opinionId = decodeURIComponent(params.opinionId);
 
-  if (STORY_MVP_OPINIONS.has(opinionId)) {
-    return <PlanetStoryMvp opinionId={opinionId} />;
+  if (SYNTHESIS_MVP_OPINIONS.has(opinionId)) {
+    return <PlanetSynthesisMvp opinionId={opinionId} />;
   }
 
   return (
