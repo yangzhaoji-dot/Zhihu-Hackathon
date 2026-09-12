@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslation } from "react-i18next";
+import formationStyles from "./galaxy-formation.module.css";
 import type { Mode } from "./use-opinion-space";
 
 const LEGEND: { cls: string; key: string }[] = [
@@ -10,6 +11,15 @@ const LEGEND: { cls: string; key: string }[] = [
   { cls: "l-cond", key: "cosmos.legendCond" },
   { cls: "l-oppose", key: "cosmos.legendOppose" },
 ];
+
+const FORMATION_SIGNALS = [
+  ["-82px", "-34px", "0ms"],
+  ["72px", "-46px", "210ms"],
+  ["94px", "24px", "420ms"],
+  ["-69px", "38px", "610ms"],
+  ["17px", "-74px", "830ms"],
+  ["-8px", "66px", "1040ms"],
+] as const;
 
 export function CosmosChrome({
   mode,
@@ -82,6 +92,7 @@ export function CosmosChrome({
             onChange={(e) => onQueryChange(e.target.value)}
             aria-label={searchPlaceholder}
             placeholder={searchPlaceholder}
+            autoFocus
           />
           <button type="submit" disabled={searching}>
             {searching ? searchingLabel : searchAction}
@@ -116,6 +127,33 @@ export function CosmosChrome({
           <button className={railOn === "match" ? "on" : ""} onClick={() => onRail("match")}>{t("cosmos.railMatch")}</button>
           <button className={railOn === "tint" ? "on" : ""} onClick={() => onRail("tint")}>{t("cosmos.railTint")}</button>
           <button className={railOn === "profile" ? "on" : ""} onClick={() => onRail("profile")}>{t("cosmos.railProfile")}</button>
+        </div>
+      )}
+
+      {searching && mode === "questions" && (
+        <div className={formationStyles.overlay} role="status" aria-live="polite" data-el="galaxy-formation">
+          <div className={formationStyles.core}>
+            <div className={formationStyles.orbit} aria-hidden />
+            <div className={formationStyles.orbit2} aria-hidden />
+            <div className={formationStyles.orbit3} aria-hidden />
+            <div className={formationStyles.star} aria-hidden />
+            <div className={formationStyles.signals} aria-hidden>
+              {FORMATION_SIGNALS.map(([x, y, delay], index) => (
+                <i
+                  key={index}
+                  style={{
+                    "--sx": x,
+                    "--sy": y,
+                    "--delay": delay,
+                  } as React.CSSProperties}
+                />
+              ))}
+            </div>
+            <div className={formationStyles.copy}>
+              <strong>{zh ? "正在从旧知乎档案恢复问题星系" : "Recovering a question galaxy from the old Zhihu archive"}</strong>
+              <span>{query || (zh ? "正在锁定问题信号" : "Locking question signal")}</span>
+            </div>
+          </div>
         </div>
       )}
     </>
