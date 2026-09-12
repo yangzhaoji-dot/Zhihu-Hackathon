@@ -23,7 +23,7 @@ export function FirstCarrierCue({ opinionId }: { opinionId: string }) {
     if (window.sessionStorage.getItem(storageKey) === "seen") return;
 
     let raf = 0;
-    let deadline = performance.now() + 45_000;
+    const deadline = performance.now() + 45_000;
     const scan = () => {
       if (performance.now() > deadline) return;
       const root = document.querySelector<HTMLElement>('[data-el="world-runtime"]');
