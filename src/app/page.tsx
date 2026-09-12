@@ -34,12 +34,17 @@ export default function Home() {
   const controller = useRef<AbortController | null>(null);
   const searchInput = useRef<HTMLInputElement | null>(null);
   const requestId = useRef(0);
+  const invalidateRequests = useCallback(() => {
+    requestId.current += 1;
+    controller.current?.abort();
+    controller.current = null;
+  }, []);
   useEffect(() => {
     const frame = requestAnimationFrame(() => {
       try { if (!localStorage.getItem(INTRO_KEY) && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) setIntro(true); } catch { /* Still allow use when storage is blocked. */ }
     });
-    return () => { cancelAnimationFrame(frame); controller.current?.abort(); requestId.current++; };
-  }, []);
+    return () => { cancelAnimationFrame(frame); invalidateRequests(); };
+  }, [invalidateRequests]);
   const finishIntro = useCallback(() => {
     try { localStorage.setItem(INTRO_KEY, "seen"); } catch { /* Optional preference. */ }
     setIntro(false);
@@ -76,7 +81,7 @@ export default function Home() {
       if (id === requestId.current) { setBusy(false); controller.current = null; }
     }
   };
-  const cancelSearch = () => { requestId.current++; controller.current?.abort(); controller.current = null; setBusy(false); };
+  const cancelSearch = () => { invalidateRequests(); setBusy(false); };
 
   return <SpaceShell extra={<button type="button" onClick={() => setIntro(true)}><RotateCcw size={13}/>{t("replay")}</button>}>
     <div inert={intro}>

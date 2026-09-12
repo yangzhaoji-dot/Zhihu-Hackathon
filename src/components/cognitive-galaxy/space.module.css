@@ -2,7 +2,7 @@
   --cg-bg:#060a12; --cg-ink:#ecede7; --cg-muted:#8997a9; --cg-dim:#5e6b7c; --cg-line:rgba(180,201,224,.16); --cg-panel:rgba(10,17,29,.93);
   --cg-health:#82afa2; --cg-resources:#d4b584; --cg-growth:#8baacb; --cg-values:#b99fca; --cg-context:#b18491; --cg-reasoning:#85b9c2; --cg-other:#acb0bb;
   --cg-radius:12px; --cg-accent:#d8c9a6;
-  position:relative; isolation:isolate; min-height:100dvh; width:100%; background:var(--cg-bg); color:var(--cg-ink); font-family:var(--font-sans),"PingFang SC","Microsoft YaHei",sans-serif; overflow-x:clip;
+  position:relative; isolation:isolate; flex-shrink:0; min-height:100dvh; width:100%; background:var(--cg-bg); color:var(--cg-ink); font-family:var(--font-sans,"Inter"),"Noto Sans CJK SC","WenQuanYi Zen Hei","PingFang SC","Microsoft YaHei",sans-serif; overflow-x:clip;
 }
 .shell *, .shell *::before, .shell *::after { box-sizing:border-box; }
 .shell button,.shell input,.shell a { -webkit-tap-highlight-color:transparent; }

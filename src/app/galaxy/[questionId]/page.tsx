@@ -30,7 +30,6 @@ export default function GalaxyPage() {
     void (async () => {
       try {
         const graph = readGalaxy(questionId) ?? await loadGalaxy(questionId,abort.signal);
-        // Yield also for the synchronous cache path, so effects don't synchronously set state.
         await Promise.resolve();
         if (!alive) return;
         saveGalaxy(graph); setRecord({ id:questionId,graph,failed:false });
@@ -47,12 +46,14 @@ export default function GalaxyPage() {
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return;
-      if (selected) router.push(galaxyUrl(questionId,cluster?.id),{ scroll:false });
-      else if (cluster) router.push(galaxyUrl(questionId),{ scroll:false });
+      // Read the current URL rather than a stale selection while navigation commits.
+      const current = new URLSearchParams(window.location.search);
+      if (current.has("opinion")) router.push(galaxyUrl(questionId,current.get("cluster")),{ scroll:false });
+      else if (current.has("cluster")) router.push(galaxyUrl(questionId),{ scroll:false });
     };
     window.addEventListener("keydown",onKey);
     return () => window.removeEventListener("keydown",onKey);
-  }, [selected,cluster,router,questionId]);
+  }, [router,questionId]);
 
   const pending = record?.id !== questionId;
   if (!galaxy) return <SpaceShell><main className={styles.status} aria-live="polite"><h1>{t(pending ? "loadingGalaxy" : "unavailable")}</h1>{!pending && <><p>{t("unavailableDetail")}</p><Link href="/">{t("home")}</Link></>}</main></SpaceShell>;

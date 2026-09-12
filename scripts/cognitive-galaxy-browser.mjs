@@ -13,6 +13,7 @@ const context=await browser.newContext({viewport:{width:1440,height:1000},locale
 await context.addInitScript(()=>localStorage.setItem("cognitive-galaxy:intro:v1","seen"));
 const page=await context.newPage();
 const errors=[];
+page.setDefaultTimeout(20000);
 page.on("pageerror",error=>errors.push(error.message));
 try {
   await page.goto("http://localhost:3000/",{waitUntil:"domcontentloaded"});
@@ -35,26 +36,25 @@ try {
   await page.waitForTimeout(1100);
   await page.screenshot({path:path.join(out,"04-focus.png"),fullPage:true});
   await page.locator('[data-el="land-planet"]').click();
+  await page.locator('[data-el="planet-focus"] [role="status"]').waitFor();
   assert.equal(await page.locator('[data-el="planet-focus"] [role="status"]').count(),1);
   await page.reload({waitUntil:"domcontentloaded"});
   await page.locator('[data-el="planet-focus"]').waitFor();
   await page.keyboard.press("Escape");
-  await page.waitForURL(url=>!url.searchParams.has("opinion"));
+  await page.waitForURL(url=>!url.searchParams.has("opinion"),{waitUntil:"domcontentloaded"});
   await page.keyboard.press("Escape");
-  await page.waitForURL(url=>!url.searchParams.has("cluster"));
-  // Pointer navigation and browser Back follow the same semantic hierarchy.
+  await page.waitForURL(url=>!url.searchParams.has("cluster"),{waitUntil:"domcontentloaded"});
   await page.locator('[data-el="galaxy-cluster"]').first().press("Enter");
-  await page.waitForURL(url=>url.searchParams.has("cluster"));
-  await page.goBack();
-  await page.waitForURL(url=>!url.searchParams.has("cluster"));
-  await page.goto("http://localhost:3000/");
+  await page.waitForURL(url=>url.searchParams.has("cluster"),{waitUntil:"domcontentloaded"});
+  await page.goBack({waitUntil:"domcontentloaded"});
+  await page.waitForURL(url=>!url.searchParams.has("cluster"),{waitUntil:"domcontentloaded"});
+  await page.goto("http://localhost:3000/",{waitUntil:"domcontentloaded"});
   await page.route("**/api/opinion/build",route=>route.fulfill({status:503,contentType:"application/json",body:JSON.stringify({error:"zhihu_auth_not_configured"})}));
   await page.locator("input").fill("测试问题");
   await page.locator("form button[type=submit]").click();
   await page.locator('[role="alert"]').waitFor({timeout:15000});
   assert.equal(await page.locator('[data-el="enter-demo"]').count(),1);
   await page.unroute("**/api/opinion/build");
-  // Two-stage question selection and a synthetic successful graph exercise the real UI contract.
   await page.route("**/api/opinion/build", async route=>{
     const body=route.request().postDataJSON();
     const graph={questionId:"q_test_contract",questionTitle:"测试星系",sourceScope:"zhihu-question-answers",opinions:[{id:"test-health",questionId:"q_test_contract",title:"心理健康也是重要条件",summary:"仅用于接口测试",kind:"human",sourceIds:[],support:0,x:0,y:0}],sources:[],authors:[],relations:[]};
@@ -63,18 +63,17 @@ try {
   await page.locator("input").fill("测试");
   await page.locator("form button[type=submit]").click();
   await page.getByRole("button",{name:"测试星系",exact:true}).click();
-  await page.waitForURL("**/galaxy/q_test_contract");
+  await page.waitForURL("**/galaxy/q_test_contract",{waitUntil:"domcontentloaded"});
   await page.locator('[data-el="galaxy-cluster"]').waitFor();
   assert.equal(await page.locator('[data-el="opinion-planet"]').count(),1);
   await page.reload({waitUntil:"domcontentloaded"});
   await page.locator('[data-el="galaxy-cluster"]').waitFor();
   await page.unroute("**/api/opinion/build");
-  await page.goto("http://localhost:3000/galaxy/demo-luoci?cluster=bogus&opinion=bogus");
+  await page.goto("http://localhost:3000/galaxy/demo-luoci?cluster=bogus&opinion=bogus",{waitUntil:"domcontentloaded"});
   await page.locator('[data-el="galaxy-cluster"]').first().waitFor();
-  // Reduced motion + mobile layout, including direct route restoration.
   await page.emulateMedia({reducedMotion:"reduce"});
   await page.setViewportSize({width:390,height:844});
-  await page.goto("http://localhost:3000/");
+  await page.goto("http://localhost:3000/",{waitUntil:"domcontentloaded"});
   await page.locator('[data-el="enter-demo"]').waitFor();
   await page.waitForTimeout(500);
   await page.screenshot({path:path.join(out,"05-mobile-home.png"),fullPage:true});
@@ -87,11 +86,9 @@ try {
   await page.locator('[data-el="planet-focus"]').waitFor();
   await page.screenshot({path:path.join(out,"07-mobile-focus.png"),fullPage:true});
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
-  // Fresh opening can always be skipped and must not reappear on reload.
   await page.emulateMedia({reducedMotion:"no-preference"});
   await page.setViewportSize({width:1440,height:1000});
-  await page.goto("http://localhost:3000/");
-  // Remove the init script's persistence by replaying from the public header control.
+  await page.goto("http://localhost:3000/",{waitUntil:"domcontentloaded"});
   await page.locator("header button").first().click();
   await page.locator('[data-el="skip-opening"]').waitFor();
   await page.waitForTimeout(600);
@@ -99,5 +96,12 @@ try {
   await page.locator('[data-el="skip-opening"]').click();
   await page.locator('[data-el="galaxy-opening"]').waitFor({state:"detached"});
   assert.deepEqual(errors,[]);
-  await fs.writeFile(path.join(out,"result.json"),JSON.stringify({ok:true,pageErrors:errors,checks:["48 unique planets","6 clusters","8 viewpoints per demo cluster","focus","phase boundary","refresh","Escape","browser Back","keyboard","search error","invalid view query","mobile overflow","reduced motion","skippable opening"]},null,2));
+  await fs.writeFile(path.join(out,"result.json"),JSON.stringify({ok:true,pageErrors:errors,checks:["48 unique planets","6 clusters","8 viewpoints per demo cluster","focus","phase boundary","refresh","Escape","browser Back","keyboard","search error","two-stage search contract","invalid view query","mobile overflow","reduced motion","skippable opening"]},null,2));
+} catch (error) {
+  const detail={ok:false,url:page.url(),message:String(error),pageErrors:errors};
+  console.error(JSON.stringify(detail));
+  await fs.writeFile(path.join(out,"failure.json"),JSON.stringify(detail,null,2));
+  await page.screenshot({path:path.join(out,"failure.png"),fullPage:true}).catch(()=>{});
+  await fs.writeFile(path.join(out,"failure.html"),await page.content());
+  throw error;
 } finally { await browser.close(); }
