@@ -52,8 +52,6 @@ export function CarrierInteractionStage({
   const zh = locale !== "en-US";
 
   useEffect(() => {
-    setStepIndex(0);
-    setRevealed([]);
     emitCarrierProgress(interaction, 0);
     return () => {
       if (typeof window !== "undefined") {
