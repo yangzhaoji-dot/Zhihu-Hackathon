@@ -1,0 +1,94 @@
+.grammar {
+  isolation: isolate;
+  transition: background 900ms ease, filter 900ms ease;
+}
+
+/* Crossroads: split paths, old transit surfaces, warm decisions inside cold air. */
+.grammar[data-world-theme="crossroads"] {
+  background-image:
+    radial-gradient(circle at 18% 28%, color-mix(in srgb, var(--world-accent) 12%, transparent), transparent 24%),
+    radial-gradient(circle at 80% 72%, color-mix(in srgb, var(--world-mist) 16%, transparent), transparent 30%),
+    linear-gradient(132deg, transparent 43%, color-mix(in srgb, var(--world-road) 16%, transparent) 44% 47%, transparent 48%),
+    linear-gradient(48deg, transparent 47%, color-mix(in srgb, var(--world-road) 11%, transparent) 48% 50%, transparent 51%);
+}
+
+.grammar[data-world-theme="crossroads"] [data-terrain="plaza"] {
+  clip-path: polygon(4% 18%, 24% 4%, 72% 7%, 97% 28%, 90% 78%, 70% 96%, 17% 91%, 2% 64%);
+}
+
+/* Archive: dense layers and page-like bands, as if the ground is made of records. */
+.grammar[data-world-theme="archive"] {
+  background-image:
+    repeating-linear-gradient(0deg, rgba(255,255,255,.018) 0 1px, transparent 1px 34px),
+    linear-gradient(110deg, color-mix(in srgb, var(--world-ground) 70%, #17130f), var(--world-sky));
+}
+
+.grammar[data-world-theme="archive"] [data-terrain="plaza"],
+.grammar[data-world-theme="archive"] [data-terrain="station"] {
+  border-radius: 10px;
+  box-shadow: inset 0 0 0 1px rgba(235,220,180,.08), inset 18px 0 34px rgba(0,0,0,.14);
+}
+
+/* Theater: darker perimeter and localized light, like a stage awaiting testimony. */
+.grammar[data-world-theme="theater"] {
+  background-image:
+    radial-gradient(ellipse at 52% 42%, color-mix(in srgb, var(--world-accent) 10%, transparent), transparent 30%),
+    radial-gradient(ellipse at 50% 50%, transparent 20%, rgba(16,6,12,.36) 78%),
+    linear-gradient(160deg, var(--world-ground), var(--world-sky));
+}
+
+.grammar[data-world-theme="theater"] [data-terrain="station"] {
+  box-shadow: 0 0 44px color-mix(in srgb, var(--world-accent) 18%, transparent), inset 0 0 24px rgba(0,0,0,.18);
+}
+
+/* Forest: softer boundaries and layered mist; roads feel grown rather than engineered. */
+.grammar[data-world-theme="forest"] {
+  background-image:
+    radial-gradient(circle at 22% 24%, color-mix(in srgb, var(--world-accent) 10%, transparent), transparent 20%),
+    radial-gradient(circle at 76% 58%, color-mix(in srgb, var(--world-mist) 20%, transparent), transparent 28%),
+    radial-gradient(circle at 46% 88%, rgba(8,22,17,.32), transparent 38%),
+    linear-gradient(150deg, var(--world-ground), var(--world-sky));
+}
+
+.grammar[data-world-theme="forest"] [data-terrain="plaza"],
+.grammar[data-world-theme="forest"] [data-terrain="station"] {
+  border-radius: 48% 52% 42% 58% / 42% 36% 64% 58%;
+  filter: saturate(.92);
+}
+
+.grammar[data-world-theme="forest"] [data-terrain="fog"] {
+  filter: blur(9px);
+}
+
+/* Machine: visible systems, precise intersections and colder hard surfaces. */
+.grammar[data-world-theme="machine"] {
+  background-image:
+    linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.018) 1px, transparent 1px),
+    radial-gradient(circle at 72% 22%, color-mix(in srgb, var(--world-accent) 15%, transparent), transparent 22%),
+    linear-gradient(145deg, var(--world-ground), var(--world-sky));
+  background-size: 48px 48px, 48px 48px, auto, auto !important;
+}
+
+.grammar[data-world-theme="machine"] [data-terrain="plaza"],
+.grammar[data-world-theme="machine"] [data-terrain="station"] {
+  border-radius: 4px;
+  box-shadow: inset 0 0 0 1px rgba(170,215,230,.08), 0 16px 28px rgba(0,0,0,.18);
+}
+
+/* Scene density influences how strongly the base world is vignetted. */
+.grammar[data-scene-density="sparse"] {
+  box-shadow: inset 0 0 160px rgba(0,0,0,.22);
+}
+
+.grammar[data-scene-density="dense"] {
+  box-shadow: inset 0 0 100px rgba(0,0,0,.34);
+}
+
+.grammar[data-scene-fog="high"] [data-terrain="fog"] { opacity: .88; }
+.grammar[data-scene-fog="medium"] [data-terrain="fog"] { opacity: .72; }
+.grammar[data-scene-fog="low"] [data-terrain="fog"] { opacity: .48; }
+
+@media (prefers-reduced-motion: reduce) {
+  .grammar { transition: none; }
+}
