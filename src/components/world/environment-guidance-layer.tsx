@@ -46,6 +46,27 @@ function curve(from: GridPos, to: GridPos, index: number) {
   return `M ${a.x} ${a.y} Q ${cx} ${cy} ${b.x} ${b.y}`;
 }
 
+function footprintTrail(from: GridPos, to: GridPos) {
+  const a = point(from);
+  const b = point(to);
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  const length = Math.hypot(dx, dy) || 1;
+  const nx = -dy / length;
+  const ny = dx / length;
+  const angle = Math.atan2(dy, dx) * 180 / Math.PI + 90;
+  return [0.18, 0.34, 0.5, 0.66, 0.82].map((t, index) => {
+    const side = index % 2 === 0 ? -1 : 1;
+    const offset = 5 * side;
+    return {
+      x: a.x + dx * t + nx * offset,
+      y: a.y + dy * t + ny * offset,
+      angle,
+      side,
+    };
+  });
+}
+
 export function EnvironmentGuidanceLayer({ opinionId }: { opinionId: string }) {
   const entry = useMemo(() => loadOpinionWorldEntry(opinionId), [opinionId]);
   const [config, setConfig] = useState<WorldConfig | null>(null);
@@ -88,10 +109,14 @@ export function EnvironmentGuidanceLayer({ opinionId }: { opinionId: string }) {
 
   const width = config.size.w * TILE_SIZE;
   const height = config.size.h * TILE_SIZE;
-  const segments = layout.sites.map((site, index) => ({
-    id: site.id,
-    d: curve(index === 0 ? layout.spawn : layout.sites[index - 1].pos, site.pos, index),
-  }));
+  const segments = layout.sites.map((site, index) => {
+    const from = index === 0 ? layout.spawn : layout.sites[index - 1].pos;
+    return {
+      id: site.id,
+      d: curve(from, site.pos, index),
+      footprints: footprintTrail(from, site.pos),
+    };
+  });
 
   return createPortal(
     <>
@@ -101,6 +126,18 @@ export function EnvironmentGuidanceLayer({ opinionId }: { opinionId: string }) {
             <path className={styles.stonePathShadow} d={segment.d} />
             <path className={styles.stonePath} d={segment.d} />
             <path className={styles.traces} d={segment.d} />
+            <g className={styles.footprints}>
+              {segment.footprints.map((footprint, footprintIndex) => (
+                <g
+                  key={`${segment.id}-foot-${footprintIndex}`}
+                  transform={`translate(${footprint.x} ${footprint.y}) rotate(${footprint.angle})`}
+                  data-side={footprint.side > 0 ? "right" : "left"}
+                >
+                  <ellipse cx="0" cy="0" rx="3.2" ry="6.2" />
+                  <circle cx="0" cy="-7.2" r="2.25" />
+                </g>
+              ))}
+            </g>
           </g>
         ))}
       </svg>
