@@ -1,9 +1,18 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { AppAIUnavailableError } from "@/lib/eazo-ai-billing";
-import { composePlanetDialogue, type PlanetDialogueHistoryLine } from "@/lib/opinion/planet-dialogue";
+import {
+  composePlanetDialogue,
+  type PlanetDialogueHistoryLine,
+  type PlanetDialogueTrigger,
+} from "@/lib/opinion/planet-dialogue";
 
 const MAX_HISTORY = 8;
 const MAX_HISTORY_TEXT = 500;
+const PLANET_TRIGGERS = new Set<PlanetDialogueTrigger>([
+  "inspect-claim",
+  "inspect-reason",
+  "inspect-evidence",
+]);
 
 function sanitizeHistory(value: unknown): PlanetDialogueHistoryLine[] {
   if (!Array.isArray(value)) return [];
@@ -42,7 +51,7 @@ export async function POST(request: NextRequest) {
     !opinionId ||
     questionId.length > 160 ||
     opinionId.length > 160 ||
-    trigger !== "inspect"
+    !PLANET_TRIGGERS.has(trigger as PlanetDialogueTrigger)
   ) {
     return NextResponse.json({ ok: false, error: "invalid_input" }, { status: 400 });
   }
@@ -56,6 +65,7 @@ export async function POST(request: NextRequest) {
     const reply = await composePlanetDialogue({
       questionId,
       opinionId,
+      trigger: trigger as PlanetDialogueTrigger,
       locale,
       history: sanitizeHistory(body.history),
       worldState,
