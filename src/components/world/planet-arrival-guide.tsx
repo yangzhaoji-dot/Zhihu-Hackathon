@@ -56,7 +56,7 @@ export function PlanetArrivalGuide({ opinionId }: { opinionId: string }) {
 
   return (
     <aside className={styles.guide} data-stage={stage} aria-live="polite" data-el="planet-arrival-guide">
-      <GuideAvatar accent={scene ? undefined : undefined} label={zh ? "刘看山" : "Liu Kanshan"} />
+      <GuideAvatar label={zh ? "刘看山" : "Liu Kanshan"} />
       <section className={styles.bubble}>
         <header>
           <span>{zh ? "刘看山" : "LIU KANSHAN"}</span>
