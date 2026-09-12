@@ -12,9 +12,9 @@ const LEGEND: { cls: string; key: string }[] = [
 ];
 
 /**
- * The fixed chrome around the canvas: brand + mode switch, semantic search,
- * live Zhihu topic builder, relation legend, agent rail, and zoom controls. Kept separate from the
- * stateful CosmosApp so each file stays reviewable.
+ * Universe chrome follows the product hierarchy:
+ * question galaxy first, opinion planets second. Search belongs to the galaxy
+ * layer; opinion-specific tools stay hidden until a question has been entered.
  */
 export function CosmosChrome({
   mode,
@@ -48,7 +48,9 @@ export function CosmosChrome({
       <div className="topbar">
         <div className="brand">
           <small>{t("cosmos.brand")}</small>
-          <h1 data-el="focus-question">{title}</h1>
+          <h1 data-el="focus-question">
+            {mode === "questions" ? t("cosmos.questionUniverseTitle") : title}
+          </h1>
         </div>
         <div className="mode" role="tablist" aria-label="layer">
           <button
@@ -70,8 +72,8 @@ export function CosmosChrome({
         </div>
       </div>
 
-      {mode === "views" && (
-        <form className="search" onSubmit={onSearch} data-el="opinion-search">
+      {mode === "questions" && (
+        <form className="search" onSubmit={onSearch} data-el="galaxy-search">
           <input
             value={query}
             onChange={(e) => onQueryChange(e.target.value)}
@@ -108,35 +110,37 @@ export function CosmosChrome({
         </div>
       )}
 
-      <div className="rail">
-        <button
-          className={railOn === "agentPath" ? "on" : ""}
-          onClick={() => onRail("agentPath")}
-        >
-          {t("cosmos.railAgent")}
-        </button>
-        <button className={railOn === "gaps" ? "on" : ""} onClick={() => onRail("gaps")}>
-          {t("cosmos.railGap")}
-        </button>
-        <button
-          className={railOn === "match" ? "on" : ""}
-          onClick={() => onRail("match")}
-        >
-          {t("cosmos.railMatch")}
-        </button>
-        <button
-          className={railOn === "tint" ? "on" : ""}
-          onClick={() => onRail("tint")}
-        >
-          {t("cosmos.railTint")}
-        </button>
-        <button
-          className={railOn === "profile" ? "on" : ""}
-          onClick={() => onRail("profile")}
-        >
-          {t("cosmos.railProfile")}
-        </button>
-      </div>
+      {mode === "views" && (
+        <div className="rail">
+          <button
+            className={railOn === "agentPath" ? "on" : ""}
+            onClick={() => onRail("agentPath")}
+          >
+            {t("cosmos.railAgent")}
+          </button>
+          <button className={railOn === "gaps" ? "on" : ""} onClick={() => onRail("gaps")}>
+            {t("cosmos.railGap")}
+          </button>
+          <button
+            className={railOn === "match" ? "on" : ""}
+            onClick={() => onRail("match")}
+          >
+            {t("cosmos.railMatch")}
+          </button>
+          <button
+            className={railOn === "tint" ? "on" : ""}
+            onClick={() => onRail("tint")}
+          >
+            {t("cosmos.railTint")}
+          </button>
+          <button
+            className={railOn === "profile" ? "on" : ""}
+            onClick={() => onRail("profile")}
+          >
+            {t("cosmos.railProfile")}
+          </button>
+        </div>
+      )}
     </>
   );
 }
