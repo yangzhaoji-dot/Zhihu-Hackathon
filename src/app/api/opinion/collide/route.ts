@@ -3,10 +3,9 @@ import { analyzeCollision } from "@/lib/opinion/ai";
 import { AppAIUnavailableError } from "@/lib/eazo-ai-billing";
 import type { OpinionGraph } from "@/lib/opinion/types";
 
-// POST /api/opinion/collide { aId, bId }
-// Analyze a collision between two opinions: consensus, core disagreement,
-// each side's conditions, evidence comparison, missing information, and a
-// candidate fused opinion. AI-driven with a graceful offline fallback.
+// POST /api/opinion/collide { aId, bId, graph? }
+// Analyze two viewpoints from either the server seed or the current client-side
+// galaxy snapshot. The returned candidate is only materialized after user confirmation.
 export async function POST(request: NextRequest) {
   let body: { aId?: unknown; bId?: unknown; graph?: unknown };
   try {
@@ -25,8 +24,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: true, analysis });
   } catch (error) {
     if (error instanceof AppAIUnavailableError) {
-      // analyzeCollision already falls back internally, so this path is rare;
-      // surface the standard code so the client can toast it if needed.
       return NextResponse.json(
         { ok: false, code: "app_ai_unavailable", detail: { code: "app_ai_unavailable" } },
         { status: 402 },
@@ -41,8 +38,8 @@ function isOpinionGraph(value: unknown): value is OpinionGraph {
   const graph = value as Partial<OpinionGraph>;
   return typeof graph.questionId === "string" &&
     typeof graph.questionTitle === "string" &&
-    Array.isArray(graph.opinions) && graph.opinions.length <= 12 &&
-    Array.isArray(graph.sources) && graph.sources.length <= 20 &&
-    Array.isArray(graph.authors) && graph.authors.length <= 20 &&
-    Array.isArray(graph.relations) && graph.relations.length <= 30;
+    Array.isArray(graph.opinions) && graph.opinions.length <= 100 &&
+    Array.isArray(graph.sources) && graph.sources.length <= 200 &&
+    Array.isArray(graph.authors) && graph.authors.length <= 200 &&
+    Array.isArray(graph.relations) && graph.relations.length <= 300;
 }
