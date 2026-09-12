@@ -11,11 +11,6 @@ const LEGEND: { cls: string; key: string }[] = [
   { cls: "l-oppose", key: "cosmos.legendOppose" },
 ];
 
-/**
- * Universe chrome follows the product hierarchy:
- * question galaxy first, opinion planets second. Search belongs to the galaxy
- * layer; opinion-specific tools stay hidden until a question has been entered.
- */
 export function CosmosChrome({
   mode,
   title,
@@ -48,16 +43,20 @@ export function CosmosChrome({
   const searchPlaceholder = zh ? "输入你想探索的问题，或粘贴知乎问题链接" : "Enter a question to explore, or paste a Zhihu question link";
   const searchAction = zh ? "探测星系" : "Probe galaxy";
   const searchingLabel = zh ? "正在探测知乎宇宙" : "Probing Zhihu Universe";
-  const visibleHint = hint || (mode === "questions" ? t("cosmos.hintQuestion") : "");
+  const defaultQuestionHint = zh
+    ? "输入一个问题探测星系，或点击已有星系进入"
+    : "Probe a question, or enter an existing galaxy";
+  const oldQuestionHint = t("cosmos.hintQuestion");
+  const visibleHint = mode === "questions"
+    ? (!hint || hint === oldQuestionHint ? defaultQuestionHint : hint)
+    : hint;
 
   return (
     <>
       <div className="topbar">
         <div className="brand">
           <small>{zh ? "知乎宇宙" : "ZHIHU UNIVERSE"}</small>
-          <h1 data-el="focus-question">
-            {mode === "questions" ? questionLabel : title}
-          </h1>
+          <h1 data-el="focus-question">{mode === "questions" ? questionLabel : title}</h1>
         </div>
         <div className="mode" role="tablist" aria-label="layer">
           <button
@@ -105,44 +104,18 @@ export function CosmosChrome({
 
       {mode === "views" && (
         <div className="zoom">
-          <button onClick={() => onZoom(1.15)} aria-label={t("cosmos.zoomIn")}>
-            +
-          </button>
-          <button onClick={() => onZoom(1 / 1.15)} aria-label={t("cosmos.zoomOut")}>
-            −
-          </button>
+          <button onClick={() => onZoom(1.15)} aria-label={t("cosmos.zoomIn")}>+</button>
+          <button onClick={() => onZoom(1 / 1.15)} aria-label={t("cosmos.zoomOut")}>−</button>
         </div>
       )}
 
       {mode === "views" && (
         <div className="rail">
-          <button
-            className={railOn === "agentPath" ? "on" : ""}
-            onClick={() => onRail("agentPath")}
-          >
-            {t("cosmos.railAgent")}
-          </button>
-          <button className={railOn === "gaps" ? "on" : ""} onClick={() => onRail("gaps")}>
-            {t("cosmos.railGap")}
-          </button>
-          <button
-            className={railOn === "match" ? "on" : ""}
-            onClick={() => onRail("match")}
-          >
-            {t("cosmos.railMatch")}
-          </button>
-          <button
-            className={railOn === "tint" ? "on" : ""}
-            onClick={() => onRail("tint")}
-          >
-            {t("cosmos.railTint")}
-          </button>
-          <button
-            className={railOn === "profile" ? "on" : ""}
-            onClick={() => onRail("profile")}
-          >
-            {t("cosmos.railProfile")}
-          </button>
+          <button className={railOn === "agentPath" ? "on" : ""} onClick={() => onRail("agentPath")}>{t("cosmos.railAgent")}</button>
+          <button className={railOn === "gaps" ? "on" : ""} onClick={() => onRail("gaps")}>{t("cosmos.railGap")}</button>
+          <button className={railOn === "match" ? "on" : ""} onClick={() => onRail("match")}>{t("cosmos.railMatch")}</button>
+          <button className={railOn === "tint" ? "on" : ""} onClick={() => onRail("tint")}>{t("cosmos.railTint")}</button>
+          <button className={railOn === "profile" ? "on" : ""} onClick={() => onRail("profile")}>{t("cosmos.railProfile")}</button>
         </div>
       )}
     </>
