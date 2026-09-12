@@ -1,18 +1,18 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import type { CarrierActionKind, CarrierInteractionDefinition } from "@/lib/world/carrier-interactions";
+import { CarrierActionControl } from "./carrier-action-control";
+import type { CarrierInteractionDefinition } from "@/lib/world/carrier-interactions";
 import styles from "./carrier-interaction-stage.module.css";
 
-const ACTION_LABELS: Record<CarrierActionKind, { "zh-CN": string; "en-US": string }> = {
-  inspect: { "zh-CN": "观察", "en-US": "Inspect" },
-  toggle: { "zh-CN": "调整", "en-US": "Adjust" },
-  align: { "zh-CN": "对齐", "en-US": "Align" },
-  follow: { "zh-CN": "前往", "en-US": "Follow" },
-  restore: { "zh-CN": "复原", "en-US": "Restore" },
-  listen: { "zh-CN": "倾听", "en-US": "Listen" },
-  "open-source": { "zh-CN": "打开原文", "en-US": "Open source" },
-  choose: { "zh-CN": "作出判断", "en-US": "Respond" },
+const MODE_LABELS: Record<CarrierInteractionDefinition["mode"], { "zh-CN": string; "en-US": string }> = {
+  observe: { "zh-CN": "观察", "en-US": "OBSERVE" },
+  experiment: { "zh-CN": "实验", "en-US": "EXPERIMENT" },
+  trace: { "zh-CN": "溯源", "en-US": "TRACE" },
+  compare: { "zh-CN": "对照", "en-US": "COMPARE" },
+  navigate: { "zh-CN": "航行", "en-US": "NAVIGATE" },
+  restore: { "zh-CN": "复原", "en-US": "RESTORE" },
+  listen: { "zh-CN": "倾听", "en-US": "LISTEN" },
 };
 
 function emitCarrierProgress(
@@ -52,6 +52,8 @@ export function CarrierInteractionStage({
   const zh = locale !== "en-US";
 
   useEffect(() => {
+    setStepIndex(0);
+    setRevealed([]);
     emitCarrierProgress(interaction, 0);
     return () => {
       if (typeof window !== "undefined") {
@@ -83,7 +85,7 @@ export function CarrierInteractionStage({
       <section className={styles.stage}>
         <header className={styles.header}>
           <div>
-            <span>{zh ? "认知载体" : "COGNITION CARRIER"}</span>
+            <span>{zh ? "认知载体" : "COGNITION CARRIER"} · {MODE_LABELS[interaction.mode][locale]}</span>
             <h2>{interaction.carrier}</h2>
           </div>
           <strong>{Math.min(stepIndex + 1, interaction.steps.length)}/{interaction.steps.length}</strong>
@@ -100,28 +102,35 @@ export function CarrierInteractionStage({
 
         {!completed && current ? (
           <div className={styles.step}>
-            <small>{ACTION_LABELS[current.action][locale]}</small>
+            <small>{zh ? "当前观察" : "CURRENT CUE"}</small>
             <p>{current.prompt[locale]}</p>
-            <button type="button" onClick={advance}>{ACTION_LABELS[current.action][locale]}</button>
+            <CarrierActionControl
+              key={current.id}
+              action={current.action}
+              step={current}
+              locale={locale}
+              onAdvance={advance}
+            />
           </div>
         ) : (
           <div className={styles.completion}>
+            <div className={styles.distillPreview} aria-hidden><i /><b /><em /></div>
             <p>{interaction.completionLine[locale]}</p>
             <button type="button" onClick={onComplete}>
-              {zh ? "提炼认知碎片" : "Distill cognition shard"}
+              {zh ? "让认知从载体中析出" : "Distill cognition from this carrier"}
             </button>
           </div>
         )}
 
         {visibleReveals.length > 0 && (
-          <div className={styles.reveals}>
+          <div className={styles.reveals} aria-live="polite">
             {visibleReveals.map((item) => <p key={item.id}>{item.text}</p>)}
           </div>
         )}
 
         <footer className={styles.footer}>
           <button type="button" onClick={onCancel}>{zh ? "先离开这个载体" : "Leave this carrier for now"}</button>
-          <span>{zh ? "碎片只会在交互完成后生成" : "The shard appears only after the carrier interaction is complete"}</span>
+          <span>{zh ? "交互完成之前，不会生成认知碎片" : "No cognition shard exists until the carrier interaction is complete"}</span>
         </footer>
       </section>
     </div>
