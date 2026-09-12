@@ -32,7 +32,7 @@ export function CollisionPanel({ galaxy, selectedIds, onRemove, onClear, onFused
   };
 
   const fuse = () => {
-    if (!analysis || selectedIds.length !== 2) return;
+    if (!analysis || analysis.source === "fallback" || selectedIds.length !== 2) return;
     const mutation = fuseGalaxyOpinions({
       graph: galaxy.graph,
       parentA: selectedIds[0],
@@ -57,7 +57,7 @@ export function CollisionPanel({ galaxy, selectedIds, onRemove, onClear, onFused
       <div className={styles.two}><section><span>A 成立条件</span><p>{analysis.conditions.a}</p></section><section><span>B 成立条件</span><p>{analysis.conditions.b}</p></section></div>
       <section><span>证据比较</span><p>{analysis.evidence.verdict}</p></section>
       {analysis.missing.length ? <section><span>仍缺少</span>{analysis.missing.slice(0,3).map((item) => <p key={item}>· {item}</p>)}</section> : null}
-      <div className={styles.candidate}><span>可融合出的新观点</span><h3>{analysis.candidate.title}</h3><p>{analysis.candidate.summary}</p><button type="button" data-el="fuse-planets" onClick={fuse}><GitMerge size={15}/>融合成新星球</button></div>
+      <div className={styles.candidate}><span>可融合出的新观点</span><h3>{analysis.candidate.title}</h3><p>{analysis.candidate.summary}</p>{analysis.source === "fallback" ? <p className={styles.error}>AI 当前不可用，这只是降级分析，不会据此创建新星球。</p> : <button type="button" data-el="fuse-planets" onClick={fuse}><GitMerge size={15}/>融合成新星球</button>}</div>
     </div>}
   </aside>;
 }
