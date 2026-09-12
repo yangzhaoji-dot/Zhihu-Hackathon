@@ -41,16 +41,22 @@ export function CosmosChrome({
   onRail: (which: "agentPath" | "gaps" | "profile" | "match" | "tint") => void;
   onZoom: (factor: number) => void;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const zh = i18n.resolvedLanguage !== "en-US";
+  const questionLabel = zh ? "问题星系" : "Question Galaxy";
+  const planetLabel = zh ? "观点星球" : "Opinion Planets";
+  const searchPlaceholder = zh ? "输入你想探索的问题，或粘贴知乎问题链接" : "Enter a question to explore, or paste a Zhihu question link";
+  const searchAction = zh ? "探测星系" : "Probe galaxy";
+  const searchingLabel = zh ? "正在探测知乎宇宙" : "Probing Zhihu Universe";
   const visibleHint = hint || (mode === "questions" ? t("cosmos.hintQuestion") : "");
 
   return (
     <>
       <div className="topbar">
         <div className="brand">
-          <small>{t("cosmos.brand")}</small>
+          <small>{zh ? "知乎宇宙" : "ZHIHU UNIVERSE"}</small>
           <h1 data-el="focus-question">
-            {mode === "questions" ? t("cosmos.modeQuestion") : title}
+            {mode === "questions" ? questionLabel : title}
           </h1>
         </div>
         <div className="mode" role="tablist" aria-label="layer">
@@ -60,16 +66,11 @@ export function CosmosChrome({
             role="tab"
             aria-selected={mode === "questions"}
           >
-            {t("cosmos.modeQuestion")}
+            {questionLabel}
           </button>
           {mode === "views" && (
-            <button
-              className="active"
-              role="tab"
-              aria-selected="true"
-              disabled
-            >
-              {t("cosmos.modeView")}
+            <button className="active" role="tab" aria-selected="true" disabled>
+              {planetLabel}
             </button>
           )}
         </div>
@@ -80,11 +81,11 @@ export function CosmosChrome({
           <input
             value={query}
             onChange={(e) => onQueryChange(e.target.value)}
-            aria-label={t("cosmos.searchPlaceholder")}
-            placeholder={t("cosmos.searchPlaceholder")}
+            aria-label={searchPlaceholder}
+            placeholder={searchPlaceholder}
           />
           <button type="submit" disabled={searching}>
-            {searching ? t("cosmos.searching") : t("cosmos.searchBtn")}
+            {searching ? searchingLabel : searchAction}
           </button>
         </form>
       )}
