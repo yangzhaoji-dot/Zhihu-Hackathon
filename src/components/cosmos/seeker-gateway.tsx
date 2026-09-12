@@ -1,24 +1,49 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Compass, Radio, Sparkles } from "lucide-react";
 import styles from "./seeker-gateway.module.css";
 
 type GatewayStage = "dormant" | "scanning" | "ready";
 
+function tactile(pattern: number | number[] = 8) {
+  if (typeof navigator !== "undefined" && "vibrate" in navigator) navigator.vibrate(pattern);
+}
+
 export function SeekerGateway({ onEnter }: { onEnter: () => void }) {
   const [stage, setStage] = useState<GatewayStage>("dormant");
   const [locale] = useState<"zh-CN" | "en-US">(() => {
     if (typeof document === "undefined") return "zh-CN";
-    return document.documentElement.lang === "en-US" ? "en-US" : "zh-CN";
+    return document.documentElement.lang.toLowerCase().startsWith("en") ? "en-US" : "zh-CN";
   });
   const zh = locale === "zh-CN";
 
   const awaken = () => {
     if (stage !== "dormant") return;
+    tactile(10);
     setStage("scanning");
-    window.setTimeout(() => setStage("ready"), 920);
+    window.setTimeout(() => {
+      tactile([8, 36, 12]);
+      setStage("ready");
+    }, 920);
   };
+
+  const enter = () => {
+    if (stage !== "ready") return;
+    tactile(12);
+    onEnter();
+  };
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Enter" && event.key !== " ") return;
+      event.preventDefault();
+      if (stage === "dormant") awaken();
+      else if (stage === "ready") enter();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  });
 
   return (
     <main className={styles.gateway} data-stage={stage} data-el="seeker-gateway">
@@ -67,7 +92,7 @@ export function SeekerGateway({ onEnter }: { onEnter: () => void }) {
                 ? "导航恢复完成。选择一个问题星系，去寻找先人留下的认知。"
                 : "Navigation restored. Choose a question galaxy and recover the cognition left behind."}
             </p>
-            <button type="button" className={styles.primary} onClick={onEnter}>
+            <button type="button" className={styles.primary} onClick={enter}>
               <Compass size={16} aria-hidden />
               {zh ? "进入知乎宇宙" : "Enter Zhihu Universe"}
             </button>
