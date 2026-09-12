@@ -27,6 +27,14 @@ async function selectText(locator, start, end) {
   },{start,end});
 }
 
+async function collectTwoExcerpts() {
+  const excerpts=page.locator('[data-el="selectable-excerpt"]');
+  await selectText(excerpts.nth(0),0,18);
+  await page.locator('[data-el="keep-excerpt"]').click();
+  await selectText(excerpts.nth(1),0,18);
+  await page.locator('[data-el="keep-excerpt"]').click();
+}
+
 try {
   await page.goto("http://localhost:3000/galaxy/demo-luoci?cluster=health&opinion=demo-health-0",{waitUntil:"domcontentloaded"});
   await page.locator('[data-el="planet-focus"]').waitFor();
@@ -34,14 +42,11 @@ try {
   await page.waitForURL(/\/world\/o_stoploss\?/);
   await page.locator('[data-el="planet-synthesis-mvp"]').waitFor();
   assert.ok(await page.locator('[data-el="planet-material"]').count() >= 2);
+  assert.ok((await page.getByText("阅读演示材料").count()) >= 1);
+  assert.equal(await page.getByText(/12,400 赞同/).count(),0);
   await shot("01-planet-reader.png");
 
-  const excerpts=page.locator('[data-el="selectable-excerpt"]');
-  await selectText(excerpts.nth(0),0,18);
-  await page.locator('[data-el="keep-excerpt"]').click();
-  await selectText(excerpts.nth(1),0,18);
-  await page.locator('[data-el="keep-excerpt"]').click();
-
+  await collectTwoExcerpts();
   await page.route("**/api/opinion/synthesize",route=>route.fulfill({status:200,contentType:"application/json",body:JSON.stringify({ok:true,result:{
     viewpoint:"身心损耗需要止损，但离开也要同时管理后续风险。",
     summary:"用户选择的两段材料同时强调损耗与条件，因此观点不再是无条件离开。",
@@ -67,8 +72,6 @@ try {
   await shot("03-evolved-galaxy.png");
   await page.unroute("**/api/opinion/synthesize");
 
-  // A generated planet is not decorative: it can be entered again using the
-  // source excerpts persisted in the current session graph.
   await page.locator('[data-el="land-planet"]').click();
   await page.waitForURL(url=>url.pathname.includes(`/world/${evolvedId}`));
   await page.locator('[data-el="planet-synthesis-mvp"]').waitFor();
@@ -94,12 +97,47 @@ try {
   assert.match(await page.locator('[data-el="planet-focus"] h2').innerText(),/退出成本/);
   await page.unroute("**/api/opinion/collide");
 
+  // Reset must remove both the fork and fusion, then the alternative merge
+  // path must update the same source planet rather than creating a 49th node.
   await page.locator('[data-el="reset-galaxy"]').click();
   await page.waitForURL(url=>url.pathname.endsWith("/galaxy/demo-luoci") && !url.searchParams.has("cluster"));
   await page.locator('[data-el="opinion-planet"]').first().waitFor();
   assert.equal(await page.locator('[data-el="opinion-planet"]').count(),48);
+
+  await page.goto("http://localhost:3000/galaxy/demo-luoci?cluster=health&opinion=demo-health-0",{waitUntil:"domcontentloaded"});
+  await page.locator('[data-el="land-planet"]').click();
+  await page.waitForURL(/\/world\/o_stoploss\?/);
+  await page.locator('[data-el="planet-synthesis-mvp"]').waitFor();
+  await collectTwoExcerpts();
+  await page.route("**/api/opinion/synthesize",route=>route.fulfill({status:200,contentType:"application/json",body:JSON.stringify({ok:true,result:{
+    viewpoint:"长期损耗可以成为离开的理由，但需要明确它的适用边界。",
+    summary:"新表达只是给原观点补上成立边界，不需要生成重复节点。",
+    relation:"refinement",action:"merge",reason:"核心判断未变，只补充边界。",
+    additions:["明确适用边界"],gaps:[],
+    scores:{grounding:94,coherence:91,specificity:85,boundary:92,novelty:58,overall:88},provider:"mock"
+  }})}));
+  await page.locator('[data-el="generate-viewpoint"]').click();
+  await page.getByRole("button",{name:"预览合并"}).click();
+  await page.getByRole("button",{name:"合并到原星球"}).click();
+  await page.waitForURL(url=>url.pathname.includes("/galaxy/demo-luoci") && url.searchParams.get("opinion")==="demo-health-0");
+  await page.locator('[data-el="planet-focus"]').waitFor();
+  assert.match(await page.locator('[data-el="planet-focus"] h2').innerText(),/适用边界/);
+  assert.equal(await page.locator('[data-el="opinion-planet"]').count(),8);
+  await shot("05-merge-result.png");
+  await page.unroute("**/api/opinion/synthesize");
+
+  await page.locator('[data-el="reset-galaxy"]').click();
+  await page.waitForURL(url=>!url.searchParams.has("cluster"));
+  assert.equal(await page.locator('[data-el="opinion-planet"]').count(),48);
+
+  await page.setViewportSize({width:390,height:844});
+  await page.goto("http://localhost:3000/world/o_stoploss",{waitUntil:"domcontentloaded"});
+  await page.locator('[data-el="planet-synthesis-mvp"]').waitFor();
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+  await shot("06-mobile-planet.png");
   assert.deepEqual(errors,[]);
-  await fs.writeFile(path.join(out,"result.json"),JSON.stringify({ok:true,checks:["demo landing route","grounded text selection","synthesis","fork persistence","generated planet re-entry","collision","fusion","demo reset"],pageErrors:errors},null,2));
+
+  await fs.writeFile(path.join(out,"result.json"),JSON.stringify({ok:true,checks:["demo landing route","demo material labeling","grounded text selection","synthesis","fork persistence","generated planet re-entry","collision","fusion","merge","demo reset","mobile overflow"],pageErrors:errors},null,2));
 } catch(error) {
   const detail={ok:false,url:page.url(),message:String(error),pageErrors:errors};
   console.error(JSON.stringify(detail));
