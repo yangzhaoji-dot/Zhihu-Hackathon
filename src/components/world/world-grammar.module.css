@@ -107,7 +107,8 @@
   box-shadow: inset 0 0 180px rgba(0, 0, 0, 0.34);
 }
 
-.grammar[data-world-theme="crossroads"] .scenicBackdrop {
+/* The painted city is only valid for city biomes. Other biomes receive their own semantic surface below. */
+.grammar[data-world-theme="crossroads"][data-biome="city"] .scenicBackdrop {
   opacity: 0.88;
   background:
     linear-gradient(180deg, rgba(12, 25, 33, 0.16), rgba(8, 13, 17, 0.34)),
@@ -187,7 +188,7 @@
   box-shadow: 0 0 44px color-mix(in srgb, var(--world-accent) 18%, transparent), inset 0 0 24px rgba(0,0,0,.18);
 }
 
-/* Forest: softer boundaries and layered mist; roads feel grown rather than engineered. */
+/* Forest grammar: softer boundaries and layered mist; roads feel grown rather than engineered. */
 .grammar[data-world-theme="forest"] {
   background-image:
     radial-gradient(circle at 22% 24%, color-mix(in srgb, var(--world-accent) 10%, transparent), transparent 20%),
@@ -220,6 +221,120 @@
 .grammar[data-world-theme="machine"] [data-terrain="station"] {
   border-radius: 4px;
   box-shadow: inset 0 0 0 1px rgba(170,215,230,.08), 0 16px 28px rgba(0,0,0,.18);
+}
+
+/* ── Independent biome layer ────────────────────────────────────────────
+   Grammar controls how a viewpoint is understood; biome controls what kind of
+   world that reasoning inhabits. These selectors deliberately come after the
+   grammar rules so a Crossroads opinion can live in ocean, desert, ruins, etc. */
+
+.grammar[data-biome="ocean"] .scenicBackdrop {
+  opacity: .82;
+  background:
+    radial-gradient(ellipse at 18% 58%, color-mix(in srgb, var(--world-ground) 72%, #233b42) 0 8%, transparent 9%),
+    radial-gradient(ellipse at 64% 36%, color-mix(in srgb, var(--world-ground) 68%, #2f4e53) 0 10%, transparent 11%),
+    radial-gradient(ellipse at 82% 74%, color-mix(in srgb, var(--world-ground) 74%, #243d43) 0 7%, transparent 8%),
+    repeating-radial-gradient(ellipse at 50% 54%, rgba(142,205,209,.08) 0 2px, transparent 3px 22px),
+    linear-gradient(180deg, #0a2430, #123744 56%, #0a2632);
+  filter: saturate(.82) brightness(.78);
+}
+.grammar[data-biome="ocean"] .scenicAtmosphere {
+  opacity: .9;
+  background:
+    radial-gradient(ellipse at 50% 18%, rgba(151,211,215,.15), transparent 27%),
+    linear-gradient(180deg, rgba(123,185,195,.12), transparent 42%),
+    radial-gradient(ellipse at 28% 72%, rgba(118,177,186,.14), transparent 34%);
+  filter: blur(10px);
+}
+.grammar[data-biome="ocean"] .routeVeins path {
+  stroke-dasharray: 2 22;
+  opacity: .28;
+}
+
+.grammar[data-biome="desert"] .scenicBackdrop {
+  opacity: .84;
+  background:
+    radial-gradient(ellipse at 24% 70%, rgba(180,139,87,.34) 0 12%, transparent 13%),
+    radial-gradient(ellipse at 72% 58%, rgba(154,111,71,.26) 0 18%, transparent 19%),
+    repeating-linear-gradient(166deg, transparent 0 38px, rgba(230,185,119,.045) 39px 41px, transparent 42px 80px),
+    linear-gradient(180deg, #31211a, #6a513d 72%, #403025);
+  filter: saturate(.78) brightness(.8);
+}
+.grammar[data-biome="desert"] .scenicAtmosphere {
+  opacity: .58;
+  background:
+    linear-gradient(180deg, rgba(232,184,113,.16), transparent 36%),
+    radial-gradient(ellipse at 76% 32%, rgba(231,164,92,.12), transparent 30%);
+  filter: blur(5px);
+}
+.grammar[data-biome="desert"] .scenicForeground {
+  background:
+    linear-gradient(0deg, rgba(45,29,20,.5), transparent 18%),
+    radial-gradient(ellipse at 50% 50%, transparent 52%, rgba(42,27,20,.25) 95%);
+}
+
+.grammar[data-biome="forest"] .scenicBackdrop {
+  opacity: .8;
+  background:
+    radial-gradient(circle at 18% 26%, rgba(77,116,83,.42) 0 8%, transparent 9%),
+    radial-gradient(circle at 78% 34%, rgba(60,100,72,.44) 0 12%, transparent 13%),
+    radial-gradient(circle at 48% 78%, rgba(58,92,68,.38) 0 16%, transparent 17%),
+    repeating-radial-gradient(circle at 50% 50%, rgba(171,197,137,.025) 0 2px, transparent 3px 30px),
+    linear-gradient(160deg, #12221e, #294536 68%, #14251f);
+  filter: saturate(.9) brightness(.72);
+}
+.grammar[data-biome="forest"] .scenicAtmosphere {
+  opacity: .82;
+  background:
+    radial-gradient(circle at 30% 30%, rgba(185,205,145,.12), transparent 22%),
+    radial-gradient(circle at 72% 66%, rgba(125,173,154,.12), transparent 30%),
+    linear-gradient(180deg, rgba(132,166,151,.08), transparent 48%);
+}
+
+.grammar[data-biome="city"]:not([data-world-theme="crossroads"]) .scenicBackdrop {
+  opacity: .78;
+  background:
+    linear-gradient(90deg, transparent 0 8%, rgba(95,107,112,.18) 8% 22%, transparent 22% 28%, rgba(70,83,91,.24) 28% 44%, transparent 44% 55%, rgba(93,88,80,.2) 55% 72%, transparent 72%),
+    repeating-linear-gradient(0deg, transparent 0 52px, rgba(205,184,151,.035) 53px 54px),
+    linear-gradient(180deg, #14212b, #2f3537 68%, #1a2328);
+  filter: saturate(.72) brightness(.75);
+}
+
+.grammar[data-biome="ruins"] .scenicBackdrop {
+  opacity: .84;
+  background:
+    linear-gradient(134deg, transparent 0 22%, rgba(185,166,141,.08) 22.5% 23.5%, transparent 24% 54%, rgba(185,166,141,.065) 54.5% 55.5%, transparent 56%),
+    radial-gradient(ellipse at 24% 68%, rgba(103,91,80,.4) 0 9%, transparent 10%),
+    radial-gradient(ellipse at 70% 42%, rgba(91,82,75,.35) 0 14%, transparent 15%),
+    linear-gradient(155deg, #17191c, #403b36 70%, #222326);
+  filter: saturate(.58) brightness(.72);
+}
+.grammar[data-biome="ruins"] .scenicAtmosphere {
+  opacity: .64;
+  background:
+    radial-gradient(ellipse at 58% 16%, rgba(218,188,144,.1), transparent 22%),
+    linear-gradient(180deg, rgba(166,154,143,.08), transparent 50%);
+}
+
+.grammar[data-biome="industrial"] .scenicBackdrop {
+  opacity: .82;
+  background:
+    repeating-linear-gradient(90deg, transparent 0 62px, rgba(137,175,187,.055) 63px 65px, transparent 66px 126px),
+    repeating-linear-gradient(0deg, transparent 0 44px, rgba(137,175,187,.035) 45px 46px),
+    radial-gradient(circle at 76% 28%, rgba(220,131,83,.14), transparent 18%),
+    linear-gradient(155deg, #0d1720, #2c3a45 68%, #18232b);
+  filter: saturate(.74) brightness(.72);
+}
+.grammar[data-biome="industrial"] .scenicAtmosphere {
+  opacity: .54;
+  background:
+    radial-gradient(ellipse at 24% 68%, rgba(121,155,168,.09), transparent 30%),
+    radial-gradient(ellipse at 78% 28%, rgba(225,139,87,.08), transparent 22%);
+  filter: blur(6px);
+}
+.grammar[data-biome="industrial"] .routeVeins path {
+  stroke-dasharray: 8 10;
+  opacity: .38;
 }
 
 /* Scene density influences how strongly the base world is vignetted. */
