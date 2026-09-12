@@ -2,6 +2,7 @@
 
 import { Search } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import styles from "./cosmos-chrome.module.css";
 import formationStyles from "./galaxy-formation.module.css";
 import type { Mode } from "./use-opinion-space";
 
@@ -62,14 +63,16 @@ export function CosmosChrome({
 
   return (
     <>
-      <div className="topbar">
-        <button className="brand" type="button" onClick={() => onModeChange("questions")}>
+      <div className={styles.atmosphere} aria-hidden />
+
+      <div className={`topbar ${styles.topbar}`}>
+        <button className={`brand ${styles.brand}`} type="button" onClick={() => onModeChange("questions")}>
           <small>{zh ? "知乎宇宙" : "ZHIHU UNIVERSE"}</small>
           <span>{mode === "questions" ? questionLabel : planetLabel}</span>
         </button>
 
         {mode === "views" && (
-          <div className="current-system">
+          <div className={`current-system ${styles.currentSystem}`}>
             <small>{zh ? "当前问题星系" : "CURRENT QUESTION GALAXY"}</small>
             <strong data-el="focus-question">{title}</strong>
           </div>
@@ -77,7 +80,7 @@ export function CosmosChrome({
       </div>
 
       {mode === "questions" && (
-        <form className="search" onSubmit={onSearch} data-el="galaxy-search">
+        <form className={`search ${styles.search}`} onSubmit={onSearch} data-el="galaxy-search">
           <Search size={15} aria-hidden />
           <input
             value={query}
@@ -91,10 +94,10 @@ export function CosmosChrome({
         </form>
       )}
 
-      {visibleHint && <div className="hint">{visibleHint}</div>}
+      {visibleHint && <div className={`hint ${styles.hint}`}>{visibleHint}</div>}
 
       {mode === "views" && (
-        <div className="legend" aria-hidden>
+        <div className={`legend ${styles.legend}`} aria-hidden>
           {LEGEND.map((l) => (
             <span key={l.cls} className={l.cls}>
               <i />
@@ -105,7 +108,7 @@ export function CosmosChrome({
       )}
 
       {mode === "views" && (
-        <div className="zoom">
+        <div className={`zoom ${styles.zoom}`}>
           <button onClick={() => onZoom(1.15)} aria-label={t("cosmos.zoomIn")}>+</button>
           <button onClick={() => onZoom(1 / 1.15)} aria-label={t("cosmos.zoomOut")}>−</button>
         </div>
