@@ -2,16 +2,21 @@
 
 import { useEffect, useState } from "react";
 import { Orbit, RadioTower, Sparkles, X } from "lucide-react";
+import { getViewerId } from "@/lib/opinion/viewer-id";
+import { loadLocalWorldProgress } from "@/lib/opinion/world-progress-cache";
+import { resonanceCompleteKey } from "@/lib/world/resonance";
 import styles from "./ai-station-dock.module.css";
 
 type StationPayload = {
   id: string;
+  questionId: string;
   title: string;
   summary?: string;
   reason?: string;
   conditions?: string[];
   derivedFrom?: string[];
   derivedSource?: "ai" | "fallback";
+  understoodCount?: number;
 };
 
 function tactile(pattern: number | number[] = 7) {
@@ -30,8 +35,15 @@ export function AiStationDock() {
     const onOpen = (event: Event) => {
       const detail = (event as CustomEvent<StationPayload>).detail;
       if (!detail?.id) return;
+      const parentIds = detail.derivedFrom ?? [];
+      const progress = detail.questionId
+        ? loadLocalWorldProgress(getViewerId(), detail.questionId)
+        : null;
+      const understoodCount = parentIds.filter((id) =>
+        Boolean(progress?.worldState?.[resonanceCompleteKey(id)]),
+      ).length;
       tactile([6, 28, 7]);
-      setStation(detail);
+      setStation({ ...detail, understoodCount });
       window.dispatchEvent(new CustomEvent("sfx", { detail: "sfx.station.open" }));
     };
     window.addEventListener("station:open", onOpen);
@@ -56,6 +68,8 @@ export function AiStationDock() {
     setStation(null);
   };
   const parentCount = station.derivedFrom?.length ?? 0;
+  const understoodCount = station.understoodCount ?? 0;
+  const crossReadingUnlocked = parentCount >= 2 && understoodCount >= 2;
   const synthesis = station.reason?.trim() || station.summary?.trim() || (zh
     ? "这个中转站保存的是 AI 对已知真人观点关系的整理与推演。"
     : "This station preserves AI synthesis over known human-opinion relations.");
@@ -106,6 +120,29 @@ export function AiStationDock() {
                 : "The station helps expose relations between opinions, but it is not a human opinion planet."}
             </small>
           </div>
+        </div>
+
+        <div className={styles.crossRead} data-unlocked={crossReadingUnlocked ? "true" : "false"}>
+          <div className={styles.crossHead}>
+            <span>{zh ? "跨观点读取" : "CROSS-OPINION READING"}</span>
+            <strong>{understoodCount}/{Math.max(parentCount, 1)}</strong>
+          </div>
+          <div className={styles.progress} aria-hidden>
+            <i style={{ width: `${parentCount ? Math.min(100, understoodCount / parentCount * 100) : 0}%` }} />
+          </div>
+          {crossReadingUnlocked ? (
+            <p>
+              {zh
+                ? "已建立至少两条真正理解过的认知航线。现在这段 AI 综合可以作为跨观点线索来读，但仍然不是新的真人观点。"
+                : "At least two understood cognition routes are connected. This AI synthesis can now be read as a cross-opinion clue, but it is still not a new human opinion."}
+            </p>
+          ) : (
+            <p>
+              {zh
+                ? "先去共鸣至少两颗与这里相连的真人观点星球。中转站只会基于你真正探索过的认知开放更深的综合。"
+                : "Resonate with at least two connected human-opinion planets first. The station only opens deeper synthesis after you have actually explored the cognition."}
+            </p>
+          )}
         </div>
 
         {station.conditions?.length ? (
