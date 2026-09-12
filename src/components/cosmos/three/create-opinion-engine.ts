@@ -12,6 +12,7 @@ function openStation(node: OpinionNodeLike) {
   window.dispatchEvent(new CustomEvent("station:open", {
     detail: {
       id: node.id,
+      questionId: node.questionId,
       title: node.title,
       summary: node.summary,
       reason: node.reason,
