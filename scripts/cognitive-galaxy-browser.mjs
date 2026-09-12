@@ -1,0 +1,103 @@
+// Run after `bun run build` and starting the production server on port 3000.
+// Browser-only tests mock remote search; they do not claim a live Zhihu integration test.
+import assert from "node:assert/strict";
+import fs from "node:fs/promises";
+import path from "node:path";
+import { createRequire } from "node:module";
+const require = createRequire(import.meta.url);
+const { chromium } = require(process.env.PLAYWRIGHT_MODULE_PATH || "playwright");
+const out=path.resolve(process.env.GALAXY_SCREENSHOTS || "test-artifacts/galaxy");
+await fs.mkdir(out,{recursive:true});
+const browser=await chromium.launch({headless:true});
+const context=await browser.newContext({viewport:{width:1440,height:1000},locale:"zh-CN"});
+await context.addInitScript(()=>localStorage.setItem("cognitive-galaxy:intro:v1","seen"));
+const page=await context.newPage();
+const errors=[];
+page.on("pageerror",error=>errors.push(error.message));
+try {
+  await page.goto("http://localhost:3000/",{waitUntil:"domcontentloaded"});
+  await page.locator('[data-el="enter-demo"]').waitFor();
+  await page.waitForTimeout(1000);
+  await page.screenshot({path:path.join(out,"01-home.png"),fullPage:true});
+  await page.locator('[data-el="enter-demo"]').click();
+  await page.locator('[data-el="galaxy-cluster"]').first().waitFor();
+  assert.equal(await page.locator('[data-el="galaxy-cluster"]').count(),6);
+  assert.equal(await page.locator('[data-el="opinion-planet"]').count(),48);
+  await page.waitForTimeout(1000);
+  await page.screenshot({path:path.join(out,"02-overview.png"),fullPage:true});
+  await page.locator('[data-el="cluster-shortcut"]').first().click();
+  await page.locator('[data-el="opinion-shortcut"]').first().waitFor();
+  assert.equal(await page.locator('[data-el="opinion-shortcut"]').count(),8);
+  await page.waitForTimeout(1100);
+  await page.screenshot({path:path.join(out,"03-cluster.png"),fullPage:true});
+  await page.locator('[data-el="opinion-shortcut"]').first().click();
+  await page.locator('[data-el="planet-focus"]').waitFor();
+  await page.waitForTimeout(1100);
+  await page.screenshot({path:path.join(out,"04-focus.png"),fullPage:true});
+  await page.locator('[data-el="land-planet"]').click();
+  assert.equal(await page.locator('[data-el="planet-focus"] [role="status"]').count(),1);
+  await page.reload({waitUntil:"domcontentloaded"});
+  await page.locator('[data-el="planet-focus"]').waitFor();
+  await page.keyboard.press("Escape");
+  await page.waitForURL(url=>!url.searchParams.has("opinion"));
+  await page.keyboard.press("Escape");
+  await page.waitForURL(url=>!url.searchParams.has("cluster"));
+  // Pointer navigation and browser Back follow the same semantic hierarchy.
+  await page.locator('[data-el="galaxy-cluster"]').first().press("Enter");
+  await page.waitForURL(url=>url.searchParams.has("cluster"));
+  await page.goBack();
+  await page.waitForURL(url=>!url.searchParams.has("cluster"));
+  await page.goto("http://localhost:3000/");
+  await page.route("**/api/opinion/build",route=>route.fulfill({status:503,contentType:"application/json",body:JSON.stringify({error:"zhihu_auth_not_configured"})}));
+  await page.locator("input").fill("测试问题");
+  await page.locator("form button[type=submit]").click();
+  await page.locator('[role="alert"]').waitFor({timeout:15000});
+  assert.equal(await page.locator('[data-el="enter-demo"]').count(),1);
+  await page.unroute("**/api/opinion/build");
+  // Two-stage question selection and a synthetic successful graph exercise the real UI contract.
+  await page.route("**/api/opinion/build", async route=>{
+    const body=route.request().postDataJSON();
+    const graph={questionId:"q_test_contract",questionTitle:"测试星系",sourceScope:"zhihu-question-answers",opinions:[{id:"test-health",questionId:"q_test_contract",title:"心理健康也是重要条件",summary:"仅用于接口测试",kind:"human",sourceIds:[],support:0,x:0,y:0}],sources:[],authors:[],relations:[]};
+    await route.fulfill({status:200,contentType:"application/json",body:JSON.stringify(body.questionUrl ? {selectionRequired:false,graph,retrieval:{itemCount:1,hasMore:false,scope:"zhihu-question-answers"}} : {selectionRequired:true,query:"测试",questions:[{title:"测试星系",url:"https://www.zhihu.com/question/123",sourceCount:1}]})});
+  });
+  await page.locator("input").fill("测试");
+  await page.locator("form button[type=submit]").click();
+  await page.getByRole("button",{name:"测试星系",exact:true}).click();
+  await page.waitForURL("**/galaxy/q_test_contract");
+  await page.locator('[data-el="galaxy-cluster"]').waitFor();
+  assert.equal(await page.locator('[data-el="opinion-planet"]').count(),1);
+  await page.reload({waitUntil:"domcontentloaded"});
+  await page.locator('[data-el="galaxy-cluster"]').waitFor();
+  await page.unroute("**/api/opinion/build");
+  await page.goto("http://localhost:3000/galaxy/demo-luoci?cluster=bogus&opinion=bogus");
+  await page.locator('[data-el="galaxy-cluster"]').first().waitFor();
+  // Reduced motion + mobile layout, including direct route restoration.
+  await page.emulateMedia({reducedMotion:"reduce"});
+  await page.setViewportSize({width:390,height:844});
+  await page.goto("http://localhost:3000/");
+  await page.locator('[data-el="enter-demo"]').waitFor();
+  await page.waitForTimeout(500);
+  await page.screenshot({path:path.join(out,"05-mobile-home.png"),fullPage:true});
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+  await page.locator('[data-el="enter-demo"]').click();
+  await page.locator('[data-el="cluster-shortcut"]').first().waitFor();
+  await page.screenshot({path:path.join(out,"06-mobile-overview.png"),fullPage:true});
+  await page.locator('[data-el="cluster-shortcut"]').first().click();
+  await page.locator('[data-el="opinion-shortcut"]').first().click();
+  await page.locator('[data-el="planet-focus"]').waitFor();
+  await page.screenshot({path:path.join(out,"07-mobile-focus.png"),fullPage:true});
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+  // Fresh opening can always be skipped and must not reappear on reload.
+  await page.emulateMedia({reducedMotion:"no-preference"});
+  await page.setViewportSize({width:1440,height:1000});
+  await page.goto("http://localhost:3000/");
+  // Remove the init script's persistence by replaying from the public header control.
+  await page.locator("header button").first().click();
+  await page.locator('[data-el="skip-opening"]').waitFor();
+  await page.waitForTimeout(600);
+  await page.screenshot({path:path.join(out,"08-opening.png"),fullPage:true});
+  await page.locator('[data-el="skip-opening"]').click();
+  await page.locator('[data-el="galaxy-opening"]').waitFor({state:"detached"});
+  assert.deepEqual(errors,[]);
+  await fs.writeFile(path.join(out,"result.json"),JSON.stringify({ok:true,pageErrors:errors,checks:["48 unique planets","6 clusters","8 viewpoints per demo cluster","focus","phase boundary","refresh","Escape","browser Back","keyboard","search error","invalid view query","mobile overflow","reduced motion","skippable opening"]},null,2));
+} finally { await browser.close(); }

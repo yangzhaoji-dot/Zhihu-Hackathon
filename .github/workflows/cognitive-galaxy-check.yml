@@ -1,0 +1,41 @@
+name: Cognitive galaxy check
+on:
+  push:
+    branches: [cognitive-galaxy-v1]
+  pull_request:
+    branches: [resonance-scroll-v1]
+permissions:
+  contents: read
+concurrency:
+  group: cognitive-galaxy-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.9
+      - run: bun install --frozen-lockfile
+      - run: bun test scripts/cognitive-galaxy.test.ts
+      - run: bun run lint
+      - run: bun run build
+      - name: Install isolated browser test runner
+        run: |
+          npm install --prefix /tmp/cognitive-browser --no-package-lock playwright@1.51.1
+          /tmp/cognitive-browser/node_modules/.bin/playwright install --with-deps chromium
+      - name: Browser navigation and screenshots
+        env:
+          PLAYWRIGHT_MODULE_PATH: /tmp/cognitive-browser/node_modules/playwright
+        run: |
+          bun run start > /tmp/cognitive-server.log 2>&1 &
+          for i in $(seq 1 45); do curl -sf http://localhost:3000/ > /dev/null && break; sleep 2; done
+          node scripts/cognitive-galaxy-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cognitive-galaxy-preview
+          path: test-artifacts/galaxy
+          if-no-files-found: ignore
