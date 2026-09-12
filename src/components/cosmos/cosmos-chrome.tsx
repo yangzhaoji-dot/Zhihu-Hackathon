@@ -27,11 +27,9 @@ export function CosmosChrome({
   hint,
   query,
   searching,
-  railOn,
   onModeChange,
   onQueryChange,
   onSearch,
-  onRail,
   onZoom,
 }: {
   mode: Mode;
@@ -117,16 +115,6 @@ export function CosmosChrome({
         <div className="zoom">
           <button onClick={() => onZoom(1.15)} aria-label={t("cosmos.zoomIn")}>+</button>
           <button onClick={() => onZoom(1 / 1.15)} aria-label={t("cosmos.zoomOut")}>−</button>
-        </div>
-      )}
-
-      {mode === "views" && (
-        <div className="rail">
-          <button className={railOn === "agentPath" ? "on" : ""} onClick={() => onRail("agentPath")}>{t("cosmos.railAgent")}</button>
-          <button className={railOn === "gaps" ? "on" : ""} onClick={() => onRail("gaps")}>{t("cosmos.railGap")}</button>
-          <button className={railOn === "match" ? "on" : ""} onClick={() => onRail("match")}>{t("cosmos.railMatch")}</button>
-          <button className={railOn === "tint" ? "on" : ""} onClick={() => onRail("tint")}>{t("cosmos.railTint")}</button>
-          <button className={railOn === "profile" ? "on" : ""} onClick={() => onRail("profile")}>{t("cosmos.railProfile")}</button>
         </div>
       )}
 
