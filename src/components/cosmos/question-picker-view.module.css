@@ -1,0 +1,111 @@
+.picker {
+  display: grid;
+  gap: 14px;
+}
+
+.intro {
+  margin: 0;
+  color: rgba(242, 240, 233, .66);
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.list {
+  display: grid;
+  gap: 10px;
+}
+
+.signal {
+  position: relative;
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  width: 100%;
+  padding: 13px 14px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 18px;
+  background: rgba(255,255,255,.025);
+  color: #f6f1e7;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 180ms ease, border-color 180ms ease, background 180ms ease;
+}
+
+.signal:hover:not(:disabled),
+.signal:focus-visible:not(:disabled) {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--accent, #d2a469) 42%, transparent);
+  background: color-mix(in srgb, var(--accent, #d2a469) 7%, rgba(255,255,255,.025));
+}
+
+.signal:disabled { cursor: wait; opacity: .6; }
+
+.pulse {
+  position: relative;
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+}
+.pulse::before,
+.pulse::after {
+  position: absolute;
+  inset: 5px;
+  border: 1px solid rgba(141,190,213,.34);
+  border-radius: 50%;
+  content: "";
+}
+.pulse::after {
+  animation: questionSignal 2.4s ease-out infinite;
+}
+.pulse span {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #94bed0;
+  box-shadow: 0 0 15px rgba(148,190,208,.52);
+}
+
+.copy {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+}
+.copy b {
+  overflow: hidden;
+  font-size: 12px;
+  font-weight: 620;
+  line-height: 1.45;
+  text-overflow: ellipsis;
+}
+.copy small {
+  color: rgba(236,238,237,.43);
+  font-size: 9px;
+}
+
+.lock {
+  padding: 5px 8px;
+  border: 1px solid rgba(217,176,109,.2);
+  border-radius: 999px;
+  color: rgba(239,212,167,.72);
+  font-size: 9px;
+  white-space: nowrap;
+}
+
+.loading {
+  margin: 2px 0 0;
+  color: rgba(230,236,239,.48);
+  font-size: 10px;
+}
+
+@keyframes questionSignal {
+  from { opacity: .75; transform: scale(.45); }
+  to { opacity: 0; transform: scale(1.35); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pulse::after { animation: none; }
+  .signal { transition: none; }
+}
