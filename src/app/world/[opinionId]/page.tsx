@@ -1,1 +1,1 @@
-export { default } from "./resonance-page";
+export { default } from "./planet-runtime-page";
