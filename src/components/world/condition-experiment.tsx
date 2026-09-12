@@ -131,7 +131,11 @@ export function ConditionExperiment({
           type="button"
           className={styles.primary}
           disabled={normalized.length > 0 && touched === 0}
-          onClick={onComplete}
+          onClick={() => {
+            // End on a neutral “understood” glow rather than preserving the last hypothetical setting.
+            publishCue(normalized.length ? 0.48 : 0.32);
+            onComplete();
+          }}
         >
           {normalized.length
             ? (zh ? "我看懂了条件如何影响这条观点" : "I understand how the conditions shape this claim")
