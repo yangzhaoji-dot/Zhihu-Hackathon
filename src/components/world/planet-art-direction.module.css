@@ -1,6 +1,6 @@
 .forestWorld {
-  background: #0b1712 !important;
-  box-shadow: inset 0 0 150px rgba(1, 8, 5, .42) !important;
+  background: #0a1511 !important;
+  box-shadow: inset 0 0 180px rgba(1, 7, 5, .48) !important;
 }
 
 .backdrop,
@@ -15,89 +15,95 @@
 
 .backdrop {
   z-index: 0;
-  opacity: .98;
-  filter: saturate(.9) contrast(1.04) brightness(.88);
+  opacity: 1;
+  filter: saturate(.78) contrast(1.035) brightness(.9);
 }
 
 .groundLight {
   z-index: 1;
   background:
-    radial-gradient(ellipse at 67% 27%, rgba(206, 211, 145, .13), transparent 15%),
-    radial-gradient(ellipse at 49% 68%, rgba(171, 195, 134, .055), transparent 23%),
-    radial-gradient(ellipse at 18% 80%, rgba(113, 154, 126, .045), transparent 24%);
+    linear-gradient(116deg, transparent 0 31%, rgba(205,207,155,.025) 39%, transparent 48%),
+    radial-gradient(ellipse at 35% 56%, rgba(195,198,145,.075), transparent 18%),
+    radial-gradient(ellipse at 69% 48%, rgba(190,198,144,.06), transparent 16%),
+    radial-gradient(ellipse at 51% 79%, rgba(124,160,132,.035), transparent 25%);
   mix-blend-mode: screen;
 }
 
 .foreground {
   z-index: 9;
-  opacity: .96;
-  filter: drop-shadow(0 15px 22px rgba(0, 0, 0, .28));
+  opacity: .98;
+  filter: drop-shadow(0 18px 26px rgba(0, 0, 0, .3));
 }
 
-/* The collision map remains real, but it must stop looking like the art. */
+/* Collision geometry stays functional but stops reading as giant level-editor blocks. */
 .forestWorld :global([data-terrain="plaza"]),
 .forestWorld :global([data-terrain="station"]) {
   border: 0 !important;
   background: transparent !important;
   box-shadow: none !important;
-  opacity: .025 !important;
+  opacity: .012 !important;
 }
 
 .forestWorld :global([data-terrain="road"]) {
   border: 0 !important;
-  background: color-mix(in srgb, var(--world-road) 10%, transparent) !important;
+  background: transparent !important;
   box-shadow: none !important;
-  opacity: .09 !important;
+  opacity: .02 !important;
 }
 
 .forestWorld :global([data-terrain="fog"]) {
   border: 0 !important;
-  opacity: .34 !important;
-  filter: blur(18px) !important;
+  opacity: .3 !important;
+  filter: blur(20px) !important;
 }
 
 .forestWorld :global([class*="zoneLabel"]) {
   opacity: 0 !important;
 }
 
-/* Give the seeker enough visual presence to read against the environment. */
+/* Character scale: readable, but still small against the forest. */
 .forestWorld :global(img[src*="player-explorer-v1.png"]) {
-  width: 58px !important;
-  height: 87px !important;
-  margin: -31px 0 0 -5px !important;
-  filter: drop-shadow(0 8px 7px rgba(0,0,0,.55)) drop-shadow(0 0 5px rgba(188,202,146,.08)) !important;
+  width: 62px !important;
+  height: 93px !important;
+  margin: -34px 0 0 -7px !important;
+  filter: drop-shadow(0 9px 8px rgba(0,0,0,.58)) !important;
 }
 
 .forestWorld :global(img[src*="guide-fox-v1.png"]) {
-  width: 40px !important;
-  height: 60px !important;
-  left: 40px !important;
-  top: -8px !important;
-  opacity: .92 !important;
+  width: 41px !important;
+  height: 62px !important;
+  left: 43px !important;
+  top: -7px !important;
+  opacity: .94 !important;
 }
 
-/* Forest carriers should read as objects inside a world, not neon UI nodes. */
-.forestWorld :global([data-fragment-kind][data-fragment-collected="false"]::before) {
-  opacity: .32 !important;
-  filter: blur(8px) !important;
-}
-
+/* The scenery is the object. Carrier widgets become subtle interaction anchors. */
 .forestWorld :global(button[data-fragment-kind]),
 .forestWorld :global(button[data-fragment-id]) {
-  filter: saturate(.72) contrast(.97);
+  opacity: .28;
+  filter: saturate(.58) contrast(.94) brightness(.88);
+  transition: opacity 220ms ease, filter 220ms ease, transform 220ms ease;
 }
 
-.forestWorld :global(button[data-calling="true"]) {
-  filter: saturate(.94) brightness(1.04) drop-shadow(0 0 7px color-mix(in srgb, var(--world-accent) 24%, transparent));
+.forestWorld :global(button[data-calling="true"]),
+.forestWorld :global([data-calling="true"]) {
+  opacity: .82 !important;
+  filter: saturate(.84) brightness(1.04) drop-shadow(0 0 6px rgba(189,198,139,.16)) !important;
 }
 
-/* Claim: a mossy stone with carved, readable marks rather than a glowing node. */
+.forestWorld :global([data-fragment-kind][data-fragment-collected="false"]::before) {
+  opacity: .12 !important;
+  filter: blur(10px) !important;
+}
+
+/* Physical forest artifact treatments stay subdued inside the larger landmarks. */
 .forestWorld :global([data-kind="echo-stone"] [data-artifact-part="body"]) {
   background:
-    radial-gradient(circle at 26% 24%, rgba(142,165,117,.18), transparent 22%),
-    linear-gradient(145deg, #586858, #2c3b32 72%) !important;
-  box-shadow: inset -9px -11px 14px rgba(0,0,0,.28), 0 9px 10px rgba(0,0,0,.22) !important;
+    radial-gradient(circle at 26% 24%, rgba(142,165,117,.14), transparent 22%),
+    linear-gradient(145deg, #59665a, #2a3931 72%) !important;
+  box-shadow: inset -9px -11px 14px rgba(0,0,0,.28), 0 9px 10px rgba(0,0,0,.2) !important;
 }
+
 .forestWorld :global([data-kind="echo-stone"] [data-artifact-part="detail"]) {
   width: 19px !important;
   height: 12px !important;
@@ -105,66 +111,45 @@
   bottom: 21px !important;
   border: 0 !important;
   border-radius: 0 !important;
-  background: repeating-linear-gradient(0deg, rgba(211,218,172,.52) 0 1px, transparent 1px 4px) !important;
+  background: repeating-linear-gradient(0deg, rgba(211,218,172,.45) 0 1px, transparent 1px 4px) !important;
   box-shadow: none !important;
   transform: rotate(-4deg);
 }
 
-/* Reason: the spring is a physical pool; light comes from water, not from a UI ring. */
-.forestWorld :global([data-kind="condition-spring"] [data-artifact-part="body"]) {
-  border-color: #34483d !important;
-  background: radial-gradient(ellipse, rgba(118,158,143,.52), #304c40 52%, #192d27 74%) !important;
-  box-shadow: 0 7px 12px rgba(0,0,0,.24), inset 0 0 12px rgba(194,219,194,.07) !important;
-}
-.forestWorld :global([data-kind="condition-spring"] [data-artifact-part="top"]) {
-  opacity: .28;
+.forestWorld :global([data-kind="trace-tree"] [data-artifact-part="body"]) {
+  width: 10px !important;
+  left: 27px !important;
+  background: linear-gradient(90deg, #3f3928, #6f6045 48%, #302f22) !important;
+  box-shadow: 0 7px 7px rgba(0,0,0,.2);
 }
 
-/* Evidence: a trace tree with a weathered Zhihu excerpt pinned to its trunk. */
-.forestWorld :global([data-kind="trace-tree"] [data-artifact-part="body"]) {
-  width: 11px !important;
-  left: 27px !important;
-  background: linear-gradient(90deg, #403a29, #756448 48%, #302f22) !important;
-  box-shadow: 0 7px 7px rgba(0,0,0,.22);
-}
 .forestWorld :global([data-kind="trace-tree"] [data-artifact-part="top"]) {
-  background: radial-gradient(circle at 42% 34%, #75895c, #35513d 72%) !important;
-  filter: saturate(.78);
+  background: radial-gradient(circle at 42% 34%, #687e55, #314a39 72%) !important;
+  filter: saturate(.64);
 }
+
 .forestWorld :global([data-kind="trace-tree"] [data-artifact-part="detail"]) {
   left: 17px !important;
   bottom: 16px !important;
   width: 31px !important;
   height: 22px !important;
-  border: 1px solid rgba(113,98,69,.34) !important;
+  border: 1px solid rgba(113,98,69,.3) !important;
   border-radius: 2px !important;
   background:
-    repeating-linear-gradient(0deg, rgba(83,77,57,.46) 0 1px, transparent 1px 5px),
-    linear-gradient(145deg, #ded3ad, #bbae88) !important;
-  box-shadow: 0 4px 5px rgba(0,0,0,.28) !important;
+    repeating-linear-gradient(0deg, rgba(83,77,57,.42) 0 1px, transparent 1px 5px),
+    linear-gradient(145deg, #d6cca9, #afa582) !important;
+  box-shadow: 0 4px 5px rgba(0,0,0,.25) !important;
   transform: rotate(-5deg) !important;
 }
+
 .forestWorld :global(button[data-fragment-kind="evidence"]::after) {
-  position: absolute;
-  left: 50%;
-  top: 8px;
-  transform: translate(-50%, -100%) rotate(-2deg);
-  padding: 2px 5px;
-  border-radius: 3px;
-  background: rgba(35,39,29,.76);
-  color: rgba(224,218,183,.68);
-  content: "知乎 · 原文摘录";
-  font-size: 7px;
-  letter-spacing: .06em;
-  white-space: nowrap;
-  opacity: .72;
-  pointer-events: none;
+  display: none !important;
 }
 
 @media (max-width: 720px) {
   .backdrop,
   .foreground {
-    transform: scale(1.025);
+    transform: scale(1.018);
     transform-origin: center;
   }
 }
@@ -172,5 +157,9 @@
 @media (prefers-reduced-motion: reduce) {
   .backdrop,
   .foreground,
-  .groundLight { transition: none; }
+  .groundLight,
+  .forestWorld :global(button[data-fragment-kind]),
+  .forestWorld :global(button[data-fragment-id]) {
+    transition: none;
+  }
 }
