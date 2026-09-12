@@ -1,41 +1,67 @@
 .collected .artifact {
   transform: translateY(-2px);
   filter:
-    saturate(0.82)
-    drop-shadow(0 0 8px color-mix(in srgb, var(--world-accent) 36%, transparent))
+    saturate(0.88)
+    brightness(1.04)
+    drop-shadow(0 0 10px color-mix(in srgb, var(--world-accent) 34%, transparent))
     drop-shadow(8px 12px 9px rgba(0, 0, 0, 0.32));
 }
 
+/* 已探索不是“任务打勾”，而是留下一个稳定的共鸣痕迹。 */
 .mark {
   position: absolute;
-  right: 2px;
-  top: 0;
+  right: 3px;
+  top: 1px;
   z-index: 5;
   display: grid;
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   place-items: center;
-  border: 1px solid color-mix(in srgb, var(--world-accent) 62%, white);
+  border: 1px solid color-mix(in srgb, var(--world-accent) 42%, white);
   border-radius: 50%;
-  background: color-mix(in srgb, var(--world-accent) 28%, rgba(5, 8, 12, 0.84));
-  color: #fff9e9;
-  font-size: 10px;
-  font-weight: 800;
-  box-shadow: 0 0 10px color-mix(in srgb, var(--world-accent) 34%, transparent);
+  background: rgba(6, 9, 13, 0.48);
+  color: transparent;
+  font-size: 0;
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--world-accent) 6%, transparent),
+    0 0 12px color-mix(in srgb, var(--world-accent) 22%, transparent);
   pointer-events: none;
+}
+
+.mark::before {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--world-accent) 72%, white);
+  box-shadow: 0 0 7px color-mix(in srgb, var(--world-accent) 58%, transparent);
+  content: "";
 }
 
 .collected::after {
   position: absolute;
   left: 50%;
-  bottom: 6px;
-  width: 44px;
-  height: 8px;
+  bottom: 5px;
+  width: 54px;
+  height: 10px;
   border-radius: 50%;
-  background: color-mix(in srgb, var(--world-accent) 18%, transparent);
+  background: radial-gradient(ellipse, color-mix(in srgb, var(--world-accent) 18%, transparent), transparent 72%);
   content: "";
-  filter: blur(5px);
+  filter: blur(4px);
   transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.collected::before {
+  position: absolute;
+  left: 50%;
+  bottom: 3px;
+  width: 66px;
+  height: 66px;
+  border: 1px solid color-mix(in srgb, var(--world-accent) 12%, transparent);
+  border-radius: 50%;
+  content: "";
+  opacity: 0.72;
+  transform: translate(-50%, 24%) scaleY(0.32);
   pointer-events: none;
 }
 
