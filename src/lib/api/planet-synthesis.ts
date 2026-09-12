@@ -1,11 +1,13 @@
 "use client";
 
 import { request } from "@/lib/api/request";
+import type { OpinionGraph } from "@/lib/opinion/types";
 import type { PlanetSynthesisResult, SelectedExcerptInput } from "@/lib/planet-synthesis/model";
 
 export async function synthesizePlanetViewpoint(input: {
   opinionId: string;
   selections: SelectedExcerptInput[];
+  graph?: OpinionGraph;
 }): Promise<PlanetSynthesisResult> {
   const response = await request("/api/opinion/synthesize", {
     method: "POST",
