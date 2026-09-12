@@ -30,9 +30,17 @@ jobs:
         env:
           PLAYWRIGHT_MODULE_PATH: /tmp/cognitive-browser/node_modules/playwright
         run: |
+          mkdir -p test-artifacts/galaxy
           bun run start > /tmp/cognitive-server.log 2>&1 &
-          for i in $(seq 1 45); do curl -sf http://localhost:3000/ > /dev/null && break; sleep 2; done
-          node scripts/cognitive-galaxy-browser.mjs
+          for i in $(seq 1 20); do curl -s http://localhost:3000/ > /dev/null && break; sleep 1; done
+          status=$(curl -s -o test-artifacts/galaxy/home-response.html -w '%{http_code}' http://localhost:3000/)
+          echo "Homepage HTTP status: $status"
+          if [ "$status" != "200" ]; then
+            tail -n 80 /tmp/cognitive-server.log
+            cp /tmp/cognitive-server.log test-artifacts/galaxy/server.log
+            exit 1
+          fi
+          node scripts/cognitive-galaxy-browser.mjs || { tail -n 80 /tmp/cognitive-server.log; cp /tmp/cognitive-server.log test-artifacts/galaxy/server.log; exit 1; }
       - uses: actions/upload-artifact@v4
         if: always()
         with:
