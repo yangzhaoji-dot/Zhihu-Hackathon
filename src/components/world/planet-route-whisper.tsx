@@ -101,21 +101,28 @@ export function PlanetRouteWhisper({ opinionId }: { opinionId: string }) {
   const collected = new Set(collectedIds);
   const width = config.size.w * TILE_SIZE;
   const height = config.size.h * TILE_SIZE;
-  let previous = route.spawn;
-  let firstUncollectedSeen = false;
+  const callingIndex = route.sites.findIndex((site) => !collected.has(site.fragment.id));
 
   const segments = route.sites.map((site, index) => {
     const done = collected.has(site.fragment.id);
-    const state = done ? "understood" : firstUncollectedSeen ? "distant" : "calling";
-    if (!done && !firstUncollectedSeen) firstUncollectedSeen = true;
-    const d = curve(previous, site.pos, index);
-    previous = site.pos;
-    return { id: site.id, d, state, role: site.fragment.role };
+    const state = done
+      ? "understood"
+      : index === callingIndex
+        ? "calling"
+        : "distant";
+    const previous = index === 0 ? route.spawn : route.sites[index - 1].pos;
+    return {
+      id: site.id,
+      d: curve(previous, site.pos, index),
+      state,
+      role: site.fragment.role,
+    };
   });
 
-  const allRecovered = route.sites.every((site) => collected.has(site.fragment.id));
+  const allRecovered = callingIndex === -1;
+  const routeEnd = route.sites.at(-1)?.pos ?? route.spawn;
   const returnPath = route.rocket
-    ? curve(previous, route.rocket, route.sites.length + 1)
+    ? curve(routeEnd, route.rocket, route.sites.length + 1)
     : null;
 
   return createPortal(
