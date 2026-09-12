@@ -18,7 +18,7 @@ export function CosmosGuide({
         : `这颗星球承载着「${selectedTitle}」。先绕着它看看；准备好以后，再用航行控制登陆，去理解这个世界为什么会形成。`)
     : (locale === "en-US"
         ? "Seeker, this is the main field of the question galaxy. Choose one clear opinion planet and inspect it before deciding where to land."
-        : "寻知者，这里是这个问题的主星系。先选择一颗清晰的观点星球，看看它，再决定要不要登陆。`".slice(0, -1));
+        : "寻知者，这里是这个问题的主星系。先选择一颗清晰的观点星球，看看它，再决定要不要登陆。");
 
   return (
     <aside className={styles.guide} data-el="cosmos-guide">
