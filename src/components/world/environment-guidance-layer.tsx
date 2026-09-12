@@ -15,7 +15,7 @@ import styles from "./environment-guidance-layer.module.css";
 const SIGN_COPY: Record<CognitionFragmentRole, { title: string; hint: string }> = {
   claim: { title: "认知入口", hint: "先看见，再下判断" },
   reason: { title: "理由路径", hint: "问它为什么这样想" },
-  condition: { title: "边界实验区", hint: "改变条件，看哪些路仍成立" },
+  condition: { title: "条件记录", hint: "先确认它声明了哪些条件" },
   evidence: { title: "原话记录区", hint: "先读原话，再判断它支持什么" },
   boundary: { title: "观点边界", hint: "到这里为止，还有什么不知道" },
 };
@@ -32,7 +32,7 @@ function point(pos: GridPos) {
   return { x: (pos.x + 0.5) * TILE_SIZE, y: (pos.y + 0.5) * TILE_SIZE };
 }
 
-function curve(from: GridPos, to: GridPos, index: number) {
+function steppingStones(from: GridPos, to: GridPos, segmentIndex: number) {
   const a = point(from);
   const b = point(to);
   const dx = b.x - a.x;
@@ -40,10 +40,20 @@ function curve(from: GridPos, to: GridPos, index: number) {
   const length = Math.hypot(dx, dy) || 1;
   const nx = -dy / length;
   const ny = dx / length;
-  const bend = (index % 2 === 0 ? 1 : -1) * Math.min(28, 8 + length * 0.07);
-  const cx = (a.x + b.x) / 2 + nx * bend;
-  const cy = (a.y + b.y) / 2 + ny * bend;
-  return `M ${a.x} ${a.y} Q ${cx} ${cy} ${b.x} ${b.y}`;
+  const count = Math.max(3, Math.floor(length / 32));
+  const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+  return Array.from({ length: count }, (_, index) => {
+    const t = (index + 0.55) / count;
+    const sway = Math.sin(index * 1.31 + segmentIndex * 0.7) * 8;
+    const skip = (index + segmentIndex) % 7 === 5;
+    return {
+      x: a.x + dx * t + nx * sway,
+      y: a.y + dy * t + ny * sway,
+      angle: angle + Math.sin(index * 1.7) * 8,
+      scale: 0.78 + ((index * 13 + segmentIndex * 7) % 5) * 0.08,
+      skip,
+    };
+  });
 }
 
 function footprintTrail(from: GridPos, to: GridPos) {
@@ -55,7 +65,7 @@ function footprintTrail(from: GridPos, to: GridPos) {
   const nx = -dy / length;
   const ny = dx / length;
   const angle = Math.atan2(dy, dx) * 180 / Math.PI + 90;
-  return [0.18, 0.34, 0.5, 0.66, 0.82].map((t, index) => {
+  return [0.22, 0.39, 0.56, 0.73].map((t, index) => {
     const side = index % 2 === 0 ? -1 : 1;
     const offset = 5 * side;
     return {
@@ -113,7 +123,7 @@ export function EnvironmentGuidanceLayer({ opinionId }: { opinionId: string }) {
     const from = index === 0 ? layout.spawn : layout.sites[index - 1].pos;
     return {
       id: site.id,
-      d: curve(from, site.pos, index),
+      stones: steppingStones(from, site.pos, index),
       footprints: footprintTrail(from, site.pos),
     };
   });
@@ -121,11 +131,20 @@ export function EnvironmentGuidanceLayer({ opinionId }: { opinionId: string }) {
   return createPortal(
     <>
       <svg className={styles.guidance} viewBox={`0 0 ${width} ${height}`} width={width} height={height} aria-hidden>
-        {segments.map((segment, index) => (
-          <g key={segment.id} data-depth={index}>
-            <path className={styles.stonePathShadow} d={segment.d} />
-            <path className={styles.stonePath} d={segment.d} />
-            <path className={styles.traces} d={segment.d} />
+        {segments.map((segment, segmentIndex) => (
+          <g key={segment.id} data-depth={segmentIndex}>
+            <g className={styles.stones}>
+              {segment.stones.map((stone, stoneIndex) => stone.skip ? null : (
+                <g
+                  key={`${segment.id}-stone-${stoneIndex}`}
+                  transform={`translate(${stone.x} ${stone.y}) rotate(${stone.angle}) scale(${stone.scale})`}
+                >
+                  <ellipse className={styles.stoneShadow} cx="0" cy="5" rx="14" ry="8" />
+                  <rect className={styles.stone} x="-13" y="-7" width="26" height="15" rx="5" />
+                  <path className={styles.stoneCrack} d="M-4 -5 L0 -1 L-2 4" />
+                </g>
+              ))}
+            </g>
             <g className={styles.footprints}>
               {segment.footprints.map((footprint, footprintIndex) => (
                 <g
@@ -148,7 +167,7 @@ export function EnvironmentGuidanceLayer({ opinionId }: { opinionId: string }) {
         data-kind="landing"
       >
         <i aria-hidden />
-        <div><strong>{layout.scene.biome === "forest" ? "圣所边缘" : "认知落点"}</strong><span>沿留下的痕迹进入这颗观点星球</span></div>
+        <div><strong>{layout.scene.biome === "forest" ? "圣所边缘" : "认知落点"}</strong><span>沿留下的石板和足迹进入这颗观点星球</span></div>
       </div>
 
       {layout.sites.map((site, index) => {
@@ -159,8 +178,8 @@ export function EnvironmentGuidanceLayer({ opinionId }: { opinionId: string }) {
             className={styles.sign}
             data-role={site.fragment.role}
             style={{
-              left: (site.pos.x + (index % 2 === 0 ? -1.5 : 1.15)) * TILE_SIZE,
-              top: (site.pos.y - 1.65) * TILE_SIZE,
+              left: (site.pos.x + (index % 2 === 0 ? -1.45 : 1.1)) * TILE_SIZE,
+              top: (site.pos.y - 1.6) * TILE_SIZE,
             }}
           >
             <i aria-hidden />
