@@ -5,7 +5,6 @@ export type CognitionFragmentRole = "claim" | "reason" | "condition" | "evidence
 
 export interface CognitionFragmentSpec {
   id: string;
-  /** Carries route identity without turning the fragment key itself into a UI label. */
   opinionId?: string;
   role: CognitionFragmentRole;
   label: { "zh-CN": string; "en-US": string };
@@ -44,41 +43,34 @@ function conditionCarrier(sceneSpec: PlanetSceneSpec) {
 }
 
 /**
- * A planet does NOT have a globally fixed fragment count.
- * The interaction carriers vary by planet; after a carrier is understood its
- * cognition is distilled into one unified shard in the HUD / resonance scroll.
- *
- * Baseline = claim + reason + evidence.
- * - add condition only when the opinion explicitly provides conditions;
- * - add boundary only when the supplied material is rich enough to make a
- *   separate boundary interaction meaningful.
+ * Fragment count follows the material instead of a fixed gameplay template.
+ * Missing reasons or conditions no longer create empty minigames.
  */
 export function buildCognitionFragmentPlan(
   opinion: Pick<Opinion, "id" | "reason" | "conditions" | "evidence" | "sourceIds">,
   sceneSpec: PlanetSceneSpec,
 ): CognitionFragmentSpec[] {
-  const plan: CognitionFragmentSpec[] = [
-    {
-      id: "claim",
-      opinionId: opinion.id,
-      role: "claim",
-      label: LABELS.claim,
-      carrier: sceneSpec.fragments.claim.artifact,
-      // Forest worlds should begin with seeing the world. This keeps the first
-      // beat environmental instead of stacking two quiet/listen interactions.
-      mode: sceneSpec.biome === "forest" ? "observe" : sceneSpec.fragments.claim.mode,
-      intent: sceneSpec.fragments.claim.intent,
-    },
-    {
+  const plan: CognitionFragmentSpec[] = [{
+    id: "claim",
+    opinionId: opinion.id,
+    role: "claim",
+    label: LABELS.claim,
+    carrier: sceneSpec.fragments.claim.artifact,
+    mode: "observe",
+    intent: sceneSpec.fragments.claim.intent,
+  }];
+
+  if (opinion.reason?.trim()) {
+    plan.push({
       id: "reason",
       opinionId: opinion.id,
       role: "reason",
       label: LABELS.reason,
       carrier: sceneSpec.fragments.reason.artifact,
-      mode: sceneSpec.fragments.reason.mode,
+      mode: "observe",
       intent: sceneSpec.fragments.reason.intent,
-    },
-  ];
+    });
+  }
 
   if ((opinion.conditions?.filter(Boolean).length ?? 0) > 0) {
     plan.push({
@@ -87,8 +79,8 @@ export function buildCognitionFragmentPlan(
       role: "condition",
       label: LABELS.condition,
       carrier: conditionCarrier(sceneSpec),
-      mode: "experiment",
-      intent: "把这条观点自己声明的条件放进场景里试一遍，观察哪些关系会改变。",
+      mode: "observe",
+      intent: "保留观点明确声明的条件，并判断它们怎样限制适用范围。",
     });
   }
 
@@ -98,14 +90,15 @@ export function buildCognitionFragmentPlan(
     role: "evidence",
     label: LABELS.evidence,
     carrier: sceneSpec.fragments.evidence.artifact,
-    mode: sceneSpec.fragments.evidence.mode,
-    intent: sceneSpec.fragments.evidence.intent,
+    mode: "trace",
+    intent: "先读可追溯原文，再判断材料能支持到哪里。",
   });
 
   const hasSeparateBoundary =
     (opinion.conditions?.filter(Boolean).length ?? 0) >= 2 ||
     (opinion.evidence?.filter(Boolean).length ?? 0) >= 2 ||
     opinion.sourceIds.length >= 2;
+
   if (hasSeparateBoundary) {
     plan.push({
       id: "boundary",
@@ -113,8 +106,8 @@ export function buildCognitionFragmentPlan(
       role: "boundary",
       label: LABELS.boundary,
       carrier: boundaryCarrier(sceneSpec),
-      mode: sceneSpec.biome === "ruins" || sceneSpec.biome === "desert" ? "restore" : "observe",
-      intent: "找到这条观点目前无法继续推出的地方：哪些人、条件、时间或证据仍然留在边界之外。",
+      mode: "observe",
+      intent: "保留这条观点目前无法继续推出的部分：条件、反例与未知。",
     });
   }
 
