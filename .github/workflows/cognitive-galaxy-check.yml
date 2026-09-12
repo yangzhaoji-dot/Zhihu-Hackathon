@@ -13,6 +13,12 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      # Public, non-credential fixture: the existing SDK requires a host app ID to render.
+      # No authenticated Eazo or Zhihu operation is exercised with this fixture.
+      EAZO_APP_ID: cognitive-galaxy-ci
+      NEXT_PUBLIC_APP_TITLE: Zhihu Universe
+      NEXT_PUBLIC_APP_DESCRIPTION: Cognitive galaxy interface acceptance fixture
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
