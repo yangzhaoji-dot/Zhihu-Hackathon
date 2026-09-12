@@ -1,47 +1,42 @@
 "use client";
 
-import type { ResonanceFragmentKind } from "@/lib/world/resonance";
-import { CORE_RESONANCE_FRAGMENTS } from "@/lib/world/resonance";
+import type { CSSProperties } from "react";
+import type { CognitionFragmentSpec } from "@/lib/world/cognition-fragment-plan";
 import styles from "./cognition-fragment-hud.module.css";
 
-const LABELS: Record<ResonanceFragmentKind, { zh: string; en: string }> = {
-  claim: { zh: "主张", en: "claim" },
-  reason: { zh: "理由", en: "reason" },
-  condition: { zh: "条件", en: "condition" },
-  evidence: { zh: "依据", en: "evidence" },
-  boundary: { zh: "边界", en: "boundary" },
-};
-
 export function CognitionFragmentHud({
-  collected,
+  plan,
+  collectedIds,
   locale,
-  flashKind,
+  flashId,
 }: {
-  collected: readonly ResonanceFragmentKind[];
+  plan: readonly CognitionFragmentSpec[];
+  collectedIds: readonly string[];
   locale: "zh-CN" | "en-US";
-  flashKind?: ResonanceFragmentKind | null;
+  flashId?: string | null;
 }) {
   const zh = locale !== "en-US";
-  const collectedSet = new Set(collected);
+  const collectedSet = new Set(collectedIds);
+  const flash = plan.find((fragment) => fragment.id === flashId) ?? null;
   return (
     <aside className={styles.hud} aria-label={zh ? "认知碎片" : "cognition fragments"}>
       <div className={styles.shards} aria-hidden>
-        {CORE_RESONANCE_FRAGMENTS.map((kind, index) => (
+        {plan.map((fragment, index) => (
           <span
-            key={kind}
+            key={fragment.id}
             className={styles.shard}
-            data-collected={collectedSet.has(kind) ? "true" : "false"}
-            data-flash={flashKind === kind ? "true" : "false"}
-            style={{ "--shard-index": index } as React.CSSProperties}
+            data-collected={collectedSet.has(fragment.id) ? "true" : "false"}
+            data-flash={flashId === fragment.id ? "true" : "false"}
+            style={{ "--shard-index": index } as CSSProperties}
           >
             <i />
           </span>
         ))}
       </div>
       <div className={styles.copy}>
-        <strong>{collected.length}/{CORE_RESONANCE_FRAGMENTS.length}</strong>
+        <strong>{collectedIds.length}/{plan.length}</strong>
         <span>{zh ? "认知碎片" : "cognition fragments"}</span>
-        {flashKind ? <small>{zh ? LABELS[flashKind].zh : LABELS[flashKind].en}</small> : null}
+        {flash ? <small>{flash.label[locale]}</small> : null}
       </div>
     </aside>
   );
