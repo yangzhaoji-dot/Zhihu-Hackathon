@@ -27,12 +27,18 @@ const TERRAIN_PREFERENCE: Record<CognitionFragmentSpec["role"], readonly Zone["t
   boundary: ["ruin", "fog", "bridge", "road"],
 };
 
+function hash01(value: string) {
+  let hash = 2166136261;
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0) / 0xffffffff;
+}
+
 function zoneAnchors(zone: Zone): GridPos[] {
   const { x, y, w, h } = zone.rect;
   const center = { x: x + w / 2, y: y + h / 2 };
-  // Boundary/fog zones are often non-walkable in the middle. Supplying edge
-  // anchors lets nearestWalkable keep the carrier visually associated with the
-  // semantic region without dropping the player inside blocked terrain.
   return [
     center,
     { x: x + 0.75, y: center.y },
@@ -60,11 +66,57 @@ function clampToWorld(config: WorldConfig, pos: GridPos): GridPos {
   };
 }
 
+function normalized(from: GridPos, to: GridPos): GridPos {
+  const x = to.x - from.x;
+  const y = to.y - from.y;
+  const length = Math.hypot(x, y) || 1;
+  return { x: x / length, y: y / length };
+}
+
+function routeTargets(
+  config: WorldConfig,
+  spawn: GridPos,
+  count: number,
+  routeSeed: string,
+): GridPos[] {
+  const rocket = config.pois.find((poi) => poi.kind === "rocket")?.pos;
+  const seed = hash01(routeSeed);
+  const baseDirection = rocket
+    ? normalized(spawn, rocket)
+    : { x: Math.cos(seed * Math.PI * 2), y: Math.sin(seed * Math.PI * 2) };
+
+  // Every opinion gets a stable but slightly different route through the same
+  // question-sized canvas. The route still loosely bends toward the rocket so
+  // the final walk home feels spatially coherent rather than a teleport.
+  const jitter = (seed - 0.5) * 1.05;
+  const cos = Math.cos(jitter);
+  const sin = Math.sin(jitter);
+  const direction = {
+    x: baseDirection.x * cos - baseDirection.y * sin,
+    y: baseDirection.x * sin + baseDirection.y * cos,
+  };
+  const side = { x: -direction.y, y: direction.x };
+  const rocketDistance = rocket ? distance(spawn, rocket) : Math.min(config.size.w, config.size.h) * 0.58;
+  const maxDepth = Math.min(Math.max(9, count * 2.6 + 3.5), rocketDistance * 0.72);
+  const firstDepth = Math.min(4.4, maxDepth * 0.5);
+
+  return Array.from({ length: count }, (_, index) => {
+    const progress = count <= 1 ? 0 : index / (count - 1);
+    const depth = firstDepth + (maxDepth - firstDepth) * progress;
+    const wave = Math.sin(seed * Math.PI * 2 + index * 1.43) * (1.35 + progress * 0.65);
+    return clampToWorld(config, {
+      x: spawn.x + direction.x * depth + side.x * wave,
+      y: spawn.y + direction.y * depth + side.y * wave,
+    });
+  });
+}
+
 function candidatesFor(
   config: WorldConfig,
   spawn: GridPos,
   fragment: CognitionFragmentSpec,
   index: number,
+  routeTarget: GridPos,
 ) {
   const preferred = TERRAIN_PREFERENCE[fragment.role];
   const semantic = preferred.flatMap((terrain) =>
@@ -75,9 +127,9 @@ function candidatesFor(
 
   const offset = fallbackOffset(index);
   const fallback = [
+    routeTarget,
+    { x: routeTarget.x + offset.x * 0.32, y: routeTarget.y + offset.y * 0.32 },
     { x: spawn.x + offset.x, y: spawn.y + offset.y },
-    { x: spawn.x + offset.x * 1.25, y: spawn.y + offset.y * 1.25 },
-    { x: spawn.x - offset.y * 0.7, y: spawn.y + offset.x * 0.7 },
   ];
 
   return [...semantic, ...fallback]
@@ -87,48 +139,52 @@ function candidatesFor(
 
 function siteScore(
   candidate: GridPos,
-  spawn: GridPos,
+  routeTarget: GridPos,
+  previous: GridPos | null,
   placed: readonly GridPos[],
   semanticRank: number,
 ) {
-  const fromSpawn = distance(candidate, spawn);
-  // A carrier should require a short walk, but it should not feel like a remote
-  // loading screen. The ideal distance is roughly 5–9 grid cells.
-  const travelPenalty = Math.abs(fromSpawn - 7) * 0.55;
+  const routePenalty = distance(candidate, routeTarget) * 0.78;
+  const stepPenalty = previous
+    ? Math.abs(distance(candidate, previous) - 4.7) * 0.34
+    : 0;
   const nearestOther = placed.length
     ? Math.min(...placed.map((position) => distance(candidate, position)))
     : 99;
-  const crowdPenalty = nearestOther < 3.2 ? (3.2 - nearestOther) * 8 : 0;
-  const duplicatePenalty = nearestOther < 1.2 ? 40 : 0;
-  return semanticRank * 0.08 + travelPenalty + crowdPenalty + duplicatePenalty;
+  const crowdPenalty = nearestOther < 3.1 ? (3.1 - nearestOther) * 9 : 0;
+  const duplicatePenalty = nearestOther < 1.15 ? 45 : 0;
+  return semanticRank * 0.055 + routePenalty + stepPenalty + crowdPenalty + duplicatePenalty;
 }
 
 /**
- * Place cognition carriers as scene destinations rather than a fixed ring
- * around the spawn. Semantic regions supply the first candidates; walkability
- * and minimum spacing then decide the actual physical positions.
+ * Place cognition carriers as a progressive, viewpoint-specific journey.
+ *
+ * The underlying question canvas is reusable, but each opinion receives a
+ * stable route seed. Early cognition sits close to landing; later fragments
+ * pull the seeker deeper into the scene. Semantic terrain still matters, so
+ * this is not a decorative spline painted over arbitrary objects.
  */
 export function layoutCognitionSites(
   config: WorldConfig,
   spawn: GridPos,
   plan: readonly CognitionFragmentSpec[],
+  routeSeed = config.questionId,
 ): CognitionSiteLayout[] {
   const placed: GridPos[] = [];
+  const targets = routeTargets(config, spawn, plan.length, routeSeed);
 
   return plan.map((fragment, index) => {
-    const candidates = candidatesFor(config, spawn, fragment, index);
+    const routeTarget = targets[index] ?? spawn;
+    const previous = placed.at(-1) ?? null;
+    const candidates = candidatesFor(config, spawn, fragment, index, routeTarget);
     const ranked = candidates
       .map((candidate, candidateIndex) => ({
         candidate,
-        score: siteScore(candidate, spawn, placed, candidateIndex),
+        score: siteScore(candidate, routeTarget, previous, placed, candidateIndex),
       }))
       .sort((left, right) => left.score - right.score);
 
-    const offset = fallbackOffset(index);
-    const fallback = nearestWalkable(config, {}, {
-      x: spawn.x + offset.x,
-      y: spawn.y + offset.y,
-    }) ?? clampToWorld(config, { x: spawn.x + offset.x, y: spawn.y + offset.y });
+    const fallback = nearestWalkable(config, {}, routeTarget) ?? routeTarget;
     const pos = ranked[0]?.candidate ?? fallback;
     placed.push(pos);
 
