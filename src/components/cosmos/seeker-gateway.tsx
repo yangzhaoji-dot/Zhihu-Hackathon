@@ -25,21 +25,16 @@ export function SeekerGateway({ onEnter }: { onEnter: () => void }) {
     window.setTimeout(() => {
       tactile([8, 36, 12]);
       setStage("ready");
+      window.setTimeout(onEnter, 820);
     }, 920);
-  };
-
-  const enter = () => {
-    if (stage !== "ready") return;
-    tactile(12);
-    onEnter();
   };
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== "Enter" && event.key !== " ") return;
-      event.preventDefault();
-      if (stage === "dormant") awaken();
-      else if (stage === "ready") enter();
+      if ((event.key === "Enter" || event.key === " ") && stage === "dormant") {
+        event.preventDefault();
+        awaken();
+      }
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
@@ -86,16 +81,12 @@ export function SeekerGateway({ onEnter }: { onEnter: () => void }) {
             {zh ? "正在恢复知乎宇宙坐标……" : "Recovering Zhihu Universe coordinates…"}
           </div>
         ) : (
-          <div className={styles.ready}>
+          <div className={styles.ready} role="status">
             <p>
               {zh
-                ? "导航恢复完成。选择一个问题星系，去寻找先人留下的认知。"
-                : "Navigation restored. Choose a question galaxy and recover the cognition left behind."}
+                ? "坐标恢复完成。知乎宇宙正在展开……"
+                : "Coordinates restored. Zhihu Universe is unfolding…"}
             </p>
-            <button type="button" className={styles.primary} onClick={enter}>
-              <Compass size={16} aria-hidden />
-              {zh ? "进入知乎宇宙" : "Enter Zhihu Universe"}
-            </button>
           </div>
         )}
 
