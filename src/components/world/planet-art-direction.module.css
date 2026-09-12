@@ -1,0 +1,106 @@
+.forestWorld {
+  background: #0b1712 !important;
+  box-shadow: inset 0 0 150px rgba(1, 8, 5, .42) !important;
+}
+
+.backdrop,
+.foreground,
+.groundLight {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.backdrop {
+  z-index: 0;
+  opacity: .98;
+  filter: saturate(.9) contrast(1.04) brightness(.88);
+}
+
+.groundLight {
+  z-index: 1;
+  background:
+    radial-gradient(ellipse at 67% 27%, rgba(206, 211, 145, .13), transparent 15%),
+    radial-gradient(ellipse at 49% 68%, rgba(171, 195, 134, .055), transparent 23%),
+    radial-gradient(ellipse at 18% 80%, rgba(113, 154, 126, .045), transparent 24%);
+  mix-blend-mode: screen;
+}
+
+.foreground {
+  z-index: 9;
+  opacity: .96;
+  filter: drop-shadow(0 15px 22px rgba(0, 0, 0, .28));
+}
+
+/* The collision map remains real, but it must stop looking like the art. */
+.forestWorld :global([data-terrain="plaza"]),
+.forestWorld :global([data-terrain="station"]) {
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  opacity: .025 !important;
+}
+
+.forestWorld :global([data-terrain="road"]) {
+  border: 0 !important;
+  background: color-mix(in srgb, var(--world-road) 10%, transparent) !important;
+  box-shadow: none !important;
+  opacity: .09 !important;
+}
+
+.forestWorld :global([data-terrain="fog"]) {
+  border: 0 !important;
+  opacity: .34 !important;
+  filter: blur(18px) !important;
+}
+
+.forestWorld :global([class*="zoneLabel"]) {
+  opacity: 0 !important;
+}
+
+/* Give the seeker enough visual presence to read against the environment. */
+.forestWorld :global(img[src*="player-explorer-v1.png"]) {
+  width: 58px !important;
+  height: 87px !important;
+  margin: -31px 0 0 -5px !important;
+  filter: drop-shadow(0 8px 7px rgba(0,0,0,.55)) drop-shadow(0 0 5px rgba(188,202,146,.08)) !important;
+}
+
+.forestWorld :global(img[src*="guide-fox-v1.png"]) {
+  width: 40px !important;
+  height: 60px !important;
+  left: 40px !important;
+  top: -8px !important;
+  opacity: .92 !important;
+}
+
+/* Forest carriers should read as objects inside a world, not neon UI nodes. */
+.forestWorld :global([data-fragment-kind][data-fragment-collected="false"]::before) {
+  opacity: .42 !important;
+  filter: blur(6px) !important;
+}
+
+.forestWorld :global(button[data-fragment-kind]),
+.forestWorld :global(button[data-fragment-id]) {
+  filter: saturate(.78) contrast(.98);
+}
+
+.forestWorld :global(button[data-carrier-calling="true"]) {
+  filter: saturate(1.02) brightness(1.08) drop-shadow(0 0 8px color-mix(in srgb, var(--world-accent) 32%, transparent));
+}
+
+@media (max-width: 720px) {
+  .backdrop,
+  .foreground {
+    transform: scale(1.025);
+    transform-origin: center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .backdrop,
+  .foreground,
+  .groundLight { transition: none; }
+}
