@@ -4,6 +4,7 @@ import { useParams } from "next/navigation";
 import { FirstCarrierCue } from "@/components/world/first-carrier-cue";
 import { FirstFragmentCue } from "@/components/world/first-fragment-cue";
 import { PlanetArrivalGuide } from "@/components/world/planet-arrival-guide";
+import { ResonanceHush } from "@/components/world/resonance-hush";
 import PlanetRuntimeV2 from "./planet-runtime-v2";
 
 export default function PlanetPage() {
@@ -16,6 +17,7 @@ export default function PlanetPage() {
       <PlanetArrivalGuide opinionId={opinionId} />
       <FirstCarrierCue opinionId={opinionId} />
       <FirstFragmentCue opinionId={opinionId} />
+      <ResonanceHush opinionId={opinionId} />
     </>
   );
 }
