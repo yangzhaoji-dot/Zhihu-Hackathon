@@ -58,7 +58,7 @@ export function DialogueOverlay({
   onAction,
   onClose,
   resolveSource,
-  surfaceMode = "fragments",
+  surfaceMode = "legacy",
 }: DialogueOverlayProps) {
   const { t, i18n } = useTranslation();
   const [index, setIndex] = useState(0);
