@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type CSSProperties } from "react";
 import { useTranslation } from "react-i18next";
 import type { QuestionNetwork } from "@/lib/opinion/types";
+import styles from "./question-layer.module.css";
 
 const KIND_LABEL: Record<string, string> = {
   related: "相关问题",
@@ -12,10 +13,6 @@ const KIND_LABEL: Record<string, string> = {
   temporal: "同源议题",
 };
 
-/**
- * Layer 1 — the global question network. Rendered declaratively (no drag
- * physics needed here); tapping a question enters its opinion space.
- */
 export function QuestionLayer({
   network,
   onEnter,
@@ -27,7 +24,6 @@ export function QuestionLayer({
   const wrapRef = useRef<HTMLDivElement>(null);
   const lineRef = useRef<HTMLDivElement>(null);
 
-  // draw relation lines between core and each question
   useEffect(() => {
     const wrap = wrapRef.current;
     const layer = lineRef.current;
@@ -61,36 +57,46 @@ export function QuestionLayer({
   }, [network]);
 
   const isZh = i18n.language.startsWith("zh");
+  const maxAnswers = Math.max(1, ...network.questions.map((q) => q.answerCount ?? 0));
 
   return (
     <div ref={wrapRef} style={{ position: "absolute", inset: 0 }}>
       <div ref={lineRef} style={{ position: "absolute", inset: 0 }} aria-hidden />
-      {network.questions.map((q) => (
-        <button
-          key={q.id}
-          className={`question-node ${q.core ? "core" : ""}`}
-          style={{
-            left: `calc(${q.x * 100}% - ${q.core ? 98 : 84}px)`,
-            top: `calc(${q.y * 100}% - 36px)`,
-          }}
-          onClick={() => onEnter(q.id, q.title)}
-        >
-          {q.kind && (
-            <span className="q-kind">
-              {KIND_LABEL[q.kind] ?? ""}
-              {q.era ? ` · ${q.era}` : ""}
-            </span>
-          )}
-          {q.title}
-          {typeof q.answerCount === "number" && (
-            <span className="q-count">
-              {isZh
-                ? `${q.answerCount.toLocaleString("zh-CN")} 个回答`
-                : `${q.answerCount.toLocaleString("en-US")} answers`}
-            </span>
-          )}
-        </button>
-      ))}
+      {network.questions.map((q) => {
+        const answerGlow = Math.min(.68, .16 + ((q.answerCount ?? 0) / maxAnswers) * .42);
+        return (
+          <button
+            key={q.id}
+            className={`question-node ${styles.galaxy} ${q.core ? `core ${styles.coreGalaxy}` : ""}`}
+            style={{
+              left: `calc(${q.x * 100}% - ${q.core ? 98 : 84}px)`,
+              top: `calc(${q.y * 100}% - 36px)`,
+              "--answer-glow": answerGlow,
+            } as CSSProperties}
+            onClick={() => {
+              if (typeof navigator !== "undefined" && "vibrate" in navigator) navigator.vibrate([7, 24, 10]);
+              onEnter(q.id, q.title);
+            }}
+          >
+            <span className={styles.visual} aria-hidden><i /><b /><em /><span className={styles.arm} /></span>
+            <span className={styles.answerGlow} aria-hidden />
+            {q.kind && (
+              <span className="q-kind">
+                {KIND_LABEL[q.kind] ?? ""}
+                {q.era ? ` · ${q.era}` : ""}
+              </span>
+            )}
+            {q.title}
+            {typeof q.answerCount === "number" && (
+              <span className="q-count">
+                {isZh
+                  ? `${q.answerCount.toLocaleString("zh-CN")} 个回答`
+                  : `${q.answerCount.toLocaleString("en-US")} answers`}
+              </span>
+            )}
+          </button>
+        );
+      })}
     </div>
   );
 }
