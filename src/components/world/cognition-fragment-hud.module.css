@@ -21,11 +21,15 @@
   height: 34px;
 }
 
-.shard {
+.shard,
+.flight {
   position: relative;
   display: block;
   width: 25px;
   height: 31px;
+}
+
+.shard {
   margin-left: -9px;
   opacity: .32;
   transform: rotate(calc(-7deg + var(--shard-index) * 3deg));
@@ -34,7 +38,8 @@
 
 .shard:first-child { margin-left: 0; }
 
-.shard i {
+.shard i,
+.flight i {
   position: absolute;
   inset: 0;
   display: block;
@@ -54,6 +59,16 @@
 
 .shard[data-flash="true"] {
   animation: shardArrive 720ms cubic-bezier(.15,.8,.2,1);
+}
+
+.flight {
+  position: absolute;
+  left: 14px;
+  top: 12px;
+  z-index: 4;
+  opacity: 0;
+  animation: shardFlight 820ms cubic-bezier(.2,.78,.18,1) forwards;
+  filter: drop-shadow(0 0 14px color-mix(in srgb, var(--world-accent) 70%, transparent));
 }
 
 .copy {
@@ -78,6 +93,24 @@
 
 .copy small { color: var(--world-accent); }
 
+@keyframes shardFlight {
+  0% {
+    opacity: 0;
+    transform: translate(-42vw, -42vh) scale(1.7) rotate(18deg);
+    filter: blur(3px) drop-shadow(0 0 22px color-mix(in srgb, var(--world-accent) 80%, transparent));
+  }
+  18% { opacity: 1; }
+  72% {
+    opacity: 1;
+    transform: translate(-18px, -8px) scale(1.08) rotate(-5deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(0, 0) scale(.85) rotate(-7deg);
+    filter: blur(0) drop-shadow(0 0 8px color-mix(in srgb, var(--world-accent) 45%, transparent));
+  }
+}
+
 @keyframes shardArrive {
   0% { opacity: 0; transform: translate(24px,-24px) scale(.35) rotate(22deg); filter: blur(6px); }
   55% { opacity: 1; transform: translate(0,-5px) scale(1.18) rotate(-4deg); filter: drop-shadow(0 0 14px var(--world-accent)); }
@@ -86,10 +119,19 @@
 
 @media (max-width: 720px) {
   .hud { right: 12px; bottom: 70px; padding: 8px 10px; }
-  .shard { width: 21px; height: 27px; }
+  .shard,
+  .flight { width: 21px; height: 27px; }
+  .flight { animation-name: shardFlightMobile; }
+}
+
+@keyframes shardFlightMobile {
+  0% { opacity: 0; transform: translate(-38vw, -48vh) scale(1.6) rotate(18deg); filter: blur(3px); }
+  20% { opacity: 1; }
+  100% { opacity: 0; transform: translate(0,0) scale(.82) rotate(-6deg); filter: blur(0); }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .shard { transition: none; }
-  .shard[data-flash="true"] { animation: none; }
+  .shard[data-flash="true"],
+  .flight { animation: none; }
 }
