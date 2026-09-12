@@ -5,11 +5,16 @@ import Image from "next/image";
 import type { CSSProperties, RefObject } from "react";
 import type { WorldNpcView } from "@/lib/api/opinion";
 import type { Poi, WorldConfig, Zone } from "@/lib/opinion/types";
-import { getOpinionWorldTheme, type OpinionWorldTheme } from "@/lib/opinion/world-theme";
+import {
+  getOpinionWorldTheme,
+  type OpinionWorldId,
+  type OpinionWorldTheme,
+} from "@/lib/opinion/world-theme";
 import { TILE_SIZE, type GridPos } from "@/lib/world/geometry";
 import { isPoiRequirementMet, type WalkContext } from "@/lib/world/walkability";
 import fragmentStyles from "./fragment-state.module.css";
 import grammarStyles from "./world-grammar.module.css";
+import artifactStyles from "./planet-artifacts.module.css";
 import resonanceStyles from "./world-resonance.module.css";
 import styles from "./world-scene.module.css";
 
@@ -35,7 +40,18 @@ type EnvironmentObjectKind =
   | "archive-cabinet"
   | "quiet-bench"
   | "departure-board"
-  | "threshold-gate";
+  | "threshold-gate"
+  | "title-stone"
+  | "index-desk"
+  | "spotlight-marker"
+  | "statement-seat"
+  | "evidence-plinth"
+  | "echo-stone"
+  | "condition-spring"
+  | "trace-tree"
+  | "core-terminal"
+  | "control-console"
+  | "data-vault";
 
 type FragmentKind = "claim" | "reason" | "evidence";
 
@@ -50,6 +66,34 @@ const ENVIRONMENT_OBJECTS: Record<string, EnvironmentObjectKind> = {
   npc_threshold: "threshold-gate",
 };
 
+const FRAGMENT_OBJECTS: Record<OpinionWorldId, Record<FragmentKind, EnvironmentObjectKind>> = {
+  crossroads: {
+    claim: "threshold-gate",
+    reason: "workbench",
+    evidence: "archive-cabinet",
+  },
+  archive: {
+    claim: "title-stone",
+    reason: "index-desk",
+    evidence: "archive-cabinet",
+  },
+  theater: {
+    claim: "spotlight-marker",
+    reason: "statement-seat",
+    evidence: "evidence-plinth",
+  },
+  forest: {
+    claim: "echo-stone",
+    reason: "condition-spring",
+    evidence: "trace-tree",
+  },
+  machine: {
+    claim: "core-terminal",
+    reason: "control-console",
+    evidence: "data-vault",
+  },
+};
+
 function fragmentKindFromId(id: string): FragmentKind | null {
   if (id.startsWith("fragment_claim_")) return "claim";
   if (id.startsWith("fragment_reason_")) return "reason";
@@ -57,13 +101,15 @@ function fragmentKindFromId(id: string): FragmentKind | null {
   return null;
 }
 
-function environmentObjectKind(config: WorldConfig, npc: WorldNpcView): EnvironmentObjectKind | null {
+function environmentObjectKind(
+  config: WorldConfig,
+  npc: WorldNpcView,
+  themeId: OpinionWorldId,
+): EnvironmentObjectKind | null {
   if (config.tileset !== "diorama-v1") return null;
   if (!npc.role.startsWith("看山 ·")) return null;
   const fragmentKind = fragmentKindFromId(npc.id);
-  if (fragmentKind === "claim") return "threshold-gate";
-  if (fragmentKind === "reason") return "workbench";
-  if (fragmentKind === "evidence") return "archive-cabinet";
+  if (fragmentKind) return FRAGMENT_OBJECTS[themeId][fragmentKind];
   return ENVIRONMENT_OBJECTS[npc.id] ?? null;
 }
 
@@ -99,13 +145,13 @@ function PoiGlyph({ poi, locked }: { poi: Poi; locked: boolean }) {
 function EnvironmentObject({ kind, collected }: { kind: EnvironmentObjectKind; collected: boolean }) {
   return (
     <span
-      className={`${styles.environmentArtifact} ${collected ? fragmentStyles.artifact : ""}`}
+      className={`${styles.environmentArtifact} ${artifactStyles.artifact} ${collected ? fragmentStyles.artifact : ""}`}
       data-kind={kind}
       aria-hidden
     >
-      <span className={styles.artifactTop} />
-      <span className={styles.artifactBody} />
-      <span className={styles.artifactDetail} />
+      <span className={styles.artifactTop} data-artifact-part="top" />
+      <span className={styles.artifactBody} data-artifact-part="body" />
+      <span className={styles.artifactDetail} data-artifact-part="detail" />
     </span>
   );
 }
@@ -303,7 +349,7 @@ export function WorldScene({
         })}
 
         {npcs.map((npc) => {
-          const objectKind = environmentObjectKind(config, npc);
+          const objectKind = environmentObjectKind(config, npc, activeTheme.id);
           const fragmentKind = fragmentKindFromId(npc.id);
           const collected = Boolean(
             fragmentKind && walkCtx.worldState?.[`fragment:${npc.opinion.id}:${fragmentKind}`],
