@@ -59,10 +59,284 @@
   border-radius: 50%;
 }
 
+/* ── Grammar-specific condition carriers ─────────────────────────────── */
+.carrier[data-carrier-name="条件闸机"] .object i {
+  left: 6px;
+  right: 6px;
+  height: 43px;
+  border-radius: 4px;
+  background:
+    linear-gradient(90deg, rgba(255,255,255,.06) 0 19%, transparent 19% 81%, rgba(255,255,255,.06) 81%),
+    linear-gradient(150deg, color-mix(in srgb, var(--carrier-accent) 18%, #46505a), #252c32);
+}
+.carrier[data-carrier-name="条件闸机"] .object b {
+  left: 11px;
+  right: 11px;
+  bottom: 25px;
+  height: 3px;
+  transform: rotate(-9deg);
+}
+.carrier[data-carrier-name="条件闸机"] .object em {
+  left: 26px;
+  bottom: 9px;
+  width: 12px;
+  height: 12px;
+  border-style: solid;
+}
+
+.carrier[data-carrier-name="索引筛选台"] .object i {
+  left: 7px;
+  right: 7px;
+  height: 33px;
+  border-radius: 3px 3px 9px 9px;
+  background:
+    repeating-linear-gradient(0deg, rgba(255,255,255,.08) 0 2px, transparent 2px 8px),
+    linear-gradient(150deg, color-mix(in srgb, var(--carrier-accent) 12%, #5c5a52), #282925);
+}
+.carrier[data-carrier-name="索引筛选台"] .object b {
+  left: 13px;
+  right: 13px;
+  bottom: 40px;
+  height: 8px;
+  border-radius: 3px;
+}
+.carrier[data-carrier-name="索引筛选台"] .object em {
+  left: 18px;
+  bottom: 14px;
+  width: 28px;
+  height: 3px;
+  border-style: solid;
+  border-radius: 1px;
+}
+
+.carrier[data-carrier-name="依赖控制台"] .object i {
+  left: 5px;
+  right: 5px;
+  height: 36px;
+  border-radius: 5px;
+  background:
+    linear-gradient(rgba(255,255,255,.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.04) 1px, transparent 1px),
+    linear-gradient(150deg, color-mix(in srgb, var(--carrier-accent) 18%, #30404b), #18232d);
+  background-size: 9px 9px, 9px 9px, auto;
+}
+.carrier[data-carrier-name="依赖控制台"] .object b {
+  left: 20px;
+  right: 20px;
+  bottom: 33px;
+  height: 7px;
+}
+.carrier[data-carrier-name="依赖控制台"] .object em {
+  left: 24px;
+  bottom: 11px;
+  width: 16px;
+  height: 16px;
+  border-style: solid;
+}
+
+.carrier[data-carrier-name="换位机关"] .object i {
+  left: 11px;
+  right: 11px;
+  height: 34px;
+  border-radius: 50% 50% 8px 8px;
+  transform: perspective(70px) rotateX(12deg);
+}
+.carrier[data-carrier-name="换位机关"] .object b {
+  left: 8px;
+  right: auto;
+  bottom: 19px;
+  width: 48px;
+  height: 3px;
+  transform: rotate(90deg);
+  opacity: .78;
+}
+.carrier[data-carrier-name="换位机关"] .object em {
+  left: 18px;
+  bottom: 13px;
+  width: 28px;
+  height: 16px;
+  border-style: solid;
+}
+
+.carrier[data-carrier-name="边界回声池"] .object i {
+  left: 8px;
+  right: 8px;
+  bottom: 5px;
+  height: 28px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, color-mix(in srgb, var(--carrier-accent) 20%, #283638), #182224 72%);
+}
+.carrier[data-carrier-name="边界回声池"] .object b {
+  left: 24px;
+  right: 24px;
+  bottom: 31px;
+  height: 6px;
+}
+.carrier[data-carrier-name="边界回声池"] .object em {
+  left: 12px;
+  bottom: 9px;
+  width: 40px;
+  height: 19px;
+  border-style: solid;
+  box-shadow: 0 0 12px color-mix(in srgb, var(--carrier-accent) 24%, transparent);
+}
+
+/* ── Biome-specific boundary carriers ───────────────────────────────── */
+.carrier[data-carrier-name="雾外浮标"] .object i {
+  left: 24px;
+  right: 24px;
+  bottom: 7px;
+  height: 43px;
+  border-radius: 50% 50% 10px 10px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--carrier-accent) 42%, #d7e2e2), #2f4750 55%, #1c3039);
+}
+.carrier[data-carrier-name="雾外浮标"] .object b {
+  left: 20px;
+  right: 20px;
+  bottom: 43px;
+  height: 5px;
+}
+.carrier[data-carrier-name="雾外浮标"] .object em {
+  left: 9px;
+  bottom: 4px;
+  width: 46px;
+  height: 12px;
+  border-style: solid;
+  border-color: color-mix(in srgb, var(--carrier-accent) 30%, transparent);
+}
+
+.carrier[data-carrier-name="风蚀残碑"] .object i {
+  left: 15px;
+  right: 13px;
+  height: 48px;
+  border-radius: 2px;
+  clip-path: polygon(8% 8%, 72% 0, 100% 19%, 84% 48%, 94% 100%, 13% 91%, 0 46%);
+  background: linear-gradient(145deg, color-mix(in srgb, var(--carrier-accent) 11%, #8d7a61), #443d34 74%);
+}
+.carrier[data-carrier-name="风蚀残碑"] .object b {
+  left: 31px;
+  right: auto;
+  bottom: 24px;
+  width: 3px;
+  height: 28px;
+  transform: rotate(24deg);
+  opacity: .62;
+}
+.carrier[data-carrier-name="风蚀残碑"] .object em {
+  left: 13px;
+  bottom: 2px;
+  width: 40px;
+  height: 8px;
+  border-style: solid;
+  opacity: .45;
+}
+
+.carrier[data-carrier-name="断根界碑"] .object i {
+  left: 14px;
+  right: 14px;
+  height: 45px;
+  border-radius: 52% 48% 22% 24% / 30% 38% 62% 70%;
+  clip-path: polygon(30% 0, 63% 9%, 72% 41%, 100% 61%, 70% 100%, 49% 76%, 23% 100%, 0 66%, 29% 42%);
+  background: linear-gradient(155deg, color-mix(in srgb, var(--carrier-accent) 10%, #596653), #293329 74%);
+}
+.carrier[data-carrier-name="断根界碑"] .object b {
+  left: 29px;
+  right: auto;
+  bottom: 9px;
+  width: 4px;
+  height: 43px;
+  transform: rotate(-10deg);
+  opacity: .58;
+}
+.carrier[data-carrier-name="断根界碑"] .object em {
+  left: 8px;
+  bottom: 0;
+  width: 48px;
+  height: 17px;
+  border-width: 1px 0 0;
+  border-radius: 50%;
+}
+
+.carrier[data-carrier-name="封闭站台"] .object i {
+  left: 4px;
+  right: 4px;
+  bottom: 9px;
+  height: 29px;
+  border-radius: 3px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--carrier-accent) 10%, #6c6d69), #303439);
+}
+.carrier[data-carrier-name="封闭站台"] .object b {
+  left: 9px;
+  right: 9px;
+  bottom: 27px;
+  height: 4px;
+  transform: rotate(-4deg);
+}
+.carrier[data-carrier-name="封闭站台"] .object em {
+  left: 5px;
+  bottom: 4px;
+  width: 54px;
+  height: 7px;
+  border-width: 1px 0 0;
+  border-radius: 0;
+}
+
+.carrier[data-carrier-name="断裂遗迹"] .object i {
+  left: 9px;
+  right: 9px;
+  height: 45px;
+  clip-path: polygon(0 9%, 73% 0, 62% 34%, 100% 48%, 82% 100%, 42% 77%, 20% 100%, 0 64%);
+  border-radius: 2px;
+  background: linear-gradient(155deg, color-mix(in srgb, var(--carrier-accent) 9%, #706b64), #34312e 72%);
+}
+.carrier[data-carrier-name="断裂遗迹"] .object b {
+  left: 31px;
+  right: auto;
+  bottom: 12px;
+  width: 3px;
+  height: 36px;
+  transform: rotate(-28deg);
+  opacity: .52;
+}
+.carrier[data-carrier-name="断裂遗迹"] .object em {
+  left: 18px;
+  bottom: 12px;
+  width: 28px;
+  height: 19px;
+  border-style: dashed;
+}
+
+.carrier[data-carrier-name="失效旁路"] .object i {
+  left: 8px;
+  right: 8px;
+  bottom: 8px;
+  height: 39px;
+  border-radius: 18px;
+  background: transparent;
+  border-width: 5px;
+  border-color: color-mix(in srgb, var(--carrier-accent) 28%, #40515d);
+}
+.carrier[data-carrier-name="失效旁路"] .object b {
+  left: 29px;
+  right: auto;
+  bottom: 9px;
+  width: 6px;
+  height: 44px;
+  transform: rotate(45deg);
+  background: color-mix(in srgb, var(--carrier-accent) 62%, #d9d0c0);
+}
+.carrier[data-carrier-name="失效旁路"] .object em {
+  left: 23px;
+  bottom: 17px;
+  width: 18px;
+  height: 18px;
+  border-style: solid;
+}
+
+/* Generic role fallback. */
 .carrier[data-role="condition"] .object i {
   clip-path: polygon(0 0, 42% 0, 50% 18%, 58% 0, 100% 0, 100% 100%, 0 100%);
 }
-
 .carrier[data-role="condition"] .object em {
   width: 30px;
   height: 4px;
@@ -71,12 +345,10 @@
   border-style: solid;
   border-radius: 999px;
 }
-
 .carrier[data-role="boundary"] .object i {
   clip-path: polygon(0 0, 70% 0, 57% 28%, 100% 42%, 100% 100%, 0 100%);
   background: linear-gradient(155deg, color-mix(in srgb, var(--carrier-accent) 12%, #62605b), #252a2d 76%);
 }
-
 .carrier[data-role="boundary"] .object b {
   width: 20px;
   right: auto;
