@@ -5,20 +5,11 @@ import Image from "next/image";
 import type { CSSProperties, RefObject } from "react";
 import type { WorldNpcView } from "@/lib/api/opinion";
 import type { Poi, WorldConfig, Zone } from "@/lib/opinion/types";
-import type { OpinionWorldTheme } from "@/lib/opinion/world-theme";
+import { getOpinionWorldTheme, type OpinionWorldTheme } from "@/lib/opinion/world-theme";
 import { TILE_SIZE, type GridPos } from "@/lib/world/geometry";
 import { isPoiRequirementMet, type WalkContext } from "@/lib/world/walkability";
 import resonanceStyles from "./world-resonance.module.css";
 import styles from "./world-scene.module.css";
-
-// 世界渲染层。
-//
-// graybox：保留原有 Zone + NPC 灰盒，服务动态议题与工程验证。
-// diorama-v1：用于“环境优先”的议题世界。数据层继续复用 NpcConfig，
-// 但固定观点不再画成人，而画成可调查的场景物件；点击/靠近仍复用成熟的
-// 来源追溯、观点卡、比较和 AI 对话流程。
-// resonant：不是“观点被证明”，只表示用户完成了这一轮核心理解；世界用
-// 朝阳、局部雾退与亮度变化回应这次理解，未知仍然保留。
 
 interface WorldSceneProps {
   config: WorldConfig;
@@ -55,10 +46,7 @@ const ENVIRONMENT_OBJECTS: Record<string, EnvironmentObjectKind> = {
   npc_threshold: "threshold-gate",
 };
 
-function environmentObjectKind(
-  config: WorldConfig,
-  npc: WorldNpcView,
-): EnvironmentObjectKind | null {
+function environmentObjectKind(config: WorldConfig, npc: WorldNpcView): EnvironmentObjectKind | null {
   if (config.tileset !== "diorama-v1") return null;
   if (!npc.role.startsWith("看山 ·")) return null;
   return ENVIRONMENT_OBJECTS[npc.id] ?? null;
@@ -74,7 +62,7 @@ function zoneBackground(terrain: Zone["terrain"], theme: OpinionWorldTheme): str
     case "road": return `${theme.road}59`;
     case "bridge": return `${theme.road}8c`;
     case "station": return `${theme.accent}3d`;
-    case "fog": return "rgba(225, 233, 231, 0.30)";
+    case "fog": return `${theme.mist}4d`;
     case "ruin": return "rgba(8, 10, 13, 0.45)";
     case "monument": return `${theme.accent}52`;
   }
@@ -116,13 +104,15 @@ export function WorldScene({
   highlightId,
   onTap,
 }: WorldSceneProps) {
+  // The selected planet opinion, not the question-level config, owns the visual grammar.
+  const activeTheme = npcs[0]?.opinion ? getOpinionWorldTheme(npcs[0].opinion) : theme;
   const fogLifted = (zone: Zone) =>
     Boolean(zone.stateKey && walkCtx.worldState && walkCtx.worldState[zone.stateKey]);
   const ruinMarked = (zone: Zone) =>
     Boolean(walkCtx.worldState && walkCtx.worldState[`ruin:${zone.id}`]);
 
-  const groundZones = config.zones.filter((z) => z.terrain !== "fog");
-  const fogZones = config.zones.filter((z) => z.terrain === "fog");
+  const groundZones = config.zones.filter((zone) => zone.terrain !== "fog");
+  const fogZones = config.zones.filter((zone) => zone.terrain === "fog");
 
   const handleClick = (event: React.MouseEvent<HTMLDivElement>) => {
     const worldEl = worldElRef.current;
@@ -133,10 +123,21 @@ export function WorldScene({
       y: (event.clientY - rect.top) / TILE_SIZE,
     };
     const npc = npcs.find(
-      (n) => Math.hypot(pos.x - (n.pos.x + 0.5), pos.y - (n.pos.y + 0.5)) <= 1,
+      (candidate) => Math.hypot(pos.x - (candidate.pos.x + 0.5), pos.y - (candidate.pos.y + 0.5)) <= 1,
     );
     onTap(pos, npc?.id ?? null);
   };
+
+  const worldStyle = {
+    width: config.size.w * TILE_SIZE,
+    height: config.size.h * TILE_SIZE,
+    backgroundSize: `${TILE_SIZE}px ${TILE_SIZE}px`,
+    "--world-sky": activeTheme.sky,
+    "--world-ground": activeTheme.ground,
+    "--world-road": activeTheme.road,
+    "--world-accent": activeTheme.accent,
+    "--world-mist": activeTheme.mist,
+  } as CSSProperties;
 
   return (
     <div className={styles.viewport} aria-label="world scene">
@@ -144,12 +145,13 @@ export function WorldScene({
         ref={worldElRef}
         className={`${styles.worldGrid} ${resonant ? resonanceStyles.resonant : ""}`}
         data-tileset={config.tileset}
+        data-world-theme={activeTheme.id}
+        data-scene-motif={activeTheme.surface.motif}
+        data-scene-density={activeTheme.surface.density}
+        data-scene-fog={activeTheme.surface.fog}
+        data-resonance-type={activeTheme.resonance}
         data-resonant={resonant ? "true" : "false"}
-        style={{
-          width: config.size.w * TILE_SIZE,
-          height: config.size.h * TILE_SIZE,
-          backgroundSize: `${TILE_SIZE}px ${TILE_SIZE}px`,
-        }}
+        style={worldStyle}
         onClick={handleClick}
       >
         {groundZones.map((zone) => (
@@ -162,7 +164,7 @@ export function WorldScene({
               top: zone.rect.y * TILE_SIZE,
               width: zone.rect.w * TILE_SIZE,
               height: zone.rect.h * TILE_SIZE,
-              background: zoneBackground(zone.terrain, theme),
+              background: zoneBackground(zone.terrain, activeTheme),
             }}
           >
             <span className={styles.zoneLabel}>{zone.label[locale] ?? zone.label["zh-CN"]}</span>
@@ -180,7 +182,7 @@ export function WorldScene({
               top: (fog.pos.y - 0.5) * TILE_SIZE,
               width: 4 * TILE_SIZE,
               height: 2 * TILE_SIZE,
-              background: zoneBackground("fog", theme),
+              background: zoneBackground("fog", activeTheme),
             }}
             aria-hidden
           />
@@ -196,7 +198,7 @@ export function WorldScene({
               top: zone.rect.y * TILE_SIZE,
               width: zone.rect.w * TILE_SIZE,
               height: zone.rect.h * TILE_SIZE,
-              background: zoneBackground("fog", theme),
+              background: zoneBackground("fog", activeTheme),
             }}
           >
             <span className={styles.zoneLabel}>{zone.label[locale] ?? zone.label["zh-CN"]}</span>
@@ -230,6 +232,7 @@ export function WorldScene({
                 npc.translucent ? styles.translucent : ""
               } ${highlightId === npc.id ? styles.highlight : ""}`}
               data-object-kind={objectKind ?? undefined}
+              data-planet-object={objectKind ? undefined : "true"}
               style={{ left: npc.pos.x * TILE_SIZE, top: npc.pos.y * TILE_SIZE }}
               onClick={(event) => {
                 event.stopPropagation();
@@ -240,26 +243,17 @@ export function WorldScene({
               {objectKind ? (
                 <EnvironmentObject kind={objectKind} />
               ) : npc.sprite ? (
-                <Image
-                  className={styles.npcSprite}
-                  src={npc.sprite}
-                  alt=""
-                  width={64}
-                  height={96}
-                  sizes="64px"
-                />
+                <Image className={styles.npcSprite} src={npc.sprite} alt="" width={64} height={96} sizes="64px" />
               ) : (
                 <span
                   className={styles.npcBlob}
-                  style={{ "--blob-color": theme.accent } as CSSProperties}
+                  style={{ "--blob-color": activeTheme.accent } as CSSProperties}
                   aria-hidden
                 >
                   {npc.role.slice(0, 1)}
                 </span>
               )}
-              <span className={styles.npcName}>
-                {objectKind ? environmentObjectLabel(npc.role) : npc.role}
-              </span>
+              <span className={styles.npcName}>{objectKind ? environmentObjectLabel(npc.role) : npc.role}</span>
             </button>
           );
         })}
