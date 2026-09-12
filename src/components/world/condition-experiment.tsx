@@ -31,9 +31,11 @@ function reflectCueInScene(cue: number) {
   if (typeof document === "undefined") return;
   const runtime = document.querySelector<HTMLElement>('[data-el="world-runtime"]');
   if (!runtime) return;
-  runtime.style.setProperty("--condition-cue", String(Math.max(0, Math.min(1, cue))));
-  runtime.style.setProperty("--condition-route-opacity", String(0.16 + cue * 0.54));
-  runtime.style.setProperty("--condition-route-glow", String(4 + cue * 12));
+  const normalized = Math.max(0, Math.min(1, cue));
+  runtime.style.setProperty("--condition-cue", String(normalized));
+  runtime.style.setProperty("--condition-route-opacity", String(0.16 + normalized * 0.54));
+  runtime.style.setProperty("--condition-route-glow", `${4 + normalized * 12}px`);
+  runtime.style.setProperty("--condition-object-brightness", String(0.92 + normalized * 0.22));
 }
 
 export function ConditionExperiment({
