@@ -96,12 +96,36 @@ export function PlanetRouteWhisper({ opinionId }: { opinionId: string }) {
     return { spawn, sites, rocket };
   }, [config, entry, opinionId]);
 
+  const callingSite = useMemo(() => {
+    if (!route) return null;
+    const recovered = new Set(collectedIds);
+    return route.sites.find((site) => !recovered.has(site.fragment.id)) ?? null;
+  }, [collectedIds, route]);
+
+  useEffect(() => {
+    if (!callingSite || typeof window === "undefined") return;
+    const timer = window.setTimeout(() => {
+      window.dispatchEvent(new CustomEvent("carrier:calling", {
+        detail: {
+          opinionId,
+          carrierId: callingSite.id,
+          fragmentId: callingSite.fragment.id,
+          carrier: callingSite.fragment.carrier,
+          role: callingSite.fragment.role,
+        },
+      }));
+    }, 520);
+    return () => window.clearTimeout(timer);
+  }, [callingSite, opinionId]);
+
   if (!worldEl || !config || !route || route.sites.length === 0) return null;
 
   const collected = new Set(collectedIds);
   const width = config.size.w * TILE_SIZE;
   const height = config.size.h * TILE_SIZE;
-  const callingIndex = route.sites.findIndex((site) => !collected.has(site.fragment.id));
+  const callingIndex = callingSite
+    ? route.sites.findIndex((site) => site.id === callingSite.id)
+    : -1;
 
   const segments = route.sites.map((site, index) => {
     const done = collected.has(site.fragment.id);
