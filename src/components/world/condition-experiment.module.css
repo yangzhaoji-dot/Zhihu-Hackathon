@@ -177,15 +177,16 @@
 
 /*
  * The experiment also illuminates the matching route in the actual world.
- * This CSS variable is local UI feedback only; it never becomes model confidence.
+ * These variables are local visual feedback only; they never become model confidence.
  */
 :global([data-el="world-runtime"]) :global(path[data-route-kind="reason"]) {
   opacity: var(--condition-route-opacity, 0.3);
-  transition: opacity 220ms ease, stroke-width 220ms ease;
+  filter: drop-shadow(0 0 var(--condition-route-glow, 6px) color-mix(in srgb, var(--world-accent) 40%, transparent));
+  transition: opacity 220ms ease, filter 220ms ease;
 }
 
 :global([data-el="world-runtime"]) :global([data-fragment-kind="reason"]) {
-  filter: brightness(calc(0.92 + var(--condition-cue, 0) * 0.22));
+  filter: brightness(var(--condition-object-brightness, 0.92));
   transition: filter 220ms ease;
 }
 
