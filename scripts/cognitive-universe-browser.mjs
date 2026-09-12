@@ -59,11 +59,22 @@ try {
   await page.locator('[data-el="planet-focus"]').waitFor();
   assert.match(await page.locator('[data-el="planet-focus"] h2').innerText(),/身心损耗/);
   const forkUrl=page.url();
+  const evolvedId=new URL(forkUrl).searchParams.get("opinion");
+  assert.ok(evolvedId?.startsWith("user_"));
   await page.reload({waitUntil:"domcontentloaded"});
   await page.locator('[data-el="planet-focus"]').waitFor();
   assert.equal(page.url(),forkUrl);
   await shot("03-evolved-galaxy.png");
   await page.unroute("**/api/opinion/synthesize");
+
+  // A generated planet is not decorative: it can be entered again using the
+  // source excerpts persisted in the current session graph.
+  await page.locator('[data-el="land-planet"]').click();
+  await page.waitForURL(url=>url.pathname.includes(`/world/${evolvedId}`));
+  await page.locator('[data-el="planet-synthesis-mvp"]').waitFor();
+  assert.ok(await page.locator('[data-el="planet-material"]').count() >= 1);
+  await page.getByRole("button",{name:/返回主星系/}).click();
+  await page.locator('[data-el="planet-focus"]').waitFor();
 
   await page.locator('[data-el="planet-focus"] button[aria-label]').first().click();
   await page.locator('[data-el="collision-select"]').nth(0).click();
@@ -88,7 +99,7 @@ try {
   await page.locator('[data-el="opinion-planet"]').first().waitFor();
   assert.equal(await page.locator('[data-el="opinion-planet"]').count(),48);
   assert.deepEqual(errors,[]);
-  await fs.writeFile(path.join(out,"result.json"),JSON.stringify({ok:true,checks:["demo landing route","grounded text selection","synthesis","fork persistence","collision","fusion","demo reset"],pageErrors:errors},null,2));
+  await fs.writeFile(path.join(out,"result.json"),JSON.stringify({ok:true,checks:["demo landing route","grounded text selection","synthesis","fork persistence","generated planet re-entry","collision","fusion","demo reset"],pageErrors:errors},null,2));
 } catch(error) {
   const detail={ok:false,url:page.url(),message:String(error),pageErrors:errors};
   console.error(JSON.stringify(detail));
