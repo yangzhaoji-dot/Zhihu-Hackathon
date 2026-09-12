@@ -31,11 +31,19 @@
 
 .traces {
   stroke: color-mix(in srgb, var(--world-accent) 56%, #d4c98c);
-  stroke-width: 3.2;
-  stroke-dasharray: 2 25;
-  opacity: .26;
+  stroke-width: 2.4;
+  stroke-dasharray: 1 29;
+  opacity: .1;
   animation: tracesDrift 15s linear infinite;
 }
+
+.footprints {
+  fill: color-mix(in srgb, var(--world-road) 56%, #453f31);
+  opacity: .2;
+  filter: blur(.15px);
+}
+.footprints g[data-side="right"] { opacity: .82; }
+.footprints circle { opacity: .48; }
 
 .sign {
   position: absolute;
@@ -128,7 +136,12 @@
 
 :global([data-biome="forest"]) .traces {
   stroke: #bbc789;
-  opacity: .24;
+  opacity: .07;
+}
+
+:global([data-biome="forest"]) .footprints {
+  fill: #64705a;
+  opacity: .28;
 }
 
 :global([data-biome="forest"]) .sign > i {
@@ -159,6 +172,7 @@
 @media (max-width: 720px) {
   .sign { transform: translate(-50%, -100%) scale(.9); transform-origin: bottom center; }
   .sign span { display: none; }
+  .footprints { opacity: .18; }
 }
 
 @media (prefers-reduced-motion: reduce) {
