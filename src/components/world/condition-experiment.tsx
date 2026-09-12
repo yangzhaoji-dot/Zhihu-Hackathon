@@ -24,8 +24,16 @@ function cueFromStates(states: readonly ConditionState[], count: number) {
   if (!count) return 0;
   const fits = states.filter((state) => state === "fits").length;
   const breaks = states.filter((state) => state === "breaks").length;
-  // 0.15 keeps the route faintly visible even when assumptions are mostly absent.
   return Math.max(0.15, Math.min(1, (fits + (count - fits - breaks) * 0.18) / count));
+}
+
+function reflectCueInScene(cue: number) {
+  if (typeof document === "undefined") return;
+  const runtime = document.querySelector<HTMLElement>('[data-el="world-runtime"]');
+  if (!runtime) return;
+  runtime.style.setProperty("--condition-cue", String(Math.max(0, Math.min(1, cue))));
+  runtime.style.setProperty("--condition-route-opacity", String(0.16 + cue * 0.54));
+  runtime.style.setProperty("--condition-route-glow", String(4 + cue * 12));
 }
 
 export function ConditionExperiment({
@@ -44,6 +52,11 @@ export function ConditionExperiment({
   const fits = states.filter((state) => state === "fits").length;
   const ratio = normalized.length ? fits / normalized.length : 0;
   const zh = locale !== "en-US";
+
+  const publishCue = (cue: number) => {
+    reflectCueInScene(cue);
+    onCueChange?.(cue);
+  };
 
   const stateLabel = (state: ConditionState) => {
     if (state === "fits") return zh ? "假设满足" : "assume present";
@@ -79,7 +92,7 @@ export function ConditionExperiment({
                   stateIndex === index ? NEXT_STATE[state] : state,
                 );
                 setStates(next);
-                onCueChange?.(cueFromStates(next, normalized.length));
+                publishCue(cueFromStates(next, normalized.length));
               }}
               aria-label={`${condition} · ${stateLabel(states[index])}`}
             >
@@ -106,7 +119,7 @@ export function ConditionExperiment({
           type="button"
           className={styles.secondary}
           onClick={() => {
-            onCueChange?.(0);
+            publishCue(0);
             onCancel();
           }}
         >
