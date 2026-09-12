@@ -46,9 +46,11 @@ export default function GalaxyPage() {
   const galaxy = useMemo(() => graph ? buildGalaxy(graph,questionId === DEMO_ID ? DEMO_ASSIGNMENTS : {}) : null, [graph,questionId]);
   const cluster = galaxy?.clusters.find((item) => item.id === search.get("cluster")) ?? null;
   const selected = cluster?.nodes.find((node) => node.opinion.id === search.get("opinion")) ?? null;
-  const navigate = (clusterId?: string | null, opinionId?: string | null) => router.push(galaxyUrl(questionId,clusterId,opinionId),{ scroll:false });
+  const navigate = (clusterId?: string | null, opinionId?: string | null) => {
+    if (opinionId || clusterId !== cluster?.id) setCollisionIds([]);
+    router.push(galaxyUrl(questionId,clusterId,opinionId),{ scroll:false });
+  };
 
-  useEffect(() => { setCollisionIds([]); }, [cluster?.id]);
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return;
