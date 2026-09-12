@@ -6,41 +6,32 @@
   pointer-events: none;
 }
 
-.stonePathShadow,
-.stonePath,
-.traces {
+.stones {
+  opacity: .72;
+}
+
+.stoneShadow {
+  fill: rgba(5, 10, 8, .22);
+  filter: blur(1.4px);
+}
+
+.stone {
+  fill: #737a68;
+  stroke: rgba(213,207,177,.08);
+  stroke-width: 1;
+  filter: drop-shadow(0 2px 1px rgba(0,0,0,.16));
+}
+
+.stoneCrack {
   fill: none;
+  stroke: rgba(52,58,49,.38);
+  stroke-width: 1;
   stroke-linecap: round;
-  pointer-events: none;
-}
-
-.stonePathShadow {
-  stroke: rgba(4, 9, 7, .22);
-  stroke-width: 20;
-  stroke-dasharray: 17 13;
-  opacity: .44;
-}
-
-.stonePath {
-  stroke: color-mix(in srgb, var(--world-road) 68%, #91876c);
-  stroke-width: 13;
-  stroke-dasharray: 17 13;
-  opacity: .28;
-  filter: drop-shadow(0 5px 4px rgba(0,0,0,.2));
-}
-
-.traces {
-  stroke: color-mix(in srgb, var(--world-accent) 56%, #d4c98c);
-  stroke-width: 2.4;
-  stroke-dasharray: 1 29;
-  opacity: .1;
-  animation: tracesDrift 15s linear infinite;
 }
 
 .footprints {
-  fill: color-mix(in srgb, var(--world-road) 56%, #453f31);
-  opacity: .2;
-  filter: blur(.15px);
+  fill: #536052;
+  opacity: .22;
 }
 .footprints g[data-side="right"] { opacity: .82; }
 .footprints circle { opacity: .48; }
@@ -49,14 +40,14 @@
   position: absolute;
   z-index: 6;
   display: flex;
-  min-width: 112px;
-  max-width: 170px;
+  min-width: 108px;
+  max-width: 164px;
   align-items: flex-end;
   gap: 6px;
   transform: translate(-50%, -100%) rotate(-1.4deg);
   color: rgba(237,232,210,.78);
   pointer-events: none;
-  filter: drop-shadow(0 7px 7px rgba(0,0,0,.26));
+  filter: drop-shadow(0 7px 7px rgba(0,0,0,.24));
 }
 
 .sign > i {
@@ -65,19 +56,18 @@
   height: 39px;
   flex: 0 0 auto;
   border-radius: 5px 5px 2px 2px;
-  background: #4b4433;
-  box-shadow: inset -1px 0 rgba(255,255,255,.06);
+  background: linear-gradient(90deg, #443a2b, #66573b 55%, #3c382b);
+  box-shadow: inset -1px 0 rgba(255,255,255,.05);
 }
 
 .sign > div {
   position: relative;
   margin-bottom: 13px;
   padding: 6px 9px 7px;
-  border: 1px solid rgba(210,203,165,.12);
+  border: 1px solid rgba(210,203,165,.1);
   border-radius: 5px 5px 7px 4px;
-  background:
-    linear-gradient(94deg, rgba(72,67,49,.94), rgba(43,47,37,.94));
-  box-shadow: inset 0 1px rgba(255,255,255,.04);
+  background: linear-gradient(94deg, rgba(78,66,45,.93), rgba(47,56,39,.93));
+  box-shadow: inset 0 1px rgba(255,255,255,.035);
 }
 
 .sign > div::before {
@@ -91,90 +81,70 @@
   content: "";
 }
 
+.sign > div::after {
+  position: absolute;
+  right: 7px;
+  bottom: -4px;
+  width: 22px;
+  height: 8px;
+  border-top: 2px solid rgba(91,120,74,.45);
+  border-radius: 50%;
+  content: "";
+  transform: rotate(-8deg);
+}
+
 .sign strong,
 .sign span {
   display: block;
 }
 
 .sign strong {
-  color: #e5dfbe;
+  color: #dfd9b9;
   font-size: 9px;
-  font-weight: 800;
-  letter-spacing: .08em;
+  font-weight: 780;
+  letter-spacing: .07em;
 }
 
 .sign span {
   margin-top: 3px;
-  color: rgba(223,220,197,.54);
+  color: rgba(220,216,193,.5);
   font-size: 7.5px;
   line-height: 1.35;
 }
 
 .sign[data-role="evidence"] > div {
-  background: linear-gradient(94deg, rgba(70,65,48,.96), rgba(50,59,45,.96));
-  border-color: rgba(195,203,161,.18);
+  border-color: rgba(195,203,161,.16);
 }
 
-.sign[data-role="condition"] > div,
 .sign[data-role="boundary"] > div {
   transform: rotate(1.8deg);
 }
 
 .landingSign {
-  opacity: .9;
+  opacity: .88;
 }
 
-:global([data-biome="forest"]) .stonePath {
-  stroke: #87906f;
-  opacity: .34;
+:global([data-biome="forest"]) .stones {
+  opacity: .64;
 }
 
-:global([data-biome="forest"]) .stonePathShadow {
-  stroke: #1a2b21;
-  opacity: .58;
-}
-
-:global([data-biome="forest"]) .traces {
-  stroke: #bbc789;
-  opacity: .07;
+:global([data-biome="forest"]) .stone {
+  fill: #6f7564;
+  stroke: rgba(202,204,172,.07);
 }
 
 :global([data-biome="forest"]) .footprints {
-  fill: #64705a;
-  opacity: .28;
-}
-
-:global([data-biome="forest"]) .sign > i {
-  background: linear-gradient(90deg, #443a2b, #66573b 55%, #3c382b);
-}
-
-:global([data-biome="forest"]) .sign > div {
-  background:
-    linear-gradient(94deg, rgba(80,68,46,.95), rgba(49,58,40,.95));
-}
-
-:global([data-biome="forest"]) .sign > div::after {
-  position: absolute;
-  right: 7px;
-  bottom: -4px;
-  width: 22px;
-  height: 8px;
-  border-top: 2px solid rgba(91,120,74,.5);
-  border-radius: 50%;
-  content: "";
-  transform: rotate(-8deg);
-}
-
-@keyframes tracesDrift {
-  to { stroke-dashoffset: -108; }
+  fill: #596558;
+  opacity: .24;
 }
 
 @media (max-width: 720px) {
   .sign { transform: translate(-50%, -100%) scale(.9); transform-origin: bottom center; }
   .sign span { display: none; }
-  .footprints { opacity: .18; }
+  .footprints { opacity: .16; }
+  .stones { opacity: .58; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .traces { animation: none; }
+  .sign { transition: none; }
 }
