@@ -24,6 +24,22 @@
 
 ---
 
+## 当前产品版本
+
+当前完整闭环位于：
+
+```bash
+cognitive-universe-v1
+```
+
+对应 PR：`#6 feat: 完整认知宇宙闭环 — 星球演化、碰撞与融合`
+
+完整产品设计见：
+
+> [`docs/cognitive-universe-v1.md`](./docs/cognitive-universe-v1.md)
+
+---
+
 ## 当前核心流程
 
 ```text
@@ -53,10 +69,6 @@ Merge / Fork
   ↓
 观点碰撞 / Fusion
 ```
-
-完整产品设计见：
-
-> [`docs/cognitive-universe-v1.md`](./docs/cognitive-universe-v1.md)
 
 ---
 
@@ -152,13 +164,7 @@ AI 不是一个悬浮聊天框，而是整个系统背后的认知引擎：
 
 ---
 
-## 当前实现分支
-
-当前完整闭环：
-
-```bash
-cognitive-universe-v1
-```
+## 已实现能力
 
 当前已经跑通：
 
