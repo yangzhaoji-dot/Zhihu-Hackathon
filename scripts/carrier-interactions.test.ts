@@ -27,7 +27,7 @@ const source: OpinionSource = {
   url: "https://www.zhihu.com/question/example/answer/example",
 };
 
-const traceFragment: CognitionFragmentSpec = {
+const evidenceFragment: CognitionFragmentSpec = {
   id: "evidence",
   role: "evidence",
   label: { "zh-CN": "依据", "en-US": "Evidence" },
@@ -36,25 +36,43 @@ const traceFragment: CognitionFragmentSpec = {
   intent: "追到原始材料",
 };
 
-describe("source-grounded carrier interactions", () => {
-  test("trace carrier shows the bound Zhihu excerpt before interpretation", () => {
-    const interaction = buildCarrierInteraction(traceFragment, opinion, [source]);
-    expect(interaction.steps[0].action).toBe("open-source");
+const claimFragment: CognitionFragmentSpec = {
+  id: "claim",
+  role: "claim",
+  label: { "zh-CN": "主张", "en-US": "Claim" },
+  carrier: "主张石",
+  mode: "observe",
+  intent: "先看见主张",
+};
+
+const legacyActions = new Set(["toggle", "align", "follow", "restore", "listen"]);
+
+describe("simplified source-grounded carrier interactions", () => {
+  test("claim interaction is one lightweight continue step", () => {
+    const interaction = buildCarrierInteraction(claimFragment, opinion, [source]);
+    expect(interaction.steps).toHaveLength(1);
+    expect(interaction.steps[0].action).toBe("continue");
+    expect(interaction.steps[0].reveal).toBe(opinion.claim);
+  });
+
+  test("evidence shows the bound Zhihu excerpt then asks one grounded judgement", () => {
+    const interaction = buildCarrierInteraction(evidenceFragment, opinion, [source]);
+    expect(interaction.steps.map((step) => step.action)).toEqual(["open-source", "choose"]);
     expect(interaction.steps[0].sourceExcerpt).toBe(source.excerpt);
     expect(interaction.steps[0].sourceUrl).toBe(source.url);
     expect(interaction.steps[0].sourceUpvotes).toBe(128);
+    expect(interaction.steps[1].choiceMode).toBe("grounded");
+    expect(interaction.steps[1].choices?.some((choice) => choice.grounded)).toBe(true);
   });
 
-  test("source reading is followed by a grounded material-understanding choice", () => {
-    const interaction = buildCarrierInteraction(traceFragment, opinion, [source]);
-    const grounded = interaction.steps.find((step) => step.choiceMode === "grounded");
-    expect(grounded?.action).toBe("choose");
-    expect(grounded?.choices?.some((choice) => choice.grounded)).toBe(true);
+  test("main interaction builder emits no legacy minigame actions", () => {
+    const interaction = buildCarrierInteraction(evidenceFragment, opinion, [source]);
+    expect(interaction.steps.some((step) => legacyActions.has(step.action))).toBe(false);
   });
 
-  test("trace carrier never fabricates a source when none is bound", () => {
-    const interaction = buildCarrierInteraction(traceFragment, { ...opinion, sourceIds: [] }, []);
+  test("evidence never fabricates a source when none is bound", () => {
+    const interaction = buildCarrierInteraction(evidenceFragment, { ...opinion, sourceIds: [] }, []);
     expect(interaction.steps.some((step) => step.action === "open-source")).toBe(false);
-    expect(interaction.steps[0].id).toBe("missing-source");
+    expect(interaction.steps[0].id).toBe("evidence-gap");
   });
 });
