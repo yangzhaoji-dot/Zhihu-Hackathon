@@ -64,7 +64,9 @@ export function buildCognitionFragmentPlan(
       role: "claim",
       label: LABELS.claim,
       carrier: sceneSpec.fragments.claim.artifact,
-      mode: sceneSpec.fragments.claim.mode,
+      // Forest worlds should begin with seeing the world. This keeps the first
+      // beat environmental instead of stacking two quiet/listen interactions.
+      mode: sceneSpec.biome === "forest" ? "observe" : sceneSpec.fragments.claim.mode,
       intent: sceneSpec.fragments.claim.intent,
     },
     {
