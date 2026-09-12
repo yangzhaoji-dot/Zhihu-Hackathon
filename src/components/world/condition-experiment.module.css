@@ -175,6 +175,20 @@
   cursor: not-allowed;
 }
 
+/*
+ * The experiment also illuminates the matching route in the actual world.
+ * This CSS variable is local UI feedback only; it never becomes model confidence.
+ */
+:global([data-el="world-runtime"]) :global(path[data-route-kind="reason"]) {
+  opacity: var(--condition-route-opacity, 0.3);
+  transition: opacity 220ms ease, stroke-width 220ms ease;
+}
+
+:global([data-el="world-runtime"]) :global([data-fragment-kind="reason"]) {
+  filter: brightness(calc(0.92 + var(--condition-cue, 0) * 0.22));
+  transition: filter 220ms ease;
+}
+
 @media (max-width: 620px) {
   .condition {
     align-items: flex-start;
@@ -195,7 +209,9 @@
 
 @media (prefers-reduced-motion: reduce) {
   .routeLight,
-  .routeGate {
+  .routeGate,
+  :global([data-el="world-runtime"]) :global(path[data-route-kind="reason"]),
+  :global([data-el="world-runtime"]) :global([data-fragment-kind="reason"]) {
     transition: none;
   }
 }
