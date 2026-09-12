@@ -4,6 +4,7 @@ import { useParams } from "next/navigation";
 import { EnvironmentGuidanceLayer } from "@/components/world/environment-guidance-layer";
 import { FirstCarrierCue } from "@/components/world/first-carrier-cue";
 import { FirstFragmentCue } from "@/components/world/first-fragment-cue";
+import { ForestStoryLandmarks } from "@/components/world/forest-story-landmarks";
 import { PlanetArrivalGuide } from "@/components/world/planet-arrival-guide";
 import { PlanetArtDirection } from "@/components/world/planet-art-direction";
 import { PlanetBiomeSync } from "@/components/world/planet-biome-sync";
@@ -20,6 +21,7 @@ export default function PlanetPage() {
       <PlanetRuntimeV2 />
       <PlanetBiomeSync opinionId={opinionId} />
       <PlanetArtDirection opinionId={opinionId} />
+      <ForestStoryLandmarks opinionId={opinionId} />
       <EnvironmentGuidanceLayer opinionId={opinionId} />
       <PlanetRouteWhisper opinionId={opinionId} />
       <PlanetArrivalGuide opinionId={opinionId} />
