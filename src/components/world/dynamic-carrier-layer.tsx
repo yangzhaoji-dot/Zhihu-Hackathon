@@ -1,7 +1,7 @@
 "use client";
 
 import { createPortal } from "react-dom";
-import type { RefObject } from "react";
+import { useEffect, useState, type CSSProperties, type RefObject } from "react";
 import type { CognitionFragmentSpec } from "@/lib/world/cognition-fragment-plan";
 import { cognitionFragmentKey } from "@/lib/world/cognition-fragment-plan";
 import { TILE_SIZE, type GridPos } from "@/lib/world/geometry";
@@ -28,7 +28,12 @@ export function DynamicCarrierLayer({
   accent: string;
   onTap: (site: DynamicCarrierSite) => void;
 }) {
-  const worldEl = worldElRef.current;
+  const [worldEl, setWorldEl] = useState<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    setWorldEl(worldElRef.current);
+  }, [worldElRef, sites.length]);
+
   if (!worldEl || sites.length === 0) return null;
 
   return createPortal(
@@ -47,7 +52,7 @@ export function DynamicCarrierLayer({
               left: site.pos.x * TILE_SIZE,
               top: site.pos.y * TILE_SIZE,
               "--carrier-accent": accent,
-            } as React.CSSProperties}
+            } as CSSProperties}
             onClick={(event) => {
               event.stopPropagation();
               onTap(site);
