@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { GuideAvatar } from "@/components/opinion-world/guide-avatar";
 import type { Author, DialogueAction, DialogueLine, OpinionSource } from "@/lib/opinion/types";
+import { ConditionExperiment } from "./condition-experiment";
 import styles from "./dialogue-overlay.module.css";
 
 export interface ResolvedDialogueLine extends DialogueLine {
@@ -26,8 +27,26 @@ interface DialogueOverlayProps {
   onAction: (action: DialogueAction) => void;
   onClose: () => void;
   resolveSource: (sourceId: string) => SourceCardData | null;
-  /** 地表碎片主线只改用户可见标签；底层兼容动作类型暂不破坏。 */
   surfaceMode?: "legacy" | "fragments";
+}
+
+function extractConditionCandidates(lines: ResolvedDialogueLine[]) {
+  const collected: string[] = [];
+  for (const line of lines) {
+    const text = line.text.replace(/\s+/g, " ").trim();
+    const matches = [
+      text.match(/(?:条件|前提)(?:是|包括|依赖|为)?[：:]\s*([^。！？!?]+)/),
+      text.match(/(?:依赖这些条件)[：:]\s*([^。！？!?]+)/),
+      text.match(/(?:conditions?|depends on)[：:]\s*([^.!?]+)/i),
+    ].filter(Boolean) as RegExpMatchArray[];
+    for (const match of matches) {
+      for (const item of match[1].split(/[；;、，,]/)) {
+        const value = item.trim().replace(/^这些?/, "");
+        if (value.length >= 2 && value.length <= 90 && !collected.includes(value)) collected.push(value);
+      }
+    }
+  }
+  return collected.slice(0, 3);
 }
 
 export function DialogueOverlay({
@@ -41,35 +60,48 @@ export function DialogueOverlay({
   resolveSource,
   surfaceMode = "fragments",
 }: DialogueOverlayProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [index, setIndex] = useState(0);
   const [openedSourceId, setOpenedSourceId] = useState<string | null>(null);
+  const [experimentAction, setExperimentAction] = useState<DialogueAction | null>(null);
 
   const line = lines[Math.min(index, lines.length - 1)];
   const isLast = index >= lines.length - 1;
+  const locale = i18n.resolvedLanguage === "en-US" ? "en-US" : "zh-CN";
+  const experimentConditions = useMemo(() => extractConditionCandidates(lines), [lines]);
 
   const advance = useCallback(() => {
+    if (experimentAction) return;
     if (openedSourceId) {
       setOpenedSourceId(null);
       return;
     }
     if (isLast) onClose();
     else setIndex((value) => value + 1);
-  }, [isLast, onClose, openedSourceId]);
+  }, [experimentAction, isLast, onClose, openedSourceId]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         event.stopPropagation();
+        if (experimentAction) {
+          setExperimentAction(null);
+          return;
+        }
+        if (openedSourceId) {
+          setOpenedSourceId(null);
+          return;
+        }
         onClose();
         return;
       }
+      if (experimentAction) return;
       event.preventDefault();
       advance();
     };
     window.addEventListener("keydown", onKeyDown, { capture: true });
     return () => window.removeEventListener("keydown", onKeyDown, { capture: true });
-  }, [advance, onClose]);
+  }, [advance, experimentAction, onClose, openedSourceId]);
 
   const visibleActions = useMemo(
     () =>
@@ -93,7 +125,7 @@ export function DialogueOverlay({
 
   const actionLabel = (action: DialogueAction) => {
     if (surfaceMode === "fragments" && action.type === "collect-opinion") {
-      return t("world.resonance.takeReasonFragment", { defaultValue: "收下理由碎片" });
+      return locale === "en-US" ? "Try the conditions" : "试一试条件";
     }
     return t(`world.actions.${action.type}`);
   };
@@ -112,7 +144,7 @@ export function DialogueOverlay({
                 <small>{opened.author?.title ?? ""}</small>
               </span>
               <span className={styles.sourceUp}>
-                {t("cosmos.upvotes", { n: opened.source.upvotes.toLocaleString("zh-CN") })}
+                {t("cosmos.upvotes", { n: opened.source.upvotes.toLocaleString(locale) })}
               </span>
               <button
                 type="button"
@@ -155,13 +187,17 @@ export function DialogueOverlay({
           </span>
           <p className={styles.text}>{line.text}</p>
 
-          {visibleActions.length > 0 && (
+          {visibleActions.length > 0 && !experimentAction && (
             <div className={styles.actions} onClick={(event) => event.stopPropagation()}>
               {visibleActions.map((action, actionIndex) => (
                 <button
                   key={`${action.type}-${actionIndex}`}
                   type="button"
                   onClick={() => {
+                    if (surfaceMode === "fragments" && action.type === "collect-opinion") {
+                      setExperimentAction(action);
+                      return;
+                    }
                     if (action.type === "show-source") setOpenedSourceId(action.sourceId);
                     onAction(action);
                   }}
@@ -172,10 +208,26 @@ export function DialogueOverlay({
             </div>
           )}
 
+          {experimentAction?.type === "collect-opinion" && (
+            <div onClick={(event) => event.stopPropagation()}>
+              <ConditionExperiment
+                conditions={experimentConditions}
+                locale={locale}
+                onCancel={() => setExperimentAction(null)}
+                onComplete={() => {
+                  onAction(experimentAction);
+                  setExperimentAction(null);
+                }}
+              />
+            </div>
+          )}
+
           <div className={styles.footer}>
             <span className={styles.progress}>{index + 1} / {lines.length}</span>
             <span className={styles.hint}>
-              {isLast ? t("world.dialogueUi.closeHint") : t("world.dialogueUi.nextHint")}
+              {experimentAction
+                ? (locale === "en-US" ? "Change at least one assumption" : "至少改变一个前提")
+                : isLast ? t("world.dialogueUi.closeHint") : t("world.dialogueUi.nextHint")}
             </span>
           </div>
         </div>
