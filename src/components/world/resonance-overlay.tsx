@@ -12,6 +12,7 @@ interface ResonanceOverlayProps {
   mantra: string;
   scrollLabel: string;
   unresolvedLabel: string;
+  fragmentCount?: number;
   onTransform: () => void;
   onComplete: () => void;
 }
@@ -28,6 +29,7 @@ export function ResonanceOverlay({
   mantra,
   scrollLabel,
   unresolvedLabel,
+  fragmentCount = Math.max(1, chapters.filter((chapter) => chapter.id !== "unknown").length),
   onTransform,
   onComplete,
 }: ResonanceOverlayProps) {
@@ -86,6 +88,16 @@ export function ResonanceOverlay({
       <div className={styles.veil} aria-hidden />
 
       <section className={styles.scroll} aria-hidden={stage !== "scroll"}>
+        <div className={styles.shardAssembly} aria-hidden>
+          {Array.from({ length: fragmentCount }, (_, index) => (
+            <span
+              key={index}
+              style={{ "--assembly-index": index, "--assembly-count": fragmentCount } as CSSProperties}
+            >
+              <i />
+            </span>
+          ))}
+        </div>
         <div className={styles.scrollHeader}>
           <span>{scrollLabel}</span>
           <h2>{title}</h2>
