@@ -21,22 +21,12 @@ const EVALUATION_SYSTEM: AiMessage = {
     "只输出规范 JSON。",
 };
 
-function isPlaceholderSource(source: OpinionSource): boolean {
-  return /question\/0+\/answer\//.test(source.url) || source.url.includes("example");
-}
-
-function materialBlock(selections: readonly SelectedExcerptInput[], sources: readonly OpinionSource[]): string {
-  const byId = new Map(sources.map((source) => [source.id, source]));
-  return selections.map((selection, index) => {
-    const source = byId.get(selection.sourceId);
-    // The repository's authored demo uses placeholder source URLs and sample
-    // popularity numbers. Those numbers must never influence the model as if
-    // they were real Zhihu evidence.
-    const metadata = source && !isPlaceholderSource(source)
-      ? `；真实来源赞同 ${source.upvotes}`
-      : source ? "；演示材料（无真实赞同数据）" : "";
-    return `M${index + 1}（source=${selection.sourceId}${metadata}）：「${selection.text}」`;
-  }).join("\n");
+function materialBlock(selections: readonly SelectedExcerptInput[], _sources: readonly OpinionSource[]): string {
+  // Viewpoint formation is intentionally driven by what the user selected,
+  // not by author popularity, upvotes or demo fixture metadata.
+  return selections
+    .map((selection, index) => `M${index + 1}（source=${selection.sourceId}）：「${selection.text}」`)
+    .join("\n");
 }
 
 export async function synthesizePlanetViewpoint(input: {
