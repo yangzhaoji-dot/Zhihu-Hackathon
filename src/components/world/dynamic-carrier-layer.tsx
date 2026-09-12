@@ -34,7 +34,7 @@ export function DynamicCarrierLayer({
   opinionId: string;
   worldState: Record<string, unknown>;
   accent: string;
-  biome: PlanetBiomeId;
+  biome?: PlanetBiomeId;
   onTap: (site: DynamicCarrierSite) => void;
 }) {
   const [worldEl, setWorldEl] = useState<HTMLDivElement | null>(null);
@@ -87,7 +87,7 @@ export function DynamicCarrierLayer({
             className={styles.carrier}
             data-role={site.fragment.role}
             data-mode={site.fragment.mode}
-            data-biome={biome}
+            data-biome={biome ?? undefined}
             data-fragment-id={site.fragment.id}
             data-collected={collected ? "true" : "false"}
             style={{
