@@ -62,14 +62,16 @@ export function CosmosChrome({
           >
             {t("cosmos.modeQuestion")}
           </button>
-          <button
-            className={mode === "views" ? "active" : ""}
-            onClick={() => onModeChange("views")}
-            role="tab"
-            aria-selected={mode === "views"}
-          >
-            {t("cosmos.modeView")}
-          </button>
+          {mode === "views" && (
+            <button
+              className="active"
+              role="tab"
+              aria-selected="true"
+              disabled
+            >
+              {t("cosmos.modeView")}
+            </button>
+          )}
         </div>
       </div>
 
