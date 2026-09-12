@@ -1,1 +1,1 @@
-export { default } from "./planet-runtime-page";
+export { default } from "./planet-runtime-v2";
