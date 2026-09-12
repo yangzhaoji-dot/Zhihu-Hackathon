@@ -1,0 +1,149 @@
+.carrier {
+  position: absolute;
+  z-index: 6;
+  display: grid;
+  width: 74px;
+  min-height: 82px;
+  place-items: end center;
+  transform: translate(-13px, -24px);
+  border: 0;
+  background: transparent;
+  color: #f5f1e8;
+  cursor: pointer;
+}
+
+.object {
+  position: relative;
+  display: block;
+  width: 64px;
+  height: 62px;
+  filter: drop-shadow(8px 12px 8px rgba(0,0,0,.36));
+  transition: transform 180ms ease, filter 180ms ease, opacity 180ms ease;
+}
+
+.object i,
+.object b,
+.object em {
+  position: absolute;
+  display: block;
+  box-sizing: border-box;
+}
+
+.object i {
+  left: 9px;
+  right: 9px;
+  bottom: 5px;
+  height: 39px;
+  border: 1px solid color-mix(in srgb, var(--carrier-accent) 46%, rgba(255,255,255,.18));
+  border-radius: 7px 7px 12px 12px;
+  background: linear-gradient(150deg, color-mix(in srgb, var(--carrier-accent) 18%, #56616a), #273039 72%);
+  box-shadow: inset -8px -10px 14px rgba(0,0,0,.22);
+}
+
+.object b {
+  left: 17px;
+  right: 17px;
+  bottom: 32px;
+  height: 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--carrier-accent) 72%, white 10%);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--carrier-accent) 36%, transparent);
+}
+
+.object em {
+  left: 21px;
+  bottom: 13px;
+  width: 23px;
+  height: 11px;
+  border: 1px dashed color-mix(in srgb, var(--carrier-accent) 42%, rgba(255,255,255,.18));
+  border-radius: 50%;
+}
+
+.carrier[data-role="condition"] .object i {
+  clip-path: polygon(0 0, 42% 0, 50% 18%, 58% 0, 100% 0, 100% 100%, 0 100%);
+}
+
+.carrier[data-role="condition"] .object em {
+  width: 30px;
+  height: 4px;
+  left: 17px;
+  bottom: 15px;
+  border-style: solid;
+  border-radius: 999px;
+}
+
+.carrier[data-role="boundary"] .object i {
+  clip-path: polygon(0 0, 70% 0, 57% 28%, 100% 42%, 100% 100%, 0 100%);
+  background: linear-gradient(155deg, color-mix(in srgb, var(--carrier-accent) 12%, #62605b), #252a2d 76%);
+}
+
+.carrier[data-role="boundary"] .object b {
+  width: 20px;
+  right: auto;
+  transform: rotate(-22deg);
+  opacity: .78;
+}
+
+.carrier:hover .object,
+.carrier:focus-visible .object {
+  transform: translateY(-5px) scale(1.035);
+  filter:
+    drop-shadow(0 0 11px color-mix(in srgb, var(--carrier-accent) 48%, transparent))
+    drop-shadow(8px 14px 9px rgba(0,0,0,.38));
+}
+
+.carrier[data-collected="false"]::before {
+  position: absolute;
+  left: 50%;
+  bottom: 18px;
+  width: 98px;
+  height: 64px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--carrier-accent) 17%, transparent), transparent 68%);
+  content: "";
+  animation: carrierBreathe 4.6s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.carrier[data-collected="true"] .object {
+  opacity: .78;
+  filter: drop-shadow(0 0 7px color-mix(in srgb, var(--carrier-accent) 30%, transparent));
+}
+
+.carrier[data-collected="true"]::after {
+  position: absolute;
+  left: 50%;
+  bottom: 13px;
+  width: 34px;
+  height: 5px;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--carrier-accent) 28%, transparent);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--carrier-accent) 30%, transparent);
+  content: "";
+}
+
+.label {
+  max-width: 120px;
+  margin-top: 4px;
+  padding: 3px 7px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(4,7,10,.56);
+  color: rgba(245,241,232,.72);
+  font-size: 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  backdrop-filter: blur(6px);
+}
+
+@keyframes carrierBreathe {
+  0%,100% { opacity: .34; transform: translateX(-50%) scale(.92); }
+  50% { opacity: .68; transform: translateX(-50%) scale(1.08); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .carrier[data-collected="false"]::before { animation: none; }
+  .object { transition: none; }
+}
