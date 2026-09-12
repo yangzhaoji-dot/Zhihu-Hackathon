@@ -176,16 +176,20 @@ export function PlanetSynthesisMvp({ opinionId }: { opinionId: string }) {
     return baseGraph?.opinions.find((opinion) => opinion.id === originId) ?? trace?.opinion ?? null;
   }, [baseGraph, originId, trace]);
 
+  // Related viewpoints may contribute reading material without becoming direct
+  // provenance of the source planet. Only a source-less demo stand-in needs a
+  // temporary bridge so the server can validate selected sample excerpts.
   const graphForSynthesis = useMemo(() => {
     if (!baseGraph || !displayOpinion) return null;
     const sources = materials.map((material) => material.source);
     const authors = materials.map((material) => material.author).filter((author): author is Author => Boolean(author));
     const grounded = attachGrounding(baseGraph, sources, authors);
+    if (displayOpinion.sourceIds.length > 0) return grounded;
     const materialSourceIds = sources.map((source) => source.id);
     return {
       ...grounded,
       opinions: grounded.opinions.map((opinion) => opinion.id === displayOpinion.id
-        ? { ...opinion, sourceIds: [...new Set([...opinion.sourceIds, ...materialSourceIds])] }
+        ? { ...opinion, sourceIds: [...new Set(materialSourceIds)] }
         : opinion),
     };
   }, [baseGraph, displayOpinion, materials]);
@@ -249,19 +253,22 @@ export function PlanetSynthesisMvp({ opinionId }: { opinionId: string }) {
   };
 
   const commitEvolution = (action: SynthesisAction) => {
-    if (!result || !graphForSynthesis || !displayOpinion || committing) return;
+    if (!result || !baseGraph || !displayOpinion || committing) return;
     setCommitting(true);
     try {
       const selectedSourceIds = new Set(saved.map((item) => item.sourceId));
       const selectedMaterials = materials.filter((material) => selectedSourceIds.has(material.source.id));
+      const selectedSources = selectedMaterials.map((material) => material.source);
+      const selectedAuthors = selectedMaterials.map((material) => material.author).filter((author): author is Author => Boolean(author));
+      const evolutionBase = attachGrounding(baseGraph, selectedSources, selectedAuthors);
       const mutation = evolveGraphFromSynthesis({
-        graph: graphForSynthesis,
+        graph: evolutionBase,
         parentId: displayOpinion.id,
         result,
         selections: saved.map(({ sourceId, text }) => ({ sourceId, text })),
         action,
-        sources: selectedMaterials.map((material) => material.source),
-        authors: selectedMaterials.map((material) => material.author).filter((author): author is Author => Boolean(author)),
+        sources: selectedSources,
+        authors: selectedAuthors,
       });
       saveGalaxy(mutation.graph);
       const built = buildGalaxy(mutation.graph, mutation.graph.questionId === DEMO_ID ? DEMO_ASSIGNMENTS : {});
