@@ -22,17 +22,21 @@ export function KanshanCarrierOverlay({
 }) {
   const [index, setIndex] = useState(0);
   const [choiceId, setChoiceId] = useState<string | null>(null);
+  const [reaction, setReaction] = useState<string | null>(null);
   const prompt = prompts[Math.min(index, prompts.length - 1)];
   const zh = locale !== "en-US";
   if (!prompt) return null;
   const last = index >= prompts.length - 1;
 
   const choose = (id: string) => {
+    const choice = prompt.choices?.find((item) => item.id === id);
     setChoiceId(id);
+    setReaction(choice?.response?.[locale] ?? null);
     window.setTimeout(() => {
       setChoiceId(null);
+      setReaction(null);
       setIndex((value) => Math.min(prompts.length - 1, value + 1));
-    }, 180);
+    }, choice?.response ? 820 : 220);
   };
 
   return (
@@ -45,13 +49,16 @@ export function KanshanCarrierOverlay({
             <small>{carrier}</small>
           </header>
           <p>{prompt.line[locale]}</p>
-          {prompt.choices?.length ? (
+          {reaction ? (
+            <div className={styles.reaction} aria-live="polite">{reaction}</div>
+          ) : prompt.choices?.length ? (
             <div className={styles.choices}>
               {prompt.choices.map((choice) => (
                 <button
                   key={choice.id}
                   type="button"
                   data-selected={choiceId === choice.id ? "true" : "false"}
+                  disabled={choiceId !== null}
                   onClick={() => choose(choice.id)}
                 >
                   {choice.label[locale]}
@@ -60,7 +67,7 @@ export function KanshanCarrierOverlay({
             </div>
           ) : (
             <button type="button" className={styles.investigate} onClick={onInvestigate}>
-              {zh ? "开始调查这个载体" : "Investigate this carrier"}
+              {zh ? "开始操作这个载体" : "Interact with this carrier"}
             </button>
           )}
           <footer>
