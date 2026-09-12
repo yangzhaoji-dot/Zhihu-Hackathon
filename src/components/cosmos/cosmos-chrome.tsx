@@ -42,6 +42,7 @@ export function CosmosChrome({
   onZoom: (factor: number) => void;
 }) {
   const { t } = useTranslation();
+  const visibleHint = hint || (mode === "questions" ? t("cosmos.hintQuestion") : "");
 
   return (
     <>
@@ -86,7 +87,7 @@ export function CosmosChrome({
         </form>
       )}
 
-      {hint && <div className="hint">{hint}</div>}
+      {visibleHint && <div className="hint">{visibleHint}</div>}
 
       {mode === "views" && (
         <div className="legend" aria-hidden>
