@@ -57,6 +57,17 @@
 }
 .routes path[data-role="boundary"][data-state="calling"] { opacity: .23; }
 
+/* In forest worlds, the physical stone path / traces do the navigation work.
+   The abstract signal line stays as a barely-visible cognition whisper. */
+:global([data-biome="forest"]) .routes path[data-state="distant"] { opacity: .018; }
+:global([data-biome="forest"]) .routes path[data-state="calling"] {
+  opacity: .1;
+  stroke-width: 1.25;
+  filter: drop-shadow(0 0 3px color-mix(in srgb, var(--world-accent) 18%, transparent));
+}
+:global([data-biome="forest"]) .routes path[data-state="understood"] { opacity: .045; }
+:global([data-biome="forest"]) .routes path[data-state="return"] { opacity: .08; }
+
 @keyframes routeCall {
   to { stroke-dashoffset: -84; }
 }
