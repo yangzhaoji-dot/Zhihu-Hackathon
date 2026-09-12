@@ -46,6 +46,10 @@ function findAuthor(trace: SourceTrace, source: OpinionSource) {
   return trace.authors.find((author) => author.id === source.authorId) ?? null;
 }
 
+function displayAuthor(material: Material) {
+  return isPlaceholder(material.source) ? "演示材料" : material.author?.name ?? "知乎答主";
+}
+
 function scoreLabel(key: keyof PlanetSynthesisResult["scores"]) {
   return ({ grounding: "材料支撑", coherence: "自洽", specificity: "具体性", boundary: "边界意识", novelty: "新增内容", overall: "综合" } as const)[key];
 }
@@ -118,8 +122,6 @@ export function PlanetSynthesisMvp({ opinionId }: { opinionId: string }) {
         let rootTrace = graph ? traceFromGraph(graph, opinionId) : null;
         let collected = graph && rootTrace ? materialsFromGraph(graph, opinionId) : [];
 
-        // Demo stand-ins (and direct legacy entry) can point at a grounded source
-        // opinion that does not itself live in the originating graph.
         if (!rootTrace) {
           rootTrace = await fetchSourceTrace(opinionId);
           const related = await Promise.all(
@@ -169,6 +171,7 @@ export function PlanetSynthesisMvp({ opinionId }: { opinionId: string }) {
   }, [galaxyId, opinionId]);
 
   const sourceIndex = useMemo(() => new Map(materials.map((material) => [material.source.id, material])), [materials]);
+  const hasDemoMaterial = useMemo(() => materials.some((material) => isPlaceholder(material.source)), [materials]);
   const displayOpinion = useMemo(() => {
     return baseGraph?.opinions.find((opinion) => opinion.id === originId) ?? trace?.opinion ?? null;
   }, [baseGraph, originId, trace]);
@@ -198,7 +201,7 @@ export function PlanetSynthesisMvp({ opinionId }: { opinionId: string }) {
     setPending({
       sourceId: material.source.id,
       text: text.slice(0, 600),
-      author: material.author?.name ?? "知乎答主",
+      author: displayAuthor(material),
       opinionTitle: material.opinionTitle,
     });
   };
@@ -233,7 +236,7 @@ export function PlanetSynthesisMvp({ opinionId }: { opinionId: string }) {
       window.setTimeout(() => resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
     } catch (error) {
       const code = error instanceof Error ? error.message : "";
-      setGenerationError(code === "ai_unavailable" ? "AI 当前不可用。你选中的原文已经保留，可以稍后再生成。" : "这次观点生成失败了，请稍后重试。");
+      setGenerationError(code === "ai_unavailable" ? "AI 当前不可用。你选中的材料已经保留，可以稍后再生成。" : "这次观点生成失败了，请稍后重试。");
     } finally {
       setGenerating(false);
     }
@@ -286,27 +289,27 @@ export function PlanetSynthesisMvp({ opinionId }: { opinionId: string }) {
           <span className={styles.eyebrow}>观点星球 · 内部探索</span>
           <h1>{displayOpinion.title}</h1>
           <p>{displayOpinion.summary}</p>
-          <div className={styles.challenge}><Sparkles size={16}/><div><strong>这次不是来找标准答案。</strong><span>阅读与这颗星球相关的知乎原文，划出真正影响你判断的句子。至少收下两段后，让 AI 根据你的选择形成一个新观点。</span></div></div>
+          <div className={styles.challenge}><Sparkles size={16}/><div><strong>这次不是来找标准答案。</strong><span>{hasDemoMaterial ? "当前使用明确标注的演示材料验证交互；真实检索时这里会使用可追溯的知乎原文。划出真正影响你判断的句子，至少收下两段后形成一个新观点。" : "阅读与这颗星球相关的知乎原文，划出真正影响你判断的句子。至少收下两段后，让 AI 根据你的选择形成一个新观点。"}</span></div></div>
         </div>
       </section>
 
       <section className={styles.workspace}>
         <div className={styles.reader}>
-          <div className={styles.sectionHead}><span>01</span><div><h2>阅读原文</h2><p>直接拖选文字。我们不会先替你把材料拆成“证据 / 反例 / 条件”。</p></div></div>
+          <div className={styles.sectionHead}><span>01</span><div><h2>{hasDemoMaterial ? "阅读演示材料" : "阅读知乎原文"}</h2><p>{hasDemoMaterial ? "这些是交互样例，不冒充真实知乎回答、作者或赞同数据。真实检索时保留同样的划选方式。" : "直接拖选文字。我们不会先替你把材料拆成“证据 / 反例 / 条件”。"}</p></div></div>
           <div className={styles.materials}>
             {materials.map((material, index) => {
               const placeholder = isPlaceholder(material.source);
               const alreadyUsed = saved.some((item) => item.sourceId === material.source.id);
               return (
-                <article key={material.source.id} className={styles.materialCard} data-used={alreadyUsed ? "true" : "false"} data-el="planet-material">
-                  <header><span>{index + 1 < 10 ? `0${index + 1}` : index + 1}</span><div><strong>{material.author?.name ?? "知乎答主"}</strong><small>{material.author?.title ?? material.opinionTitle}</small></div><em>{material.relation === "origin" ? "原观点来源" : "相关观点材料"}</em></header>
+                <article key={material.source.id} className={styles.materialCard} data-used={alreadyUsed ? "true" : "false"} data-el="planet-material" data-demo={placeholder ? "true" : "false"}>
+                  <header><span>{index + 1 < 10 ? `0${index + 1}` : index + 1}</span><div><strong>{displayAuthor(material)}</strong><small>{placeholder ? "交互样例 · 非真实知乎答主" : material.author?.title ?? material.opinionTitle}</small></div><em>{placeholder ? "演示来源" : material.relation === "origin" ? "原观点来源" : "相关观点材料"}</em></header>
                   <p className={styles.context}>关联观点：{material.opinionTitle}</p>
                   <blockquote
                     data-el="selectable-excerpt"
                     onMouseUp={(event: MouseEvent<HTMLElement>) => captureSelection(material, event.currentTarget)}
                     onTouchEnd={(event: TouchEvent<HTMLElement>) => captureSelection(material, event.currentTarget)}
                   >{material.source.excerpt}</blockquote>
-                  <footer><span>{material.source.upvotes.toLocaleString("zh-CN")} 赞同</span>{!placeholder && <a href={material.source.url} target="_blank" rel="noreferrer">原回答 <ExternalLink size={11}/></a>}{alreadyUsed && <b><Check size={12}/>已摘取</b>}</footer>
+                  <footer>{placeholder ? <span>演示摘录 · 不代表真实回答或赞同统计</span> : <><span>{material.source.upvotes.toLocaleString("zh-CN")} 赞同</span><a href={material.source.url} target="_blank" rel="noreferrer">原回答 <ExternalLink size={11}/></a></>}{alreadyUsed && <b><Check size={12}/>已摘取</b>}</footer>
                 </article>
               );
             })}
@@ -315,15 +318,15 @@ export function PlanetSynthesisMvp({ opinionId }: { opinionId: string }) {
 
         <aside className={styles.tray}>
           <div className={styles.sectionHead}><span>02</span><div><h2>我的认知片段</h2><p>你留下什么，本身就在表达你关注什么。</p></div></div>
-          {saved.length === 0 ? <div className={styles.emptyTray}>在左侧原文中拖选一句或一段文字，然后「收下这段」。</div> : <div className={styles.savedList}>{saved.map((item, index) => <article key={`${item.sourceId}-${index}`}><button type="button" onClick={() => removeSaved(index)} aria-label="移除"><X size={13}/></button><small>{item.author}</small><blockquote>“{item.text}”</blockquote><span>{sourceIndex.get(item.sourceId)?.opinionTitle ?? item.opinionTitle}</span></article>)}</div>}
+          {saved.length === 0 ? <div className={styles.emptyTray}>在左侧材料中拖选一句或一段文字，然后「收下这段」。</div> : <div className={styles.savedList}>{saved.map((item, index) => <article key={`${item.sourceId}-${index}`}><button type="button" onClick={() => removeSaved(index)} aria-label="移除"><X size={13}/></button><small>{item.author}</small><blockquote>“{item.text}”</blockquote><span>{sourceIndex.get(item.sourceId)?.opinionTitle ?? item.opinionTitle}</span></article>)}</div>}
           <button type="button" className={styles.generate} data-el="generate-viewpoint" disabled={saved.length < 2 || generating} onClick={() => void generate()}>{generating ? <><LoaderCircle className={styles.spin} size={16}/>正在形成观点…</> : <><Sparkles size={16}/>形成我的观点</>}</button>
-          {saved.length < 2 && <p className={styles.trayHint}>至少需要 2 段你亲自选中的原文。</p>}
+          {saved.length < 2 && <p className={styles.trayHint}>至少需要 2 段你亲自选中的材料。</p>}
           {generationError && <p className={styles.error}>{generationError}</p>}
         </aside>
       </section>
 
       {result && <section ref={resultRef} className={styles.result} data-el="synthesis-result">
-        <div className={styles.sectionHead}><span>03</span><div><h2>观点已经形成</h2><p>AI 只根据你选中的原文合成观点，再与原星球比较。</p></div></div>
+        <div className={styles.sectionHead}><span>03</span><div><h2>观点已经形成</h2><p>AI 只根据你选中的文本合成观点，再与原星球比较。</p></div></div>
         <div className={styles.resultGrid}>
           <article className={styles.generated}><span>你的新观点</span><h3>{result.viewpoint}</h3><p>{result.summary}</p><div className={styles.relation}><strong>{RELATION_LABEL[result.relation]}</strong><span>{result.reason}</span></div></article>
           <article className={styles.scorePanel}><div className={styles.overall}><span>观点质量</span><strong>{result.scores.overall}</strong></div><div className={styles.scores}>{(["grounding","coherence","specificity","boundary","novelty"] as const).map((key) => <div key={key}><span>{scoreLabel(key)}</span><i><b style={{ width: `${result.scores[key]}%` }}/></i><strong>{result.scores[key]}</strong></div>)}</div></article>
@@ -333,7 +336,7 @@ export function PlanetSynthesisMvp({ opinionId }: { opinionId: string }) {
           <div>{result.action === "merge" ? <Combine size={24}/> : <GitBranch size={24}/>}<span>AI 建议</span><h3>{result.action === "merge" ? "合并回原星球" : "分叉成一颗新星球"}</h3><p>{result.action === "merge" ? "这个观点更像是在补足原观点的条件和边界，不必制造一个近似重复的新节点。" : "这个观点已经拥有足够独立的判断，适合保留为新的观点节点并与原星球建立关系。"}</p></div>
           <button type="button" onClick={() => setOutcomePreview(true)}>{result.action === "merge" ? "预览合并" : "预览新星球"}</button>
         </div>
-        {outcomePreview && <div className={styles.preview} data-action={result.action} data-el="evolution-preview"><div className={styles.previewOrbit} aria-hidden><i/><b/></div><div><span>{result.action === "merge" ? "MERGE PREVIEW" : "FORK PREVIEW"}</span><h3>{result.action === "merge" ? result.viewpoint : result.viewpoint}</h3><p>{result.action === "merge" ? `原星球会吸收这次形成的新条件与表达：${result.additions.join("；") || result.summary}` : "新星球会保留你选中的材料作为来源，并和原星球建立关系。"}</p><small>AI 给出建议，但最终由你决定是合并还是分叉。</small><div className={styles.commitActions}><button type="button" data-recommended={result.action === "merge"} disabled={committing} onClick={() => commitEvolution("merge")}><Combine size={14}/>合并到原星球</button><button type="button" data-recommended={result.action === "fork"} disabled={committing} onClick={() => commitEvolution("fork")}><GitBranch size={14}/>生成新星球</button></div></div></div>}
+        {outcomePreview && <div className={styles.preview} data-action={result.action} data-el="evolution-preview"><div className={styles.previewOrbit} aria-hidden><i/><b/></div><div><span>{result.action === "merge" ? "MERGE PREVIEW" : "FORK PREVIEW"}</span><h3>{result.viewpoint}</h3><p>{result.action === "merge" ? `原星球会吸收这次形成的新条件与表达：${result.additions.join("；") || result.summary}` : "新星球会保留你选中的材料作为来源，并和原星球建立关系。"}</p><small>AI 给出建议，但最终由你决定是合并还是分叉。</small><div className={styles.commitActions}><button type="button" data-recommended={result.action === "merge"} disabled={committing} onClick={() => commitEvolution("merge")}><Combine size={14}/>合并到原星球</button><button type="button" data-recommended={result.action === "fork"} disabled={committing} onClick={() => commitEvolution("fork")}><GitBranch size={14}/>生成新星球</button></div></div></div>}
         <button type="button" className={styles.reset} onClick={() => { setSaved([]); setResult(null); setOutcomePreview(false); setGenerationError(null); }}><RotateCcw size={14}/>重新探索</button>
       </section>}
 
