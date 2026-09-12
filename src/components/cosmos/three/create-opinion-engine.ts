@@ -52,7 +52,7 @@ function stationAwareCallbacks(cb: OpinionEngineCallbacks): OpinionEngineCallbac
 
 /**
  * Build the best available opinion-space engine for this device:
- *   • WebGL present → two-axis semantic planets + discoverable buried-opinion signals;
+ *   • WebGL present → narrative semantic planets + discoverable weak signals;
  *   • otherwise      → the existing 2D DOM CosmosEngine.
  *
  * AI stations are intercepted at this boundary so they can never leak into
@@ -66,12 +66,12 @@ export async function createOpinionEngine(
   const callbacks = stationAwareCallbacks(cb);
   if (hasWebGL()) {
     try {
-      const { DiscoverableCosmosEngine3D } = await import("./discoverable-cosmos-engine-3d");
+      const { NarrativeCosmosEngine3D } = await import("./narrative-cosmos-engine-3d");
       const profile = profileFor(detectTier());
-      const engine = new DiscoverableCosmosEngine3D(mount, root, callbacks, profile) as unknown as OpinionEngine;
+      const engine = new NarrativeCosmosEngine3D(mount, root, callbacks, profile) as unknown as OpinionEngine;
       return { engine, is3D: true };
     } catch (err) {
-      console.warn("[cosmos] discoverable 3D engine unavailable, falling back to 2D", err);
+      console.warn("[cosmos] narrative 3D engine unavailable, falling back to 2D", err);
     }
   }
   const engine = new CosmosEngine(mount, root, callbacks) as unknown as OpinionEngine;
