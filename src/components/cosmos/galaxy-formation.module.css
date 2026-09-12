@@ -1,0 +1,120 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 46;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 48%, rgba(75,128,155,.16), transparent 33%),
+    rgba(3,6,11,.78);
+  backdrop-filter: blur(8px);
+  pointer-events: all;
+}
+
+.core {
+  position: relative;
+  display: grid;
+  width: min(420px, calc(100vw - 40px));
+  min-height: 280px;
+  place-items: center;
+  text-align: center;
+}
+
+.orbit,
+.orbit2,
+.orbit3 {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  border: 1px solid rgba(150,194,214,.18);
+  border-radius: 50%;
+  transform: translate(-50%, -50%) rotate(-12deg);
+  animation: formOrbit 2.8s linear infinite;
+}
+.orbit { width: 230px; height: 82px; }
+.orbit2 {
+  width: 180px;
+  height: 112px;
+  border-color: rgba(230,207,160,.14);
+  transform: translate(-50%, -50%) rotate(28deg);
+  animation-duration: 3.6s;
+  animation-direction: reverse;
+}
+.orbit3 {
+  width: 112px;
+  height: 112px;
+  border-color: rgba(150,194,214,.1);
+  animation-duration: 2.1s;
+}
+
+.star {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  width: 18px;
+  height: 18px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff0cb 0 16%, #d9b26f 32%, #7095aa 61%, transparent 72%);
+  box-shadow: 0 0 26px rgba(225,188,121,.5), 0 0 72px rgba(88,146,174,.22);
+  animation: starPulse 1.2s ease-in-out infinite alternate;
+}
+
+.signals {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.signals i {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: rgba(188,216,228,.76);
+  transform: translate(calc(-50% + var(--sx)), calc(-50% + var(--sy)));
+  animation: signalJoin 1.7s ease-in-out infinite;
+  animation-delay: var(--delay);
+}
+
+.copy {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 8px;
+  display: grid;
+  gap: 7px;
+}
+.copy strong {
+  color: #f6ead0;
+  font-size: 14px;
+  font-weight: 620;
+  letter-spacing: .04em;
+}
+.copy span {
+  color: rgba(231,237,239,.46);
+  font-size: 10px;
+  letter-spacing: .08em;
+}
+
+@keyframes formOrbit {
+  to { transform: translate(-50%, -50%) rotate(348deg); }
+}
+@keyframes starPulse {
+  from { transform: translate(-50%, -50%) scale(.84); opacity: .7; }
+  to { transform: translate(-50%, -50%) scale(1.15); opacity: 1; }
+}
+@keyframes signalJoin {
+  0%,100% { opacity: .12; }
+  45% { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .orbit,
+  .orbit2,
+  .orbit3,
+  .star,
+  .signals i { animation: none; }
+}
