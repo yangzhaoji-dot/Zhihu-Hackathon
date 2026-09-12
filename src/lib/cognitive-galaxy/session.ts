@@ -5,6 +5,10 @@ const PREFIX = "cognitive-galaxy:v1:";
 const memory = new Map<string, OpinionGraph>();
 const MAX_ENTRIES = 5;
 
+function cloneGraph(graph: OpinionGraph): OpinionGraph {
+  return JSON.parse(JSON.stringify(graph)) as OpinionGraph;
+}
+
 /** Validates cached/API content before rendering; unknown data is never a fake demo. */
 export function isOpinionGraph(value: unknown): value is OpinionGraph {
   if (!value || typeof value !== "object") return false;
@@ -17,26 +21,46 @@ export function isOpinionGraph(value: unknown): value is OpinionGraph {
 
 export function saveGalaxy(graph: OpinionGraph): void {
   if (!isOpinionGraph(graph)) throw new Error("invalid_graph");
-  memory.set(graph.questionId, graph);
+  const snapshot = cloneGraph(graph);
+  memory.set(graph.questionId, snapshot);
   if (memory.size > MAX_ENTRIES) memory.delete(memory.keys().next().value!);
+  if (typeof window === "undefined") return;
   try {
     const ids: string[] = JSON.parse(sessionStorage.getItem(`${PREFIX}index`) ?? "[]");
     const next = [...ids.filter((id) => id !== graph.questionId), graph.questionId];
     while (next.length > MAX_ENTRIES) sessionStorage.removeItem(`${PREFIX}${next.shift()}`);
-    sessionStorage.setItem(`${PREFIX}${graph.questionId}`, JSON.stringify(graph));
+    sessionStorage.setItem(`${PREFIX}${graph.questionId}`, JSON.stringify(snapshot));
     sessionStorage.setItem(`${PREFIX}index`, JSON.stringify(next));
   } catch { /* Blocked/quota-limited storage does not prevent current-session use. */ }
 }
 
 export function readGalaxy(id: string): OpinionGraph | null {
-  if (id === DEMO_ID) return DEMO_GRAPH;
   const cached = memory.get(id);
-  if (cached) return cached;
-  if (typeof window === "undefined") return null;
-  try {
-    const value: unknown = JSON.parse(sessionStorage.getItem(`${PREFIX}${id}`) ?? "null");
-    return isOpinionGraph(value) && value.questionId === id ? value : null;
-  } catch { return null; }
+  if (cached) return cloneGraph(cached);
+  if (typeof window !== "undefined") {
+    try {
+      const value: unknown = JSON.parse(sessionStorage.getItem(`${PREFIX}${id}`) ?? "null");
+      if (isOpinionGraph(value) && value.questionId === id) {
+        memory.set(id, value);
+        return cloneGraph(value);
+      }
+    } catch { /* fall through */ }
+  }
+  // The authored demo is the pristine fallback. Once the user evolves it,
+  // the saved session snapshot above wins over this fixture.
+  return id === DEMO_ID ? cloneGraph(DEMO_GRAPH) : null;
+}
+
+export function resetGalaxy(id: string): OpinionGraph | null {
+  memory.delete(id);
+  if (typeof window !== "undefined") {
+    try {
+      sessionStorage.removeItem(`${PREFIX}${id}`);
+      const ids: string[] = JSON.parse(sessionStorage.getItem(`${PREFIX}index`) ?? "[]");
+      sessionStorage.setItem(`${PREFIX}index`, JSON.stringify(ids.filter((item) => item !== id)));
+    } catch { /* storage is optional */ }
+  }
+  return id === DEMO_ID ? cloneGraph(DEMO_GRAPH) : null;
 }
 
 export function galaxyUrl(id: string, cluster?: string | null, opinion?: string | null): string {
