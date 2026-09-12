@@ -7,9 +7,23 @@
   padding: 22px;
   background: linear-gradient(180deg, rgba(2,5,8,.08), rgba(2,5,8,.68));
   backdrop-filter: blur(2px);
+  animation: carrierOverlayIn 280ms ease both;
+}
+
+.focusField {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 50% 58%, color-mix(in srgb, var(--world-accent) 9%, transparent), transparent 30%),
+    linear-gradient(180deg, transparent 22%, rgba(3,6,9,.22));
+  opacity: .72;
+  transition: opacity 420ms ease, filter 420ms ease;
 }
 
 .stage {
+  position: relative;
+  z-index: 1;
   width: min(720px, calc(100vw - 28px));
   max-height: min(78dvh, 720px);
   overflow: auto;
@@ -18,6 +32,21 @@
   border-radius: 22px;
   background: rgba(7, 11, 16, .94);
   box-shadow: 0 24px 80px rgba(0,0,0,.45);
+  transform-origin: 50% 100%;
+  animation: carrierStageIn 360ms cubic-bezier(.18,.78,.2,1) both;
+  transition: opacity 420ms ease, transform 420ms cubic-bezier(.2,.75,.2,1), filter 420ms ease;
+}
+
+.overlay[data-distilling="true"] .focusField {
+  opacity: 1;
+  filter: brightness(1.18);
+}
+
+.overlay[data-distilling="true"] .stage {
+  opacity: 0;
+  transform: translateY(18px) scale(.96);
+  filter: blur(5px);
+  pointer-events: none;
 }
 
 .header {
@@ -155,6 +184,12 @@
   cursor: pointer;
 }
 
+.completion button:disabled,
+.footer button:disabled {
+  opacity: .56;
+  cursor: default;
+}
+
 .distillPreview {
   position: relative;
   width: 86px;
@@ -191,6 +226,13 @@
   border: 1px solid color-mix(in srgb, var(--world-accent) 20%, transparent);
   border-radius: 50%;
   animation: distillRing 2.2s ease-out infinite;
+}
+
+.distillPreview[data-active="true"] {
+  animation: shardExtract 520ms cubic-bezier(.18,.8,.2,1) both;
+}
+.distillPreview[data-active="true"] em {
+  animation: distillBurst 520ms ease-out both;
 }
 
 .reveals {
@@ -232,13 +274,35 @@
   text-align: right;
 }
 
+@keyframes carrierOverlayIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes carrierStageIn {
+  from { opacity: 0; transform: translateY(34px) scale(.965); filter: blur(4px); }
+  to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+}
+
 @keyframes shardHover {
   0%, 100% { transform: translateY(2px) rotate(-2deg); }
   50% { transform: translateY(-5px) rotate(2deg); }
 }
+
+@keyframes shardExtract {
+  0% { opacity: 1; transform: translateY(0) scale(1) rotate(-2deg); }
+  48% { opacity: 1; transform: translateY(-18px) scale(1.26) rotate(6deg); filter: drop-shadow(0 0 24px var(--world-accent)); }
+  100% { opacity: 0; transform: translate(24px, -38px) scale(.62) rotate(16deg); filter: blur(2px); }
+}
+
 @keyframes distillRing {
   0% { opacity: .5; transform: scale(.72); }
   100% { opacity: 0; transform: scale(1.28); }
+}
+
+@keyframes distillBurst {
+  0% { opacity: .6; transform: scale(.72); }
+  100% { opacity: 0; transform: scale(1.9); }
 }
 
 @media (max-width: 640px) {
@@ -250,7 +314,12 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .pulse { transition: none; }
+  .overlay,
+  .stage,
+  .pulse,
   .distillPreview,
-  .distillPreview em { animation: none; }
+  .distillPreview em {
+    animation: none;
+    transition: none;
+  }
 }
