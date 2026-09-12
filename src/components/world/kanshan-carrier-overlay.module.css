@@ -77,8 +77,25 @@
   color: #fff8ea;
 }
 
+.choices button:disabled {
+  cursor: default;
+  opacity: .58;
+}
+
 .investigate {
   border-color: color-mix(in srgb, var(--world-accent) 42%, transparent);
+}
+
+.reaction {
+  position: relative;
+  padding: 10px 13px 10px 16px;
+  border-left: 2px solid color-mix(in srgb, var(--world-accent) 66%, transparent);
+  border-radius: 0 12px 12px 0;
+  background: color-mix(in srgb, var(--world-accent) 8%, rgba(255,255,255,.02));
+  color: rgba(245,241,232,.78);
+  font-size: 12px;
+  line-height: 1.65;
+  animation: reactionIn 220ms ease both;
 }
 
 .body footer {
@@ -102,6 +119,11 @@
   font-size: 9px;
 }
 
+@keyframes reactionIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 @media (max-width: 640px) {
   .overlay { padding: 0 12px 74px; }
   .box { grid-template-columns: 1fr; }
@@ -109,4 +131,8 @@
   .choices { display: grid; }
   .choices button,
   .investigate { width: 100%; text-align: left; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reaction { animation: none; }
 }
