@@ -26,6 +26,7 @@ export function CarrierActionControl({
   const [beacon, setBeacon] = useState(0);
   const [restored, setRestored] = useState(0);
   const [choice, setChoice] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<string | null>(null);
   const holdTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [holding, setHolding] = useState(false);
 
@@ -200,36 +201,69 @@ export function CarrierActionControl({
   }
 
   if (action === "open-source") {
+    const excerpt = step.sourceExcerpt?.trim();
     return (
-      <div className={styles.archiveDrawer}>
-        <button type="button" onClick={() => { tactile([8, 20, 10]); onAdvance(); }}>
-          <span />
-          <i />
-          <b />
+      <div className={styles.sourceReading}>
+        <article className={styles.sourcePaper}>
+          <header>
+            <span>{zh ? "知乎原文片段" : "ZHIHU SOURCE EXCERPT"}</span>
+            {typeof step.sourceUpvotes === "number" ? <small>{step.sourceUpvotes.toLocaleString()} {zh ? "赞同" : "upvotes"}</small> : null}
+          </header>
+          {excerpt ? <blockquote>“{excerpt}”</blockquote> : <p>{zh ? "这份来源没有留下可展示的原文片段。" : "No displayable excerpt survived for this source."}</p>}
+          {step.sourceUrl ? (
+            <a href={step.sourceUrl} target="_blank" rel="noreferrer" onClick={(event) => event.stopPropagation()}>
+              {zh ? "在新标签页查看原回答 ↗" : "Open original answer ↗"}
+            </a>
+          ) : null}
+        </article>
+        <button
+          type="button"
+          className={styles.readContinue}
+          onClick={() => {
+            tactile([8, 20, 10]);
+            onAdvance();
+          }}
+        >
+          {zh ? "我读完了，继续" : "I have read it — continue"}
         </button>
-        <small>{zh ? "拉开档案抽屉，核对可追溯材料" : "Open the archive drawer and inspect the traceable record"}</small>
+        <small>{zh ? "先读原文，再看系统如何提炼这段材料" : "Read the source before seeing how the system distills it"}</small>
       </div>
     );
   }
 
-  const options = zh
+  const configuredChoices = step.choices?.map((item) => ({
+    id: item.id,
+    label: item.label[locale],
+    feedback: item.feedback?.[locale],
+    grounded: item.grounded,
+  }));
+  const fallbackChoices = zh
     ? ["它提供了支撑", "它限定了适用范围", "现在还无法判断"]
     : ["It supports the claim", "It limits the claim", "I still cannot tell"];
+  const options = configuredChoices ?? fallbackChoices.map((label) => ({ id: label, label }));
+
   return (
-    <div className={styles.choiceGame}>
+    <div className={styles.choiceGame} data-mode={step.choiceMode ?? "interpretive"}>
       {options.map((option) => (
         <button
-          key={option}
+          key={option.id}
           type="button"
-          data-selected={choice === option ? "true" : "false"}
+          data-selected={choice === option.id ? "true" : "false"}
+          disabled={choice !== null}
           onClick={() => {
-            tactile(7);
-            setChoice(option);
-            window.setTimeout(onAdvance, 220);
+            tactile(option.grounded ? [7, 16, 11] : 7);
+            setChoice(option.id);
+            setFeedback(option.feedback ?? null);
+            window.setTimeout(onAdvance, option.feedback ? 1150 : 420);
           }}
-        >{option}</button>
+        >{option.label}</button>
       ))}
-      <small>{zh ? "这里没有标准答案；这是你当前的理解" : "There is no scored answer here; this records your current reading"}</small>
+      {feedback ? <p className={styles.choiceFeedback} aria-live="polite">{feedback}</p> : null}
+      <small>
+        {step.choiceMode === "grounded"
+          ? (zh ? "这一步区分“原文留下了什么”和“我们推断了什么”" : "This step separates what the source says from what we infer")
+          : (zh ? "这里记录的是你的当前判断，不是标准答案" : "This records your current reading; it is not a scored answer")}
+      </small>
     </div>
   );
 }
