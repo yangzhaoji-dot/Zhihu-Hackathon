@@ -20,6 +20,11 @@ export function CognitionFragmentHud({
   const flash = plan.find((fragment) => fragment.id === flashId) ?? null;
   return (
     <aside className={styles.hud} aria-label={zh ? "认知碎片" : "cognition fragments"}>
+      {flash ? (
+        <span className={styles.flight} key={`flight:${flash.id}`} aria-hidden>
+          <i />
+        </span>
+      ) : null}
       <div className={styles.shards} aria-hidden>
         {plan.map((fragment, index) => (
           <span
