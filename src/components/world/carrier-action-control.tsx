@@ -16,9 +16,9 @@ export function CarrierActionControl({
   onAdvance: () => void;
 }) {
   const zh = locale !== "en-US";
-  const [count, setCount] = useState(0);
+  const [observedSpots, setObservedSpots] = useState<number[]>([]);
   const [toggle, setToggle] = useState<"neutral" | "left" | "right">("neutral");
-  const [aligned, setAligned] = useState(0);
+  const [alignedSides, setAlignedSides] = useState<Array<"left" | "right">>([]);
   const [beacon, setBeacon] = useState(0);
   const [restored, setRestored] = useState(0);
   const [choice, setChoice] = useState<string | null>(null);
@@ -33,26 +33,28 @@ export function CarrierActionControl({
     const spots = ["A", "B", "C"];
     return (
       <div className={styles.inspect} data-action="inspect">
-        <div className={styles.inspectObject} data-turn={count}>
+        <div className={styles.inspectObject} data-turn={observedSpots.length}>
           <span />
           {spots.map((spot, index) => (
             <button
               key={spot}
               type="button"
               className={styles.hotspot}
+              data-seen={observedSpots.includes(index) ? "true" : "false"}
               style={{ "--spot-index": index } as React.CSSProperties}
               aria-label={`${zh ? "观察点" : "inspection point"} ${spot}`}
               onClick={() => {
-                const next = count + 1;
-                setCount(next);
-                if (next >= 2) window.setTimeout(onAdvance, 220);
+                if (observedSpots.includes(index)) return;
+                const next = [...observedSpots, index];
+                setObservedSpots(next);
+                if (next.length >= 2) window.setTimeout(onAdvance, 220);
               }}
             >
               {spot}
             </button>
           ))}
         </div>
-        <small>{zh ? `已观察 ${Math.min(count, 2)}/2 个细节` : `${Math.min(count, 2)}/2 details inspected`}</small>
+        <small>{zh ? `已观察 ${Math.min(observedSpots.length, 2)}/2 个不同细节` : `${Math.min(observedSpots.length, 2)}/2 distinct details inspected`}</small>
       </div>
     );
   }
@@ -89,24 +91,23 @@ export function CarrierActionControl({
   }
 
   if (action === "align") {
+    const align = (side: "left" | "right") => {
+      if (alignedSides.includes(side)) return;
+      const next = [...alignedSides, side];
+      setAlignedSides(next);
+      if (next.length >= 2) window.setTimeout(onAdvance, 260);
+    };
     return (
-      <div className={styles.alignGame} data-aligned={aligned >= 2 ? "true" : "false"}>
-        <button
-          type="button"
-          className={styles.plateLeft}
-          onClick={() => setAligned((value) => Math.min(2, value + 1))}
-        >A</button>
+      <div
+        className={styles.alignGame}
+        data-left={alignedSides.includes("left") ? "true" : "false"}
+        data-right={alignedSides.includes("right") ? "true" : "false"}
+        data-aligned={alignedSides.length >= 2 ? "true" : "false"}
+      >
+        <button type="button" className={styles.plateLeft} onClick={() => align("left")}>A</button>
         <div className={styles.alignAxis}><i /></div>
-        <button
-          type="button"
-          className={styles.plateRight}
-          onClick={() => {
-            const next = Math.min(2, aligned + 1);
-            setAligned(next);
-            if (next >= 2) window.setTimeout(onAdvance, 260);
-          }}
-        >B</button>
-        <small>{zh ? "让两份材料靠近同一条基准线" : "Bring both materials onto the same axis"}</small>
+        <button type="button" className={styles.plateRight} onClick={() => align("right")}>B</button>
+        <small>{zh ? "分别推动两份材料，让它们落到同一条基准线" : "Move both materials onto the same axis"}</small>
       </div>
     );
   }
