@@ -2,6 +2,7 @@
 
 import { createPortal } from "react-dom";
 import { useEffect, useState, type CSSProperties, type RefObject } from "react";
+import type { PlanetBiomeId } from "@/lib/opinion/planet-scene-spec";
 import type { CognitionFragmentSpec } from "@/lib/world/cognition-fragment-plan";
 import { cognitionFragmentKey } from "@/lib/world/cognition-fragment-plan";
 import { TILE_SIZE, type GridPos } from "@/lib/world/geometry";
@@ -25,6 +26,7 @@ export function DynamicCarrierLayer({
   opinionId,
   worldState,
   accent,
+  biome,
   onTap,
 }: {
   worldElRef: RefObject<HTMLDivElement | null>;
@@ -32,6 +34,7 @@ export function DynamicCarrierLayer({
   opinionId: string;
   worldState: Record<string, unknown>;
   accent: string;
+  biome: PlanetBiomeId;
   onTap: (site: DynamicCarrierSite) => void;
 }) {
   const [worldEl, setWorldEl] = useState<HTMLDivElement | null>(null);
@@ -84,6 +87,7 @@ export function DynamicCarrierLayer({
             className={styles.carrier}
             data-role={site.fragment.role}
             data-mode={site.fragment.mode}
+            data-biome={biome}
             data-fragment-id={site.fragment.id}
             data-collected={collected ? "true" : "false"}
             style={{
