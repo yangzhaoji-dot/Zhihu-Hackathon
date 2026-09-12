@@ -118,6 +118,20 @@ export function PlanetRouteWhisper({ opinionId }: { opinionId: string }) {
     return () => window.clearTimeout(timer);
   }, [callingSite, opinionId]);
 
+  useEffect(() => {
+    if (!worldEl) return;
+    const previouslyCalling = worldEl.querySelectorAll<HTMLElement>('[data-calling="true"]');
+    previouslyCalling.forEach((element) => element.removeAttribute("data-calling"));
+    if (!callingSite) return;
+
+    const fragmentId = callingSite.fragment.id;
+    const target = worldEl.querySelector<HTMLElement>(
+      `[data-fragment-id="${fragmentId}"], [data-fragment-kind="${fragmentId}"]`,
+    );
+    target?.setAttribute("data-calling", "true");
+    return () => target?.removeAttribute("data-calling");
+  }, [callingSite, worldEl]);
+
   if (!worldEl || !config || !route || route.sites.length === 0) return null;
 
   const collected = new Set(collectedIds);
