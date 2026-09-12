@@ -14,7 +14,7 @@ import { galaxyUrl, saveGalaxy } from "@/lib/cognitive-galaxy/session";
 import { DEMO_ID } from "@/lib/cognitive-galaxy/demo";
 import styles from "@/components/cognitive-galaxy/home.module.css";
 
-const INTRO_KEY = "cognitive-galaxy:intro:v1";
+const INTRO_KEY = "cognitive-galaxy:intro:v2";
 const RECOMMENDATIONS = [
   { key:"aiTitle", query:"AI 会取代程序员吗", type:"02" },
   { key:"studyTitle", query:"读研真的值得吗", type:"03" },
