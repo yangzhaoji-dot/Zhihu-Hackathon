@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion, useReducedMotion } from "framer-motion";
 import { ArrowRight, ExternalLink, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -11,24 +11,29 @@ import styles from "./galaxy.module.css";
 const INTERACTIVE_PLANET_ROUTES: Record<string, string> = {
   o_stoploss: "o_stoploss",
   // The first health opinion in the authored demo is the visual stand-in for
-  // the stop-loss sample planet. Route it into the same internal-interaction
-  // prototype so the main demo path reaches the feature instead of the old
-  // phase-boundary placeholder.
+  // the grounded stop-loss sample. Its evolution is still written back to
+  // demo-health-0 in the originating demo galaxy.
   "demo-health-0": "o_stoploss",
 };
 
 export function PlanetFocus({ node, galaxy, onClose }: { node: GalaxyNode; galaxy: Galaxy; onClose: () => void }) {
   const { t } = useTranslation("galaxy");
   const router = useRouter();
+  const search = useSearchParams();
   const reduced = useReducedMotion();
   const [landed, setLanded] = useState(false);
   const opinion = node.opinion;
   const sources = galaxy.graph.sources.filter((source) => opinion.sourceIds.includes(source.id));
   const related = galaxy.graph.relations.filter((relation) => relation.from === opinion.id || relation.to === opinion.id);
+  const mapped = INTERACTIVE_PLANET_ROUTES[opinion.id];
+  const canLand = Boolean(mapped || opinion.sourceIds.length > 0);
   const land = () => {
-    const targetOpinionId = INTERACTIVE_PLANET_ROUTES[opinion.id];
-    if (targetOpinionId) {
-      router.push(`/world/${encodeURIComponent(targetOpinionId)}`);
+    if (canLand) {
+      const targetOpinionId = mapped ?? opinion.id;
+      const params = new URLSearchParams({ galaxy: galaxy.graph.questionId, origin: opinion.id });
+      const cluster = search.get("cluster");
+      if (cluster) params.set("cluster", cluster);
+      router.push(`/world/${encodeURIComponent(targetOpinionId)}?${params.toString()}`);
       return;
     }
     setLanded(true);
@@ -38,7 +43,11 @@ export function PlanetFocus({ node, galaxy, onClose }: { node: GalaxyNode; galax
     <span className={styles.eyebrow}>{t("focusKicker")}</span>
     <h2>{opinion.title}</h2>
     {opinion.summary !== opinion.title && <p className={styles.summary}>{opinion.summary}</p>}
-    <div className={styles.metadata}><span>{node.sourceCount ? t("sourceCount",{ count:node.sourceCount }) : t("sourceMissing")}</span>{related.length > 0 && <span>{t("relatedCount",{ count:related.length })}</span>}</div>
+    <div className={styles.metadata}>
+      <span>{node.sourceCount ? t("sourceCount",{ count:node.sourceCount }) : t("sourceMissing")}</span>
+      {related.length > 0 && <span>{t("relatedCount",{ count:related.length })}</span>}
+      {opinion.derivedFrom?.length ? <span>AI 辅助形成</span> : null}
+    </div>
     {sources.slice(0,3).map((source,index) => {
       const url = safeSourceUrl(source.url);
       return url ? <a key={source.id} className={styles.sourceLink} href={url} target="_blank" rel="noopener noreferrer">{t("sourceRead")} {index+1} <ExternalLink size={11} style={{ display:"inline" }}/></a> : null;
