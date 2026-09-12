@@ -1,0 +1,63 @@
+.hush {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 48%, transparent 0 22%, rgba(3,6,10,.28) 58%, rgba(3,6,10,.72) 100%);
+  pointer-events: none;
+  animation: hushArrive 1250ms cubic-bezier(.2,.72,.2,1) both;
+}
+
+.center,
+.ring,
+.ring2 {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.center {
+  width: 8px;
+  height: 8px;
+  background: var(--world-accent, #d6ad72);
+  box-shadow: 0 0 28px color-mix(in srgb, var(--world-accent, #d6ad72) 62%, transparent);
+  animation: centerPulse 920ms ease-out both;
+}
+
+.ring,
+.ring2 {
+  width: 120px;
+  height: 120px;
+  border: 1px solid color-mix(in srgb, var(--world-accent, #d6ad72) 24%, transparent);
+  opacity: 0;
+  animation: ringExpand 980ms ease-out 120ms both;
+}
+
+.ring2 {
+  animation-delay: 260ms;
+}
+
+@keyframes hushArrive {
+  0% { opacity: 0; backdrop-filter: blur(0) saturate(1); }
+  38% { opacity: 1; backdrop-filter: blur(1.5px) saturate(.82); }
+  100% { opacity: 1; backdrop-filter: blur(4px) saturate(.7); }
+}
+
+@keyframes centerPulse {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(.2); }
+  42% { opacity: 1; transform: translate(-50%, -50%) scale(1.35); }
+  100% { opacity: .42; transform: translate(-50%, -50%) scale(.82); }
+}
+
+@keyframes ringExpand {
+  0% { opacity: .46; transform: translate(-50%, -50%) scale(.3); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(4.4); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hush { animation: none; opacity: .82; }
+  .center, .ring, .ring2 { animation: none; }
+}
