@@ -28,6 +28,7 @@ interface DialogueOverlayProps {
   onClose: () => void;
   resolveSource: (sourceId: string) => SourceCardData | null;
   surfaceMode?: "legacy" | "fragments";
+  onConditionCueChange?: (cue: number) => void;
 }
 
 function extractConditionCandidates(lines: ResolvedDialogueLine[]) {
@@ -59,6 +60,7 @@ export function DialogueOverlay({
   onClose,
   resolveSource,
   surfaceMode = "legacy",
+  onConditionCueChange,
 }: DialogueOverlayProps) {
   const { t, i18n } = useTranslation();
   const [index, setIndex] = useState(0);
@@ -85,6 +87,7 @@ export function DialogueOverlay({
       if (event.key === "Escape") {
         event.stopPropagation();
         if (experimentAction) {
+          onConditionCueChange?.(0);
           setExperimentAction(null);
           return;
         }
@@ -101,7 +104,7 @@ export function DialogueOverlay({
     };
     window.addEventListener("keydown", onKeyDown, { capture: true });
     return () => window.removeEventListener("keydown", onKeyDown, { capture: true });
-  }, [advance, experimentAction, onClose, openedSourceId]);
+  }, [advance, experimentAction, onClose, onConditionCueChange, openedSourceId]);
 
   const visibleActions = useMemo(
     () =>
@@ -213,6 +216,7 @@ export function DialogueOverlay({
               <ConditionExperiment
                 conditions={experimentConditions}
                 locale={locale}
+                onCueChange={onConditionCueChange}
                 onCancel={() => setExperimentAction(null)}
                 onComplete={() => {
                   onAction(experimentAction);
