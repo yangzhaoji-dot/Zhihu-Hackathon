@@ -33,6 +33,13 @@ function hash01(value: string) {
     hash ^= value.charCodeAt(index);
     hash = Math.imul(hash, 16777619);
   }
+  // Avalanche the FNV state so similar ids such as o_route_a / o_route_b do
+  // not collapse to nearly identical angles after world-grid rounding.
+  hash ^= hash >>> 16;
+  hash = Math.imul(hash, 0x7feb352d);
+  hash ^= hash >>> 15;
+  hash = Math.imul(hash, 0x846ca68b);
+  hash ^= hash >>> 16;
   return (hash >>> 0) / 0xffffffff;
 }
 
@@ -85,7 +92,7 @@ function routeTargets(
     ? normalized(spawn, rocket)
     : { x: Math.cos(seed * Math.PI * 2), y: Math.sin(seed * Math.PI * 2) };
 
-  const jitter = (seed - 0.5) * 1.05;
+  const jitter = (seed - 0.5) * 1.45;
   const cos = Math.cos(jitter);
   const sin = Math.sin(jitter);
   const direction = {
@@ -100,7 +107,7 @@ function routeTargets(
   return Array.from({ length: count }, (_, index) => {
     const progress = count <= 1 ? 0 : index / (count - 1);
     const depth = firstDepth + (maxDepth - firstDepth) * progress;
-    const wave = Math.sin(seed * Math.PI * 2 + index * 1.43) * (1.35 + progress * 0.65);
+    const wave = Math.sin(seed * Math.PI * 2 + index * 1.43) * (1.6 + progress * 0.85);
     return clampToWorld(config, {
       x: spawn.x + direction.x * depth + side.x * wave,
       y: spawn.y + direction.y * depth + side.y * wave,
