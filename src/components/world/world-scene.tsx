@@ -8,6 +8,7 @@ import type { Poi, WorldConfig, Zone } from "@/lib/opinion/types";
 import { getOpinionWorldTheme, type OpinionWorldTheme } from "@/lib/opinion/world-theme";
 import { TILE_SIZE, type GridPos } from "@/lib/world/geometry";
 import { isPoiRequirementMet, type WalkContext } from "@/lib/world/walkability";
+import fragmentStyles from "./fragment-state.module.css";
 import grammarStyles from "./world-grammar.module.css";
 import resonanceStyles from "./world-resonance.module.css";
 import styles from "./world-scene.module.css";
@@ -36,6 +37,8 @@ type EnvironmentObjectKind =
   | "departure-board"
   | "threshold-gate";
 
+type FragmentKind = "claim" | "reason" | "evidence";
+
 const ENVIRONMENT_OBJECTS: Record<string, EnvironmentObjectKind> = {
   npc_stoploss: "resignation-box",
   npc_cashflow: "ledger-desk",
@@ -47,12 +50,20 @@ const ENVIRONMENT_OBJECTS: Record<string, EnvironmentObjectKind> = {
   npc_threshold: "threshold-gate",
 };
 
+function fragmentKindFromId(id: string): FragmentKind | null {
+  if (id.startsWith("fragment_claim_")) return "claim";
+  if (id.startsWith("fragment_reason_")) return "reason";
+  if (id.startsWith("fragment_evidence_")) return "evidence";
+  return null;
+}
+
 function environmentObjectKind(config: WorldConfig, npc: WorldNpcView): EnvironmentObjectKind | null {
   if (config.tileset !== "diorama-v1") return null;
   if (!npc.role.startsWith("看山 ·")) return null;
-  if (npc.id.startsWith("fragment_claim_")) return "threshold-gate";
-  if (npc.id.startsWith("fragment_reason_")) return "workbench";
-  if (npc.id.startsWith("fragment_evidence_")) return "archive-cabinet";
+  const fragmentKind = fragmentKindFromId(npc.id);
+  if (fragmentKind === "claim") return "threshold-gate";
+  if (fragmentKind === "reason") return "workbench";
+  if (fragmentKind === "evidence") return "archive-cabinet";
   return ENVIRONMENT_OBJECTS[npc.id] ?? null;
 }
 
@@ -85,9 +96,13 @@ function PoiGlyph({ poi, locked }: { poi: Poi; locked: boolean }) {
   }
 }
 
-function EnvironmentObject({ kind }: { kind: EnvironmentObjectKind }) {
+function EnvironmentObject({ kind, collected }: { kind: EnvironmentObjectKind; collected: boolean }) {
   return (
-    <span className={styles.environmentArtifact} data-kind={kind} aria-hidden>
+    <span
+      className={`${styles.environmentArtifact} ${collected ? fragmentStyles.artifact : ""}`}
+      data-kind={kind}
+      aria-hidden
+    >
       <span className={styles.artifactTop} />
       <span className={styles.artifactBody} />
       <span className={styles.artifactDetail} />
@@ -228,15 +243,20 @@ export function WorldScene({
 
         {npcs.map((npc) => {
           const objectKind = environmentObjectKind(config, npc);
+          const fragmentKind = fragmentKindFromId(npc.id);
+          const collected = Boolean(
+            fragmentKind && walkCtx.worldState?.[`fragment:${npc.opinion.id}:${fragmentKind}`],
+          );
           return (
             <button
               key={npc.id}
               type="button"
               className={`${styles.npc} ${objectKind ? styles.environmentObject : ""} ${
                 npc.translucent ? styles.translucent : ""
-              } ${highlightId === npc.id ? styles.highlight : ""}`}
+              } ${collected ? fragmentStyles.collected : ""} ${highlightId === npc.id ? styles.highlight : ""}`}
               data-object-kind={objectKind ?? undefined}
               data-planet-object={objectKind ? undefined : "true"}
+              data-fragment-collected={collected ? "true" : "false"}
               style={{ left: npc.pos.x * TILE_SIZE, top: npc.pos.y * TILE_SIZE }}
               onClick={(event) => {
                 event.stopPropagation();
@@ -245,7 +265,7 @@ export function WorldScene({
               aria-label={npc.role}
             >
               {objectKind ? (
-                <EnvironmentObject kind={objectKind} />
+                <EnvironmentObject kind={objectKind} collected={collected} />
               ) : npc.sprite ? (
                 <Image className={styles.npcSprite} src={npc.sprite} alt="" width={64} height={96} sizes="64px" />
               ) : (
@@ -257,6 +277,7 @@ export function WorldScene({
                   {npc.role.slice(0, 1)}
                 </span>
               )}
+              {collected && <span className={fragmentStyles.mark} aria-hidden>✓</span>}
               <span className={styles.npcName}>{objectKind ? environmentObjectLabel(npc.role) : npc.role}</span>
             </button>
           );
