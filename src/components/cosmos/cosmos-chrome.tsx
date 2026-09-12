@@ -1,5 +1,6 @@
 "use client";
 
+import { Search } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import formationStyles from "./galaxy-formation.module.css";
 import type { Mode } from "./use-opinion-space";
@@ -46,14 +47,14 @@ export function CosmosChrome({
 }) {
   const { t, i18n } = useTranslation();
   const zh = i18n.resolvedLanguage !== "en-US";
-  const questionLabel = zh ? "问题星系" : "Question Galaxy";
-  const planetLabel = zh ? "观点星球" : "Opinion Planets";
-  const searchPlaceholder = zh ? "输入你想探索的问题，或粘贴知乎问题链接" : "Enter a question to explore, or paste a Zhihu question link";
-  const searchAction = zh ? "探测星系" : "Probe galaxy";
-  const searchingLabel = zh ? "正在探测知乎宇宙" : "Probing Zhihu Universe";
+  const questionLabel = zh ? "问题宇宙" : "Question Universe";
+  const planetLabel = zh ? "观点星系" : "Opinion System";
+  const searchPlaceholder = zh ? "搜索一个你想进入的问题……" : "Search for a question to enter…";
+  const searchAction = zh ? "定位" : "Locate";
+  const searchingLabel = zh ? "定位中" : "Locating";
   const defaultQuestionHint = zh
-    ? "输入一个问题探测星系，或点击已有星系进入"
-    : "Probe a question, or enter an existing galaxy";
+    ? "点击一个问题星系进入 · 拖动观察宇宙"
+    : "Enter a question galaxy · drag to explore";
   const oldQuestionHint = t("cosmos.hintQuestion");
   const visibleHint = mode === "questions"
     ? (!hint || hint === oldQuestionHint ? defaultQuestionHint : hint)
@@ -62,35 +63,27 @@ export function CosmosChrome({
   return (
     <>
       <div className="topbar">
-        <div className="brand">
+        <button className="brand" type="button" onClick={() => onModeChange("questions")}>
           <small>{zh ? "知乎宇宙" : "ZHIHU UNIVERSE"}</small>
-          <h1 data-el="focus-question">{mode === "questions" ? questionLabel : title}</h1>
-        </div>
-        <div className="mode" role="tablist" aria-label="layer">
-          <button
-            className={mode === "questions" ? "active" : ""}
-            onClick={() => onModeChange("questions")}
-            role="tab"
-            aria-selected={mode === "questions"}
-          >
-            {questionLabel}
-          </button>
-          {mode === "views" && (
-            <button className="active" role="tab" aria-selected="true" disabled>
-              {planetLabel}
-            </button>
-          )}
-        </div>
+          <span>{mode === "questions" ? questionLabel : planetLabel}</span>
+        </button>
+
+        {mode === "views" && (
+          <div className="current-system">
+            <small>{zh ? "当前问题星系" : "CURRENT QUESTION GALAXY"}</small>
+            <strong data-el="focus-question">{title}</strong>
+          </div>
+        )}
       </div>
 
       {mode === "questions" && (
         <form className="search" onSubmit={onSearch} data-el="galaxy-search">
+          <Search size={15} aria-hidden />
           <input
             value={query}
             onChange={(e) => onQueryChange(e.target.value)}
             aria-label={searchPlaceholder}
             placeholder={searchPlaceholder}
-            autoFocus
           />
           <button type="submit" disabled={searching}>
             {searching ? searchingLabel : searchAction}
