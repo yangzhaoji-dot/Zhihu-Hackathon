@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { CarrierActionKind, CarrierInteractionStep } from "@/lib/world/carrier-interactions";
+import type { CarrierActionKind, CarrierChoice, CarrierInteractionStep } from "@/lib/world/carrier-interactions";
 import styles from "./carrier-action-control.module.css";
 
 function tactile(pattern: number | number[] = 7) {
@@ -223,18 +223,12 @@ export function CarrierActionControl({
     );
   }
 
-  const fallbackOptions = zh
-    ? [
-        { id: "support", label: { "zh-CN": "它提供了支撑", "en-US": "It provides support" } },
-        { id: "boundary", label: { "zh-CN": "它限定了适用范围", "en-US": "It limits the scope" } },
-        { id: "uncertain", label: { "zh-CN": "现在还无法判断", "en-US": "I still cannot tell" } },
-      ]
-    : [
-        { id: "support", label: { "zh-CN": "它提供了支撑", "en-US": "It provides support" } },
-        { id: "boundary", label: { "zh-CN": "它限定了适用范围", "en-US": "It limits the scope" } },
-        { id: "uncertain", label: { "zh-CN": "现在还无法判断", "en-US": "I still cannot tell" } },
-      ];
-  const options = step.choices?.length ? step.choices : fallbackOptions;
+  const fallbackOptions: CarrierChoice[] = [
+    { id: "support", label: { "zh-CN": "它提供了支撑", "en-US": "It provides support" } },
+    { id: "boundary", label: { "zh-CN": "它限定了适用范围", "en-US": "It limits the scope" } },
+    { id: "uncertain", label: { "zh-CN": "现在还无法判断", "en-US": "I still cannot tell" } },
+  ];
+  const options: CarrierChoice[] = step.choices?.length ? step.choices : fallbackOptions;
 
   return (
     <div className={styles.choiceGame} data-mode={step.choiceMode ?? "interpretive"}>
