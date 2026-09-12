@@ -78,17 +78,87 @@
 
 /* Forest carriers should read as objects inside a world, not neon UI nodes. */
 .forestWorld :global([data-fragment-kind][data-fragment-collected="false"]::before) {
-  opacity: .42 !important;
-  filter: blur(6px) !important;
+  opacity: .32 !important;
+  filter: blur(8px) !important;
 }
 
 .forestWorld :global(button[data-fragment-kind]),
 .forestWorld :global(button[data-fragment-id]) {
-  filter: saturate(.78) contrast(.98);
+  filter: saturate(.72) contrast(.97);
 }
 
-.forestWorld :global(button[data-carrier-calling="true"]) {
-  filter: saturate(1.02) brightness(1.08) drop-shadow(0 0 8px color-mix(in srgb, var(--world-accent) 32%, transparent));
+.forestWorld :global(button[data-calling="true"]) {
+  filter: saturate(.94) brightness(1.04) drop-shadow(0 0 7px color-mix(in srgb, var(--world-accent) 24%, transparent));
+}
+
+/* Claim: a mossy stone with carved, readable marks rather than a glowing node. */
+.forestWorld :global([data-kind="echo-stone"] [data-artifact-part="body"]) {
+  background:
+    radial-gradient(circle at 26% 24%, rgba(142,165,117,.18), transparent 22%),
+    linear-gradient(145deg, #586858, #2c3b32 72%) !important;
+  box-shadow: inset -9px -11px 14px rgba(0,0,0,.28), 0 9px 10px rgba(0,0,0,.22) !important;
+}
+.forestWorld :global([data-kind="echo-stone"] [data-artifact-part="detail"]) {
+  width: 19px !important;
+  height: 12px !important;
+  left: 23px !important;
+  bottom: 21px !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: repeating-linear-gradient(0deg, rgba(211,218,172,.52) 0 1px, transparent 1px 4px) !important;
+  box-shadow: none !important;
+  transform: rotate(-4deg);
+}
+
+/* Reason: the spring is a physical pool; light comes from water, not from a UI ring. */
+.forestWorld :global([data-kind="condition-spring"] [data-artifact-part="body"]) {
+  border-color: #34483d !important;
+  background: radial-gradient(ellipse, rgba(118,158,143,.52), #304c40 52%, #192d27 74%) !important;
+  box-shadow: 0 7px 12px rgba(0,0,0,.24), inset 0 0 12px rgba(194,219,194,.07) !important;
+}
+.forestWorld :global([data-kind="condition-spring"] [data-artifact-part="top"]) {
+  opacity: .28;
+}
+
+/* Evidence: a trace tree with a weathered Zhihu excerpt pinned to its trunk. */
+.forestWorld :global([data-kind="trace-tree"] [data-artifact-part="body"]) {
+  width: 11px !important;
+  left: 27px !important;
+  background: linear-gradient(90deg, #403a29, #756448 48%, #302f22) !important;
+  box-shadow: 0 7px 7px rgba(0,0,0,.22);
+}
+.forestWorld :global([data-kind="trace-tree"] [data-artifact-part="top"]) {
+  background: radial-gradient(circle at 42% 34%, #75895c, #35513d 72%) !important;
+  filter: saturate(.78);
+}
+.forestWorld :global([data-kind="trace-tree"] [data-artifact-part="detail"]) {
+  left: 17px !important;
+  bottom: 16px !important;
+  width: 31px !important;
+  height: 22px !important;
+  border: 1px solid rgba(113,98,69,.34) !important;
+  border-radius: 2px !important;
+  background:
+    repeating-linear-gradient(0deg, rgba(83,77,57,.46) 0 1px, transparent 1px 5px),
+    linear-gradient(145deg, #ded3ad, #bbae88) !important;
+  box-shadow: 0 4px 5px rgba(0,0,0,.28) !important;
+  transform: rotate(-5deg) !important;
+}
+.forestWorld :global(button[data-fragment-kind="evidence"]::after) {
+  position: absolute;
+  left: 50%;
+  top: 8px;
+  transform: translate(-50%, -100%) rotate(-2deg);
+  padding: 2px 5px;
+  border-radius: 3px;
+  background: rgba(35,39,29,.76);
+  color: rgba(224,218,183,.68);
+  content: "知乎 · 原文摘录";
+  font-size: 7px;
+  letter-spacing: .06em;
+  white-space: nowrap;
+  opacity: .72;
+  pointer-events: none;
 }
 
 @media (max-width: 720px) {
