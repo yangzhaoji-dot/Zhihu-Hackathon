@@ -1,0 +1,32 @@
+name: Cognitive planet check
+
+on:
+  push:
+    branches: [cognitive-planet-v1]
+  pull_request:
+    branches: [cognitive-galaxy-v2]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cognitive-planet-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      EAZO_APP_ID: cognitive-planet-ci
+      NEXT_PUBLIC_APP_TITLE: Zhihu Universe
+      NEXT_PUBLIC_APP_DESCRIPTION: Planet synthesis interaction fixture
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.9
+      - run: bun install --frozen-lockfile
+      - run: bun test scripts/planet-synthesis.test.ts scripts/cognitive-galaxy.test.ts
+      - run: bun run lint
+      - run: bun run build
