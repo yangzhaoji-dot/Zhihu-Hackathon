@@ -8,91 +8,94 @@ import styles from "./planet-art-direction.module.css";
 
 function ForestBackdrop() {
   return (
-    <svg className={styles.backdrop} viewBox="0 0 1600 1000" preserveAspectRatio="none" aria-hidden>
+    <svg className={styles.backdrop} viewBox="0 0 1920 1152" preserveAspectRatio="none" aria-hidden>
       <defs>
-        <linearGradient id="forestSky" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#081712" />
-          <stop offset="0.46" stopColor="#163127" />
-          <stop offset="1" stopColor="#233f31" />
+        <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#07110f" />
+          <stop offset=".44" stopColor="#13251f" />
+          <stop offset="1" stopColor="#27382f" />
         </linearGradient>
-        <linearGradient id="forestGround" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#1b3428" />
-          <stop offset="0.55" stopColor="#2c4937" />
-          <stop offset="1" stopColor="#152b24" />
+        <linearGradient id="ground" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="#26392f" />
+          <stop offset=".48" stopColor="#31473a" />
+          <stop offset="1" stopColor="#1b3028" />
         </linearGradient>
-        <linearGradient id="pathLight" x1="0" y1="1" x2="0.65" y2="0">
-          <stop offset="0" stopColor="#7d8f63" stopOpacity="0.18" />
-          <stop offset="0.58" stopColor="#a7b47c" stopOpacity="0.38" />
-          <stop offset="1" stopColor="#d4c38b" stopOpacity="0.16" />
+        <linearGradient id="clearing" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#71806a" stopOpacity=".15" />
+          <stop offset="1" stopColor="#9d9b72" stopOpacity=".035" />
         </linearGradient>
-        <radialGradient id="sanctuaryGlow">
-          <stop offset="0" stopColor="#d3d993" stopOpacity="0.46" />
-          <stop offset="0.42" stopColor="#94aa77" stopOpacity="0.16" />
-          <stop offset="1" stopColor="#5f806b" stopOpacity="0" />
-        </radialGradient>
-        <filter id="softGlow" x="-40%" y="-40%" width="180%" height="180%">
-          <feGaussianBlur stdDeviation="12" />
+        <linearGradient id="trunk" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stopColor="#243027" />
+          <stop offset=".45" stopColor="#44503d" />
+          <stop offset="1" stopColor="#202a23" />
+        </linearGradient>
+        <filter id="mist" x="-25%" y="-60%" width="150%" height="220%">
+          <feGaussianBlur stdDeviation="32" />
         </filter>
-        <filter id="mistBlur" x="-20%" y="-40%" width="140%" height="180%">
-          <feGaussianBlur stdDeviation="26" />
+        <filter id="soft" x="-35%" y="-35%" width="170%" height="170%">
+          <feGaussianBlur stdDeviation="16" />
         </filter>
       </defs>
 
-      <rect width="1600" height="1000" fill="url(#forestSky)" />
-      <path d="M0 290 C160 188 305 208 428 265 C558 324 680 226 818 211 C970 194 1066 279 1197 249 C1348 215 1484 142 1600 190 L1600 0 L0 0 Z" fill="#07130f" opacity="0.96" />
-      <path d="M0 365 C184 280 300 328 437 364 C608 408 710 280 889 292 C1062 303 1180 373 1344 311 C1450 270 1523 266 1600 292 L1600 118 L0 160 Z" fill="#0d211a" opacity="0.9" />
-      <rect y="300" width="1600" height="700" fill="url(#forestGround)" />
+      <rect width="1920" height="1152" fill="url(#sky)" />
 
-      <g opacity="0.86">
-        <ellipse cx="191" cy="480" rx="210" ry="180" fill="#173226" />
-        <ellipse cx="1430" cy="430" rx="260" ry="218" fill="#122b23" />
-        <ellipse cx="302" cy="790" rx="310" ry="220" fill="#1b392a" />
-        <ellipse cx="1318" cy="812" rx="340" ry="246" fill="#183126" />
+      {/* very distant forest */}
+      <path d="M0 308 C152 239 281 247 408 284 C538 321 640 225 781 237 C925 250 1014 313 1154 280 C1296 248 1424 191 1556 227 C1682 261 1788 223 1920 194 L1920 0 L0 0 Z" fill="#06100d" opacity=".96" />
+      <path d="M0 405 C165 334 292 357 431 400 C566 442 702 321 858 334 C1006 347 1123 429 1272 382 C1415 337 1534 297 1671 331 C1768 355 1846 334 1920 319 L1920 126 L0 154 Z" fill="#0c1d17" opacity=".9" />
+
+      {/* distant trunks create a real vertical forest rhythm */}
+      <g opacity=".54" fill="#101f19">
+        <path d="M98 96 L147 86 L173 456 L118 478 Z" />
+        <path d="M332 55 L383 63 L401 446 L346 463 Z" />
+        <path d="M602 110 L646 94 L663 432 L617 449 Z" />
+        <path d="M902 46 L955 50 L963 428 L913 445 Z" />
+        <path d="M1194 91 L1238 76 L1254 445 L1207 457 Z" />
+        <path d="M1482 39 L1539 49 L1546 430 L1494 452 Z" />
+        <path d="M1748 92 L1798 79 L1816 438 L1763 461 Z" />
       </g>
 
-      <path d="M770 1005 C765 895 729 835 755 744 C779 659 867 621 887 545 C903 482 874 429 909 359 C942 291 1016 259 1091 250"
-        stroke="url(#pathLight)" strokeWidth="142" fill="none" strokeLinecap="round" opacity="0.48" />
-      <path d="M767 1005 C760 894 741 839 767 753 C792 673 870 634 896 548 C916 485 894 425 923 365 C956 298 1014 273 1087 251"
-        stroke="#6d805e" strokeWidth="48" fill="none" strokeLinecap="round" opacity="0.26" />
-      <path d="M767 1005 C760 894 741 839 767 753 C792 673 870 634 896 548 C916 485 894 425 923 365 C956 298 1014 273 1087 251"
-        stroke="#c8c48e" strokeWidth="4" fill="none" strokeLinecap="round" strokeDasharray="4 26" opacity="0.2" />
+      <rect y="382" width="1920" height="770" fill="url(#ground)" />
 
-      <g transform="translate(1018 164)">
-        <ellipse cx="89" cy="111" rx="178" ry="138" fill="url(#sanctuaryGlow)" filter="url(#softGlow)" />
-        <path d="M-55 149 C-12 100 4 62 22 5 C46 58 60 81 89 104 C117 82 137 57 158 10 C170 77 192 113 232 148 C170 133 132 141 91 173 C50 142 9 134 -55 149 Z" fill="#162d22" />
-        <path d="M27 152 C49 119 54 92 52 57 C82 88 103 102 128 109 C157 97 177 78 198 48 C195 91 201 119 220 151 C168 137 128 147 92 177 C73 157 50 148 27 152 Z" fill="#284736" />
-        <path d="M72 160 C80 126 86 99 90 66 C100 100 110 125 126 159" stroke="#83906b" strokeWidth="8" fill="none" opacity="0.72" />
-        <path d="M67 163 C48 177 28 188 2 194 M130 164 C153 177 179 184 205 191" stroke="#4b624c" strokeWidth="11" fill="none" strokeLinecap="round" />
-        <ellipse cx="99" cy="164" rx="45" ry="16" fill="#78916a" opacity="0.16" />
-        <circle cx="93" cy="117" r="7" fill="#d7d69b" opacity="0.8" />
-        <circle cx="93" cy="117" r="24" fill="#c6cf8a" opacity="0.14" filter="url(#softGlow)" />
+      {/* open pockets of forest floor: readable places to walk */}
+      <ellipse cx="517" cy="675" rx="405" ry="236" fill="#3c5544" opacity=".28" />
+      <ellipse cx="1105" cy="795" rx="520" ry="286" fill="#435a48" opacity=".22" />
+      <ellipse cx="1588" cy="617" rx="326" ry="246" fill="#31483b" opacity=".24" />
+      <path d="M293 1116 C431 928 574 891 735 835 C917 772 1038 662 1167 548 C1290 438 1439 414 1598 430 C1458 516 1352 611 1264 731 C1170 859 1057 942 902 995 C695 1066 494 1101 293 1116 Z" fill="url(#clearing)" />
+
+      {/* rock and root masses to break the green plane */}
+      <g opacity=".62">
+        <path d="M73 686 C161 603 267 592 360 651 C320 715 260 753 177 760 C132 746 98 722 73 686 Z" fill="#25382f" />
+        <path d="M1427 742 C1501 654 1612 634 1719 692 C1775 723 1818 785 1869 844 C1772 805 1680 808 1599 846 C1523 835 1462 801 1427 742 Z" fill="#20372d" />
+        <path d="M729 555 C785 507 852 505 911 543 C881 585 836 611 779 617 C756 599 739 578 729 555 Z" fill="#283c31" />
       </g>
 
-      <g transform="translate(235 250)" opacity="0.78">
-        <path d="M0 174 L18 53 L86 21 L164 39 L183 175 Z" fill="#26382f" />
-        <path d="M23 169 L39 70 L87 48 L145 60 L158 170 Z" fill="#34473b" />
-        <rect x="61" y="88" width="41" height="63" rx="4" fill="#17241f" />
-        <path d="M32 78 L87 48 L151 62" stroke="#70836a" strokeWidth="5" opacity="0.45" />
-        <path d="M26 164 C52 140 76 136 105 145 C126 151 148 146 167 134" stroke="#6e855e" strokeWidth="10" opacity="0.55" fill="none" />
-        <circle cx="61" cy="80" r="13" fill="#587453" />
-        <circle cx="136" cy="97" r="18" fill="#486548" />
+      {/* old civilization fragments: scenery, not interaction */}
+      <g opacity=".4" fill="#596258">
+        <path d="M246 530 L274 468 L328 445 L365 473 L382 548 L338 550 L328 492 L285 500 L278 548 Z" />
+        <rect x="306" y="492" width="21" height="56" fill="#253129" />
+        <path d="M1299 492 L1320 439 L1387 426 L1431 457 L1447 530 L1402 533 L1392 475 L1348 479 L1341 533 L1298 531 Z" />
+        <rect x="1357" y="474" width="21" height="59" fill="#253129" />
       </g>
 
-      <g opacity="0.86">
-        <path d="M184 622 C229 588 273 583 322 607 C367 629 394 668 427 709 C355 676 300 676 246 700 C215 680 195 653 184 622 Z" fill="#244433" />
-        <path d="M1283 588 C1345 548 1416 560 1484 615 C1522 646 1551 699 1600 733 L1600 865 C1544 828 1492 804 1425 807 C1370 762 1320 690 1283 588 Z" fill="#1e3a2d" />
+      {/* soft atmosphere bands */}
+      <g filter="url(#mist)" fill="#a8b7a7" opacity=".08">
+        <ellipse cx="523" cy="489" rx="338" ry="82" />
+        <ellipse cx="1140" cy="576" rx="452" ry="108" />
+        <ellipse cx="1607" cy="423" rx="285" ry="74" />
+        <ellipse cx="957" cy="963" rx="533" ry="104" />
       </g>
 
-      <g fill="#b4c987" opacity="0.48">
-        <circle cx="580" cy="612" r="4" /><circle cx="610" cy="588" r="2.7" /><circle cx="655" cy="630" r="3.2" />
-        <circle cx="1180" cy="406" r="3.7" /><circle cx="1214" cy="435" r="2.2" /><circle cx="1247" cy="392" r="3" />
-        <circle cx="420" cy="805" r="2.6" /><circle cx="466" cy="781" r="3.4" /><circle cx="505" cy="831" r="2" />
+      {/* navigation warmth, intentionally local rather than moral coding */}
+      <g filter="url(#soft)" opacity=".11">
+        <ellipse cx="684" cy="713" rx="155" ry="92" fill="#d0ca90" />
+        <ellipse cx="1315" cy="606" rx="130" ry="78" fill="#c1c789" />
       </g>
 
-      <g filter="url(#mistBlur)" fill="#9eb8a8" opacity="0.09">
-        <ellipse cx="458" cy="497" rx="260" ry="82" />
-        <ellipse cx="1129" cy="667" rx="310" ry="96" />
-        <ellipse cx="872" cy="298" rx="235" ry="62" />
+      {/* tiny forest life */}
+      <g fill="#c0c98b" opacity=".32">
+        <circle cx="427" cy="610" r="3" /><circle cx="463" cy="583" r="2" /><circle cx="496" cy="624" r="2.8" />
+        <circle cx="976" cy="675" r="2.4" /><circle cx="1013" cy="650" r="3" /><circle cx="1042" cy="695" r="2" />
+        <circle cx="1513" cy="564" r="2.6" /><circle cx="1547" cy="532" r="2.1" /><circle cx="1581" cy="579" r="3" />
       </g>
     </svg>
   );
@@ -100,23 +103,38 @@ function ForestBackdrop() {
 
 function ForestForeground() {
   return (
-    <svg className={styles.foreground} viewBox="0 0 1600 1000" preserveAspectRatio="none" aria-hidden>
-      <g fill="#07150f" opacity="0.92">
-        <path d="M0 760 C103 697 174 710 242 772 C177 810 126 866 91 1000 L0 1000 Z" />
-        <path d="M1600 699 C1493 675 1438 718 1388 789 C1443 834 1492 902 1514 1000 L1600 1000 Z" />
+    <svg className={styles.foreground} viewBox="0 0 1920 1152" preserveAspectRatio="none" aria-hidden>
+      {/* close trunks create occlusion and depth around the walkable middle */}
+      <g fill="url(#trunk)" opacity=".96">
+        <path d="M-25 250 C23 220 77 233 111 278 L144 1152 L-30 1152 Z" />
+        <path d="M1783 187 C1838 160 1894 178 1935 228 L1952 1152 L1791 1152 Z" />
       </g>
-      <g fill="none" stroke="#0a1d15" strokeLinecap="round">
-        <path d="M-12 1004 C102 901 121 832 131 724 C161 803 201 854 276 907" strokeWidth="24" />
-        <path d="M1608 1008 C1515 918 1482 824 1490 735 C1451 810 1412 864 1342 912" strokeWidth="26" />
+      <g fill="#102219" opacity=".92">
+        <ellipse cx="65" cy="306" rx="176" ry="104" transform="rotate(-17 65 306)" />
+        <ellipse cx="125" cy="432" rx="156" ry="91" transform="rotate(13 125 432)" />
+        <ellipse cx="1844" cy="301" rx="188" ry="107" transform="rotate(20 1844 301)" />
+        <ellipse cx="1801" cy="443" rx="166" ry="94" transform="rotate(-16 1801 443)" />
       </g>
-      <g fill="#183225" opacity="0.96">
-        <ellipse cx="109" cy="830" rx="74" ry="32" transform="rotate(-28 109 830)" />
-        <ellipse cx="172" cy="884" rx="85" ry="34" transform="rotate(16 172 884)" />
-        <ellipse cx="1487" cy="823" rx="82" ry="33" transform="rotate(24 1487 823)" />
-        <ellipse cx="1418" cy="891" rx="92" ry="38" transform="rotate(-18 1418 891)" />
+
+      {/* low foliage frames the bottom without hiding the player */}
+      <path d="M0 1152 L0 1017 C165 974 294 1004 418 1152 Z" fill="#0b1c14" opacity=".9" />
+      <path d="M1920 1152 L1920 1000 C1760 981 1637 1034 1523 1152 Z" fill="#091a13" opacity=".92" />
+      <g fill="#193326" opacity=".9">
+        <ellipse cx="176" cy="1034" rx="107" ry="40" transform="rotate(-13 176 1034)" />
+        <ellipse cx="302" cy="1093" rx="124" ry="44" transform="rotate(9 302 1093)" />
+        <ellipse cx="1729" cy="1042" rx="117" ry="43" transform="rotate(17 1729 1042)" />
+        <ellipse cx="1608" cy="1094" rx="133" ry="47" transform="rotate(-10 1608 1094)" />
       </g>
-      <path d="M0 1000 L0 928 C194 904 308 944 403 1000 Z" fill="#091811" opacity="0.85" />
-      <path d="M1600 1000 L1600 912 C1452 909 1337 947 1245 1000 Z" fill="#081710" opacity="0.88" />
+
+      {/* hanging branches above camera edges */}
+      <g fill="none" stroke="#0b1a13" strokeLinecap="round">
+        <path d="M0 87 C170 123 254 180 336 258" strokeWidth="29" />
+        <path d="M1920 69 C1778 111 1679 172 1587 254" strokeWidth="31" />
+      </g>
+      <g fill="#142a20">
+        <ellipse cx="244" cy="192" rx="84" ry="31" transform="rotate(27 244 192)" />
+        <ellipse cx="1644" cy="185" rx="90" ry="33" transform="rotate(-24 1644 185)" />
+      </g>
     </svg>
   );
 }
@@ -129,21 +147,23 @@ export function PlanetArtDirection({ opinionId }: { opinionId: string }) {
   useEffect(() => {
     if (scene?.biome !== "forest" || typeof document === "undefined") return;
     let raf = 0;
+    let active: HTMLElement | null = null;
     const findWorld = () => {
       const candidate = document.querySelector<HTMLElement>('[data-el="world-runtime"] [data-world-theme]');
       if (!candidate) {
         raf = window.requestAnimationFrame(findWorld);
         return;
       }
+      active = candidate;
       candidate.classList.add(styles.forestWorld);
       setWorldEl(candidate);
     };
     raf = window.requestAnimationFrame(findWorld);
     return () => {
       window.cancelAnimationFrame(raf);
-      worldEl?.classList.remove(styles.forestWorld);
+      active?.classList.remove(styles.forestWorld);
     };
-  }, [scene?.biome, worldEl]);
+  }, [scene?.biome]);
 
   if (!worldEl || scene?.biome !== "forest") return null;
 
