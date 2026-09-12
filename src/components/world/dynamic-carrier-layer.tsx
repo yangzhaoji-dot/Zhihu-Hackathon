@@ -13,6 +13,12 @@ export interface DynamicCarrierSite {
   fragment: CognitionFragmentSpec;
 }
 
+type CarrierProgressDetail = {
+  fragmentId?: string;
+  mode?: string;
+  progress?: number;
+};
+
 export function DynamicCarrierLayer({
   worldElRef,
   sites,
@@ -34,6 +40,37 @@ export function DynamicCarrierLayer({
     setWorldEl(worldElRef.current);
   }, [worldElRef, sites.length]);
 
+  useEffect(() => {
+    const scene = worldElRef.current;
+    if (!scene || typeof window === "undefined") return;
+
+    const clear = () => {
+      scene.removeAttribute("data-carrier-active");
+      scene.removeAttribute("data-carrier-mode");
+      scene.removeAttribute("data-carrier-fragment");
+      scene.style.removeProperty("--carrier-live-progress");
+      scene.style.removeProperty("--carrier-live-glow");
+    };
+
+    const onProgress = (event: Event) => {
+      const detail = (event as CustomEvent<CarrierProgressDetail>).detail ?? {};
+      const progress = Math.max(0, Math.min(1, detail.progress ?? 0));
+      scene.setAttribute("data-carrier-active", "true");
+      if (detail.mode) scene.setAttribute("data-carrier-mode", detail.mode);
+      if (detail.fragmentId) scene.setAttribute("data-carrier-fragment", detail.fragmentId);
+      scene.style.setProperty("--carrier-live-progress", String(progress));
+      scene.style.setProperty("--carrier-live-glow", `${6 + progress * 16}px`);
+    };
+
+    window.addEventListener("carrier:progress", onProgress);
+    window.addEventListener("carrier:close", clear);
+    return () => {
+      window.removeEventListener("carrier:progress", onProgress);
+      window.removeEventListener("carrier:close", clear);
+      clear();
+    };
+  }, [worldElRef]);
+
   if (!worldEl || sites.length === 0) return null;
 
   return createPortal(
@@ -47,6 +84,7 @@ export function DynamicCarrierLayer({
             className={styles.carrier}
             data-role={site.fragment.role}
             data-mode={site.fragment.mode}
+            data-fragment-id={site.fragment.id}
             data-collected={collected ? "true" : "false"}
             style={{
               left: site.pos.x * TILE_SIZE,
