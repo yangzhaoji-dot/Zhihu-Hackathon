@@ -50,6 +50,9 @@ const ENVIRONMENT_OBJECTS: Record<string, EnvironmentObjectKind> = {
 function environmentObjectKind(config: WorldConfig, npc: WorldNpcView): EnvironmentObjectKind | null {
   if (config.tileset !== "diorama-v1") return null;
   if (!npc.role.startsWith("看山 ·")) return null;
+  if (npc.id.startsWith("fragment_claim_")) return "threshold-gate";
+  if (npc.id.startsWith("fragment_reason_")) return "workbench";
+  if (npc.id.startsWith("fragment_evidence_")) return "archive-cabinet";
   return ENVIRONMENT_OBJECTS[npc.id] ?? null;
 }
 
