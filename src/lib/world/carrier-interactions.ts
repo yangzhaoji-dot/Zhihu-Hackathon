@@ -11,12 +11,24 @@ export type CarrierActionKind =
   | "open-source"
   | "choose";
 
+export interface CarrierChoice {
+  id: string;
+  label: { "zh-CN": string; "en-US": string };
+  feedback?: { "zh-CN": string; "en-US": string };
+  grounded?: boolean;
+}
+
 export interface CarrierInteractionStep {
   id: string;
   action: CarrierActionKind;
   prompt: { "zh-CN": string; "en-US": string };
   reveal?: string;
   sourceId?: string;
+  sourceExcerpt?: string;
+  sourceUrl?: string;
+  sourceUpvotes?: number;
+  choiceMode?: "grounded" | "interpretive";
+  choices?: CarrierChoice[];
 }
 
 export interface CarrierInteractionDefinition {
@@ -29,6 +41,69 @@ export interface CarrierInteractionDefinition {
 
 function valueOrGap(value: string | undefined, zhGap: string, enGap: string) {
   return value?.trim() || `${zhGap} / ${enGap}`;
+}
+
+function sourceReadingSteps(source: OpinionSource, index: number): CarrierInteractionStep[] {
+  return [
+    {
+      id: `source-${index}`,
+      action: "open-source",
+      sourceId: source.id,
+      sourceExcerpt: source.excerpt,
+      sourceUrl: source.url,
+      sourceUpvotes: source.upvotes,
+      prompt: {
+        "zh-CN": `打开第 ${index + 1} 份知乎原文片段，先完整读一遍。`,
+        "en-US": `Open Zhihu source excerpt ${index + 1} and read it once before judging it.`,
+      },
+      reveal: source.excerpt,
+    },
+    {
+      id: `source-grounding-${index}`,
+      action: "choose",
+      choiceMode: "grounded",
+      prompt: {
+        "zh-CN": "只根据刚才那段原文，下面哪种说法最谨慎？",
+        "en-US": "Based only on that excerpt, which statement is the most careful?",
+      },
+      choices: [
+        {
+          id: "traceable-support",
+          grounded: true,
+          label: {
+            "zh-CN": "它是支持当前观点的一份可追溯材料",
+            "en-US": "It is a traceable piece of material supporting the current opinion",
+          },
+          feedback: {
+            "zh-CN": "对。先确认它确实存在、确实可追溯，再讨论它能支持多远。",
+            "en-US": "Yes. First establish that the material exists and is traceable; scope comes later.",
+          },
+        },
+        {
+          id: "universal-proof",
+          label: {
+            "zh-CN": "它已经证明这个观点对所有人都成立",
+            "en-US": "It already proves the opinion applies to everyone",
+          },
+          feedback: {
+            "zh-CN": "这一步跨得太远。单个原文片段可以提供支撑，但不能自动变成普遍证明。",
+            "en-US": "That goes too far. A source excerpt can support a claim without proving universal validity.",
+          },
+        },
+        {
+          id: "ai-generated",
+          label: {
+            "zh-CN": "它只是 AI 为这个星球生成的解释",
+            "en-US": "It is only an AI-generated explanation for this planet",
+          },
+          feedback: {
+            "zh-CN": "不是。这一段来自绑定到该观点的知乎来源；系统总结和 AI 推演必须与原文分开。",
+            "en-US": "No. This excerpt comes from the Zhihu source bound to the opinion; summaries and AI inference are separate.",
+          },
+        },
+      ],
+    },
+  ];
 }
 
 /**
@@ -82,14 +157,38 @@ export function buildCarrierInteraction(
         fragmentId: fragment.id,
         carrier: fragment.carrier,
         mode: fragment.mode,
-        steps: boundSources.length ? boundSources.slice(0, 2).map((source, index) => ({
-          id: `source-${index}`,
-          action: "open-source" as const,
-          sourceId: source.id,
-          prompt: { "zh-CN": `打开第 ${index + 1} 份原文痕迹。`, "en-US": `Open source trace ${index + 1}.` },
-          reveal: source.excerpt,
-        })) : [{ id: "missing-source", action: "inspect", prompt: { "zh-CN": "检查这个空档案位：没有原文可以继续追。", "en-US": "Inspect the empty archive slot: no original source can be traced." } }],
-        completionLine: { "zh-CN": "可追溯到哪里，依据就只恢复到哪里。", "en-US": "Evidence is recovered only as far as the trace actually goes." },
+        steps: boundSources.length
+          ? [
+              ...boundSources.slice(0, 2).flatMap(sourceReadingSteps),
+              {
+                id: "source-interpretation",
+                action: "choose" as const,
+                choiceMode: "interpretive" as const,
+                prompt: {
+                  "zh-CN": "读完这些原文后，你暂时会把它们放在什么位置？",
+                  "en-US": "After reading the sources, how would you provisionally place them?",
+                },
+                choices: [
+                  {
+                    id: "support",
+                    label: { "zh-CN": "它们为当前观点提供了明显支撑", "en-US": "They provide meaningful support for the opinion" },
+                    feedback: { "zh-CN": "这是你的当前判断。继续保留条件与反例的位置。", "en-US": "That is your current reading. Keep conditions and counterexamples open." },
+                  },
+                  {
+                    id: "partial",
+                    label: { "zh-CN": "它们提供了一部分支撑，但还不足以外推", "en-US": "They provide partial support, but not enough to generalize" },
+                    feedback: { "zh-CN": "这是一个较保守的阅读方式：承认材料，同时保留适用边界。", "en-US": "This is a conservative reading: recognize the material while preserving scope limits." },
+                  },
+                  {
+                    id: "uncertain",
+                    label: { "zh-CN": "我还无法判断，需要更多材料", "en-US": "I still cannot tell; I need more material" },
+                    feedback: { "zh-CN": "可以。未知本身也可以被保留下来。", "en-US": "That is valid. Uncertainty can remain unresolved." },
+                  },
+                ],
+              },
+            ]
+          : [{ id: "missing-source", action: "inspect", prompt: { "zh-CN": "检查这个空档案位：没有原文可以继续追。", "en-US": "Inspect the empty archive slot: no original source can be traced." } }],
+        completionLine: { "zh-CN": "你先读到了原文，再决定它能支持到哪里；可追溯到哪里，依据就只恢复到哪里。", "en-US": "You read the source before judging its reach; evidence is recovered only as far as the trace goes." },
       };
 
     case "compare":
