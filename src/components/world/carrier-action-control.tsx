@@ -25,19 +25,9 @@ export function CarrierActionControl({
   const holdTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [holding, setHolding] = useState(false);
 
-  useEffect(() => {
-    setCount(0);
-    setToggle("neutral");
-    setAligned(0);
-    setBeacon(0);
-    setRestored(0);
-    setChoice(null);
-    setHolding(false);
+  useEffect(() => () => {
     if (holdTimer.current) clearTimeout(holdTimer.current);
-    return () => {
-      if (holdTimer.current) clearTimeout(holdTimer.current);
-    };
-  }, [step.id]);
+  }, []);
 
   if (action === "inspect") {
     const spots = ["A", "B", "C"];
