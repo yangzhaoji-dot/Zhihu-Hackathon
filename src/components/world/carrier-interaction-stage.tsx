@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { CarrierActionControl } from "./carrier-action-control";
+import { CarrierActionControl } from "./carrier-action-control-simple";
 import type { CarrierInteractionDefinition } from "@/lib/world/carrier-interactions";
 import styles from "./carrier-interaction-stage.module.css";
 
@@ -122,7 +122,7 @@ export function CarrierInteractionStage({
 
         {!completed && current ? (
           <div className={styles.step}>
-            <small>{current.action === "open-source" ? (zh ? "原文阅读" : "SOURCE READING") : (zh ? "当前观察" : "CURRENT CUE")}</small>
+            <small>{current.action === "open-source" ? (zh ? "原文阅读" : "SOURCE READING") : (zh ? "当前理解" : "CURRENT READING")}</small>
             <p>{current.prompt[locale]}</p>
             <CarrierActionControl
               key={current.id}
@@ -139,7 +139,7 @@ export function CarrierInteractionStage({
             <button type="button" disabled={distilling} onClick={distill}>
               {distilling
                 ? (zh ? "认知正在析出…" : "Distilling cognition…")
-                : (zh ? "让认知从载体中析出" : "Distill cognition from this carrier")}
+                : (zh ? "收下这枚认知碎片" : "Keep this cognition shard")}
             </button>
           </div>
         )}
@@ -151,8 +151,8 @@ export function CarrierInteractionStage({
         )}
 
         <footer className={styles.footer}>
-          <button type="button" disabled={distilling} onClick={() => { tactile(5); onCancel(); }}>{zh ? "先离开这个载体" : "Leave this carrier for now"}</button>
-          <span>{zh ? "交互完成之前，不会生成认知碎片" : "No cognition shard exists until the carrier interaction is complete"}</span>
+          <button type="button" disabled={distilling} onClick={() => { tactile(5); onCancel(); }}>{zh ? "先离开这里" : "Leave for now"}</button>
+          <span>{zh ? "读完并做一次判断后，认知才会形成碎片" : "A shard forms after reading and one judgement"}</span>
         </footer>
       </section>
     </div>
