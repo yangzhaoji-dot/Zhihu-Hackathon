@@ -23,6 +23,7 @@ export function KanshanCarrierOverlay({
   const [index, setIndex] = useState(0);
   const [choiceId, setChoiceId] = useState<string | null>(null);
   const [reaction, setReaction] = useState<string | null>(null);
+  const [transitioning, setTransitioning] = useState(false);
   const prompt = prompts[Math.min(index, prompts.length - 1)];
   const zh = locale !== "en-US";
   if (!prompt) return null;
@@ -39,8 +40,21 @@ export function KanshanCarrierOverlay({
     }, choice?.response ? 820 : 220);
   };
 
+  const investigate = () => {
+    if (transitioning) return;
+    setTransitioning(true);
+    window.dispatchEvent(new CustomEvent("carrier:focus", { detail: { carrier } }));
+    window.setTimeout(onInvestigate, 320);
+  };
+
   return (
-    <div className={styles.overlay} role="dialog" aria-label={zh ? "刘看山引导" : "Liu Kanshan guide"}>
+    <div
+      className={styles.overlay}
+      data-transitioning={transitioning ? "true" : "false"}
+      role="dialog"
+      aria-label={zh ? "刘看山引导" : "Liu Kanshan guide"}
+    >
+      <div className={styles.focusWash} aria-hidden />
       <section className={styles.box}>
         <GuideAvatar accent={accent} label={zh ? "刘看山" : "Liu Kanshan"} />
         <div className={styles.body}>
@@ -58,7 +72,7 @@ export function KanshanCarrierOverlay({
                   key={choice.id}
                   type="button"
                   data-selected={choiceId === choice.id ? "true" : "false"}
-                  disabled={choiceId !== null}
+                  disabled={choiceId !== null || transitioning}
                   onClick={() => choose(choice.id)}
                 >
                   {choice.label[locale]}
@@ -66,12 +80,14 @@ export function KanshanCarrierOverlay({
               ))}
             </div>
           ) : (
-            <button type="button" className={styles.investigate} onClick={onInvestigate}>
-              {zh ? "开始操作这个载体" : "Interact with this carrier"}
+            <button type="button" className={styles.investigate} disabled={transitioning} onClick={investigate}>
+              {transitioning
+                ? (zh ? "靠近载体…" : "Approaching carrier…")
+                : (zh ? "靠近并操作这个载体" : "Approach and interact with this carrier")}
             </button>
           )}
           <footer>
-            <button type="button" onClick={onCancel}>{zh ? "先离开" : "Leave for now"}</button>
+            <button type="button" disabled={transitioning} onClick={onCancel}>{zh ? "先离开" : "Leave for now"}</button>
             <span>{last ? (zh ? "看山不会替你判断结论" : "Kanshan will not judge the conclusion for you") : `${index + 1}/${prompts.length}`}</span>
           </footer>
         </div>
