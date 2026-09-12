@@ -5,6 +5,10 @@ import { GuideAvatar } from "@/components/opinion-world/guide-avatar";
 import type { KanshanPrompt } from "@/lib/world/kanshan-carrier-guide";
 import styles from "./kanshan-carrier-overlay.module.css";
 
+function tactile(pattern: number | number[] = 8) {
+  if (typeof navigator !== "undefined" && "vibrate" in navigator) navigator.vibrate(pattern);
+}
+
 export function KanshanCarrierOverlay({
   prompts,
   carrier,
@@ -31,6 +35,7 @@ export function KanshanCarrierOverlay({
 
   const choose = (id: string) => {
     const choice = prompt.choices?.find((item) => item.id === id);
+    tactile(8);
     setChoiceId(id);
     setReaction(choice?.response?.[locale] ?? null);
     window.setTimeout(() => {
@@ -42,9 +47,15 @@ export function KanshanCarrierOverlay({
 
   const investigate = () => {
     if (transitioning) return;
+    tactile([8, 22, 10]);
     setTransitioning(true);
     window.dispatchEvent(new CustomEvent("carrier:focus", { detail: { carrier } }));
     window.setTimeout(onInvestigate, 320);
+  };
+
+  const leave = () => {
+    tactile(6);
+    onCancel();
   };
 
   return (
@@ -87,7 +98,7 @@ export function KanshanCarrierOverlay({
             </button>
           )}
           <footer>
-            <button type="button" disabled={transitioning} onClick={onCancel}>{zh ? "先离开" : "Leave for now"}</button>
+            <button type="button" disabled={transitioning} onClick={leave}>{zh ? "先离开" : "Leave for now"}</button>
             <span>{last ? (zh ? "看山不会替你判断结论" : "Kanshan will not judge the conclusion for you") : `${index + 1}/${prompts.length}`}</span>
           </footer>
         </div>
