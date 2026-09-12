@@ -56,10 +56,10 @@ export function evolveGraphFromSynthesis(input: {
   if (action === "merge") {
     const updated: Opinion = {
       ...parent,
-      // `claim` keeps the pre-merge statement so the refinement remains inspectable.
       claim: parent.claim || parent.title,
       title: input.result.viewpoint,
       summary: input.result.summary,
+      support: input.result.scores.overall,
       sourceIds,
       reason: input.result.reason,
       conditions: unique([...(parent.conditions ?? []), ...input.result.additions]),
@@ -85,7 +85,7 @@ export function evolveGraphFromSynthesis(input: {
     kind: "human",
     nodeType: "opinion",
     derivedSource: "ai",
-    support: 0,
+    support: input.result.scores.overall,
     x: Math.max(0, Math.min(1, parent.x + 0.045)),
     y: Math.max(0, Math.min(1, parent.y + 0.035)),
     sourceIds: selectedSourceIds,
@@ -132,7 +132,7 @@ export function fuseGalaxyOpinions(input: {
     kind: "human",
     nodeType: "opinion",
     derivedSource: "ai",
-    support: 0,
+    support: Math.round(((a.support || 0) + (b.support || 0)) / 2),
     x: Math.max(0, Math.min(1, (a.x + b.x) / 2)),
     y: Math.max(0, Math.min(1, (a.y + b.y) / 2)),
     sourceIds: unique([...a.sourceIds, ...b.sourceIds]),
