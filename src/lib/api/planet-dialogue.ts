@@ -4,10 +4,12 @@ import { request } from "@/lib/api/request";
 import { getViewerId } from "@/lib/opinion/viewer-id";
 import type { DialogueLine, WorldDialogueReply } from "@/lib/opinion/types";
 
+export type PlanetDialogueTrigger = "inspect-claim" | "inspect-reason" | "inspect-evidence";
+
 export interface PlanetDialogueRequestInput {
   questionId: string;
   opinionId: string;
-  trigger: "inspect";
+  trigger: PlanetDialogueTrigger;
   locale: string;
   history: { speaker: string; text: string }[];
   worldState?: Record<string, unknown>;
