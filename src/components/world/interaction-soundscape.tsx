@@ -9,6 +9,10 @@ const PATTERNS: Record<string, Tone[]> = {
     { frequency: 420, duration: .07, gain: .022 },
     { frequency: 560, duration: .1, delay: .06, gain: .018 },
   ],
+  "sfx.route.calling": [
+    { frequency: 246, duration: .11, gain: .011 },
+    { frequency: 369, duration: .15, delay: .08, gain: .009 },
+  ],
   "sfx.fragment.found": [
     { frequency: 520, duration: .08, gain: .026 },
     { frequency: 690, duration: .1, delay: .07, gain: .026 },
@@ -61,10 +65,10 @@ function createTone(context: AudioContext, tone: Tone) {
 }
 
 /**
- * Executes the existing `sfx.*` custom events with tiny synthesized tones.
+ * Executes the interaction event language with tiny synthesized tones.
  * No external audio files, no autoplay: audio is unlocked only after a real
- * pointer/keyboard interaction. This keeps interaction feedback consistent
- * across universe and planet surfaces without adding asset/network cost.
+ * pointer/keyboard interaction. Route-calling is intentionally quieter than
+ * shard/resonance feedback so it behaves like an environmental signal.
  */
 export function InteractionSoundscape() {
   const contextRef = useRef<AudioContext | null>(null);
@@ -82,24 +86,31 @@ export function InteractionSoundscape() {
       }
     };
 
-    const onSfx = (event: Event) => {
+    const play = (name: string) => {
       if (!unlockedRef.current) return;
       const context = contextRef.current;
       if (!context) return;
-      const name = String((event as CustomEvent<unknown>).detail ?? "");
       const tones = PATTERNS[name];
       if (!tones) return;
       if (context.state === "suspended") void context.resume();
       for (const tone of tones) createTone(context, tone);
     };
 
+    const onSfx = (event: Event) => {
+      play(String((event as CustomEvent<unknown>).detail ?? ""));
+    };
+
+    const onCalling = () => play("sfx.route.calling");
+
     window.addEventListener("pointerdown", unlock, { once: true });
     window.addEventListener("keydown", unlock, { once: true });
     window.addEventListener("sfx", onSfx);
+    window.addEventListener("carrier:calling", onCalling);
     return () => {
       window.removeEventListener("pointerdown", unlock);
       window.removeEventListener("keydown", unlock);
       window.removeEventListener("sfx", onSfx);
+      window.removeEventListener("carrier:calling", onCalling);
       void contextRef.current?.close();
       contextRef.current = null;
     };
