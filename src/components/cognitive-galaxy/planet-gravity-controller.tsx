@@ -15,6 +15,9 @@ type DragState = {
   originX: number;
   originY: number;
   originalTransform: string;
+  centerOffsetX: number;
+  centerOffsetY: number;
+  sourceWidth: number;
   moved: boolean;
   target: Entry | null;
   ready: boolean;
@@ -81,11 +84,17 @@ export function PlanetGravityController({ nodes, enabled, onPair }: {
       if (!point) return;
       const originalTransform=source.parent.getAttribute("transform") ?? "";
       const origin=parseTranslate(originalTransform);
+      const sourceRect=source.el.getBoundingClientRect();
+      const sourceCenterX=sourceRect.left+sourceRect.width/2;
+      const sourceCenterY=sourceRect.top+sourceRect.height/2;
       drag.current={
         entry:source,pointerId:event.pointerId,
         startClientX:event.clientX,startClientY:event.clientY,
         startSvgX:point.x,startSvgY:point.y,
         originX:origin.x,originY:origin.y,originalTransform,
+        centerOffsetX:sourceCenterX-event.clientX,
+        centerOffsetY:sourceCenterY-event.clientY,
+        sourceWidth:sourceRect.width,
         moved:false,target:null,ready:false,
       };
       source.el.dataset.gravityDragging="true";
@@ -104,27 +113,33 @@ export function PlanetGravityController({ nodes, enabled, onPair }: {
       const x=current.originX+(point.x-current.startSvgX),y=current.originY+(point.y-current.startSvgY);
       current.entry.parent.setAttribute("transform",`translate(${x} ${y})`);
 
-      const sourceRect=current.entry.el.getBoundingClientRect();
-      const sx=sourceRect.left+sourceRect.width/2,sy=sourceRect.top+sourceRect.height/2;
-      let nearest:Entry | null=null,nearestDistance=Infinity,ready=false;
+      // Collision geometry is calculated in screen space from the carried
+      // planet centre implied by the pointer. This is stable even while SVG
+      // transforms / Framer Motion are updating in the same frame.
+      const sx=event.clientX+current.centerOffsetX;
+      const sy=event.clientY+current.centerOffsetY;
+      let nearest:Entry | null=null,nearestDistance=Infinity,nearestWidth=0;
       for (const candidate of entries) {
         if (candidate.id===current.entry.id) continue;
         const rect=candidate.el.getBoundingClientRect();
         const cx=rect.left+rect.width/2,cy=rect.top+rect.height/2;
         const distance=Math.hypot(sx-cx,sy-cy);
-        if (distance<nearestDistance) { nearest=candidate; nearestDistance=distance; }
+        if (distance<nearestDistance) {
+          nearest=candidate;
+          nearestDistance=distance;
+          nearestWidth=rect.width;
+        }
       }
-      const targetRect=nearest?.el.getBoundingClientRect();
-      const gravityLimit=targetRect ? Math.max(86,(sourceRect.width+targetRect.width)*1.15) : 0;
+      const gravityLimit=nearest ? Math.max(90,(current.sourceWidth+nearestWidth)*1.2) : 0;
       if (!nearest || nearestDistance>gravityLimit) nearest=null;
-      if (nearest) {
-        const rect=nearest.el.getBoundingClientRect();
-        ready=nearestDistance <= Math.max(34,(sourceRect.width+rect.width)*.48);
-      }
+      const ready=Boolean(nearest && nearestDistance<=Math.max(38,(current.sourceWidth+nearestWidth)*.55));
       if (current.target?.id!==nearest?.id) clearTargets();
       current.entry.el.dataset.gravityDragging="true";
       if (nearest) nearest.el.dataset.gravityTarget=ready ? "collision" : "near";
-      current.target=nearest; current.ready=ready;
+      current.target=nearest;
+      current.ready=ready;
+      root.dataset.gravityTarget=nearest?.id ?? "";
+      root.dataset.gravityCollision=ready ? "true" : "false";
       setHint({source:current.entry.title,target:nearest?.title ?? null,ready});
     };
 
@@ -139,7 +154,10 @@ export function PlanetGravityController({ nodes, enabled, onPair }: {
       }
       const pair=!cancelled && current.moved && current.ready && current.target
         ? [current.entry.id,current.target.id] as const : null;
-      drag.current=null; setHint(null);
+      drag.current=null;
+      delete root.dataset.gravityTarget;
+      delete root.dataset.gravityCollision;
+      setHint(null);
       if (pair) onPair(pair[0],pair[1]);
     };
 
@@ -156,6 +174,8 @@ export function PlanetGravityController({ nodes, enabled, onPair }: {
       if (current) current.entry.parent.setAttribute("transform",current.originalTransform);
       drag.current=null; clearTargets();
       delete root.dataset.gravityReady;
+      delete root.dataset.gravityTarget;
+      delete root.dataset.gravityCollision;
       for (const entry of entries) entry.el.removeEventListener("pointerdown",onDown);
       window.removeEventListener("pointermove",move,{capture:true});
       window.removeEventListener("pointerup",up,{capture:true});
