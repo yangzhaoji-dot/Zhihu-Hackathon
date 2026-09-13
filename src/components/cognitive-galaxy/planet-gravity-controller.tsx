@@ -50,7 +50,7 @@ export function PlanetGravityController({ nodes, enabled, onPair }: {
   const nodeKey = nodes.map((node) => `${node.opinion.id}:${node.opinion.title}`).join("|");
 
   useEffect(() => {
-    if (!enabled) { setHint(null); return; }
+    if (!enabled) return;
     const root = document.querySelector<HTMLElement>('[data-el="galaxy-exploration"]');
     if (!root) return;
     const byTitle = new Map(nodes.map((node) => [node.opinion.title,node.opinion.id]));
@@ -161,7 +161,7 @@ export function PlanetGravityController({ nodes, enabled, onPair }: {
     };
   }, [enabled,nodeKey,nodes,onPair]);
 
-  if (!enabled || !hint) return null;
+  if (!enabled || !hint || !drag.current) return null;
   return <div className={styles.hint} data-ready={hint.ready ? "true" : "false"} aria-live="polite">
     <span>{hint.ready ? "COLLISION" : "GRAVITY"}</span>
     <strong>{hint.target ? (hint.ready ? "松手，让两个观点发生碰撞" : "检测到认知引力，继续靠近") : "拖向另一颗观点星球"}</strong>
