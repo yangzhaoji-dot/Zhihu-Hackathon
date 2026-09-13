@@ -2,9 +2,9 @@ name: Cognitive universe check
 
 on:
   push:
-    branches: [cognitive-universe-v1]
+    branches: [cognitive-universe-v1, cognitive-orbit-v1]
   pull_request:
-    branches: [cognitive-planet-v1]
+    branches: [cognitive-planet-v1, cognitive-universe-v1]
 
 permissions:
   contents: read
