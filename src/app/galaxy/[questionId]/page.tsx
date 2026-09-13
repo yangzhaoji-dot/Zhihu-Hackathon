@@ -8,7 +8,6 @@ import { ArrowLeft, ChevronRight, GitMerge, RotateCcw } from "lucide-react";
 import { AnimatePresence } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { CollisionPanel } from "@/components/cognitive-galaxy/collision-panel";
-import { PlanetGravityController } from "@/components/cognitive-galaxy/planet-gravity-controller";
 import { PlanetRelationOverlay } from "@/components/cognitive-galaxy/planet-relation-overlay";
 import { SpaceShell } from "@/components/cognitive-galaxy/space-shell";
 import { GalaxyStage } from "@/components/cognitive-galaxy/galaxy-stage";
@@ -127,10 +126,9 @@ export default function GalaxyPage() {
       </div>
     </div>
     <div style={{position:"relative"}}>
-      {galaxy.count ? <GalaxyStage galaxy={galaxy} cluster={cluster} selected={selected} onCluster={(id) => navigate(id)} onOpinion={(id) => navigate(cluster?.id,id)}/> : <div className={styles.status}><p>{t("emptyGalaxy")}</p><Link href="/">{t("home")}</Link></div>}
+      {galaxy.count ? <GalaxyStage galaxy={galaxy} cluster={cluster} selected={selected} onCluster={(id) => navigate(id)} onOpinion={(id) => navigate(cluster?.id,id)} onPlanetPair={startPhysicalCollision}/> : <div className={styles.status}><p>{t("emptyGalaxy")}</p><Link href="/">{t("home")}</Link></div>}
       {cluster && !selected && <PlanetRelationOverlay graph={galaxy.graph} nodes={cluster.nodes} enabled clusterId={cluster.id}/>} 
     </div>
-    <PlanetGravityController nodes={cluster?.nodes ?? []} enabled={Boolean(cluster && !selected && collisionIds.length===0)} onPair={startPhysicalCollision}/>
     <AnimatePresence mode="wait">{selected && <PlanetFocus key={selected.opinion.id} node={selected} galaxy={galaxy} onClose={() => navigate(cluster?.id)}/>}</AnimatePresence>
     {!cluster && <div className={styles.directionStrip} aria-label={t("directions",{ count:galaxy.clusters.length })}>{galaxy.clusters.map((group) => <button type="button" className={styles.direction} key={group.id} style={{ "--cluster-color":`var(--cg-${group.id})` } as CSSProperties} onClick={() => navigate(group.id)} data-el="cluster-shortcut"><strong><i/>{t(`dimensions.${group.id}.title`)} <ChevronRight size={12}/></strong><small>{t(`dimensions.${group.id}.description`)}</small></button>)}</div>}
     {cluster && !selected && <section className={styles.opinions} style={{ "--cluster-color":`var(--cg-${cluster.id})` } as CSSProperties}>
