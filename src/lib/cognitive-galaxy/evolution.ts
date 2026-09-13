@@ -110,6 +110,41 @@ export function evolveGraphFromSynthesis(input: {
   };
 }
 
+/**
+ * Keep two existing planets independent while making their cognitive relation
+ * explicit. A bridge is a graph mutation, not a new opinion. Reconnecting the
+ * same unordered pair replaces the previous bridge so the map never accumulates
+ * contradictory duplicate edges for the same two planets.
+ */
+export function connectGalaxyOpinions(input: {
+  graph: OpinionGraph;
+  from: string;
+  to: string;
+  type: RelationType;
+  rationale?: string;
+}): OpinionGraph {
+  if (input.from === input.to) throw new Error("same_parent");
+  const from = input.graph.opinions.find((opinion) => opinion.id === input.from);
+  const to = input.graph.opinions.find((opinion) => opinion.id === input.to);
+  if (!from || !to) throw new Error("parent_not_found");
+  const relation = {
+    from: from.id,
+    to: to.id,
+    type: input.type,
+    rationale: input.rationale?.trim().slice(0, 280) || undefined,
+  };
+  return {
+    ...input.graph,
+    relations: [
+      ...input.graph.relations.filter((item) => !(
+        (item.from === from.id && item.to === to.id) ||
+        (item.from === to.id && item.to === from.id)
+      )),
+      relation,
+    ],
+  };
+}
+
 export function fuseGalaxyOpinions(input: {
   graph: OpinionGraph;
   parentA: string;
