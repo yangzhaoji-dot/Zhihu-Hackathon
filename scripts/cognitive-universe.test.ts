@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { evolveGraphFromSynthesis, fuseGalaxyOpinions } from "@/lib/cognitive-galaxy/evolution";
+import { connectGalaxyOpinions, evolveGraphFromSynthesis, fuseGalaxyOpinions } from "@/lib/cognitive-galaxy/evolution";
 import type { OpinionGraph } from "@/lib/opinion/types";
 import type { PlanetSynthesisResult } from "@/lib/planet-synthesis/model";
 
@@ -63,6 +63,15 @@ describe("cognitive universe evolution", () => {
     expect(child.derivedFrom).toEqual(["a"]);
     expect(child.sourceIds).toEqual(["s1"]);
     expect(mutation.graph.relations).toContainEqual(expect.objectContaining({from:"a",to:"user_test",type:"cond"}));
+  });
+
+  test("semantic bridge keeps both planets and replaces duplicate pair relation", () => {
+    const connected = connectGalaxyOpinions({graph,from:"a",to:"b",type:"cond",rationale:"A 是 B 的一个成立条件"});
+    expect(connected.opinions).toHaveLength(2);
+    expect(connected.relations).toEqual([expect.objectContaining({from:"a",to:"b",type:"cond"})]);
+    const updated = connectGalaxyOpinions({graph:connected,from:"b",to:"a",type:"oppose",rationale:"用户重新判断为对立"});
+    expect(updated.relations).toHaveLength(1);
+    expect(updated.relations[0]).toEqual(expect.objectContaining({from:"b",to:"a",type:"oppose"}));
   });
 
   test("fusion creates a third planet with both parents and source sets", () => {
