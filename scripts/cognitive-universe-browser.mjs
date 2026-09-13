@@ -35,6 +35,13 @@ async function collectTwoExcerpts() {
   await page.locator('[data-el="keep-excerpt"]').click();
 }
 
+const collisionPayload={ok:true,analysis:{
+  consensus:"都承认选择存在真实成本。",coreDisagreement:"两者对哪一种成本更优先有不同判断。",
+  conditions:{a:"身心损耗明显",b:"经济压力可控"},
+  evidence:{a:"经验材料",b:"风险材料",verdict:"两类材料互补，暂不能互相替代。"},
+  missing:["长期结果"],candidate:{title:"把退出成本与持续损耗一起比较",summary:"不要只看离开的成本，也比较继续留下的成本。"},source:"ai"
+}};
+
 try {
   await page.goto("http://localhost:3000/galaxy/demo-luoci?cluster=health&opinion=demo-health-0",{waitUntil:"domcontentloaded"});
   await page.locator('[data-el="planet-focus"]').waitFor();
@@ -78,23 +85,42 @@ try {
   assert.ok(await page.locator('[data-el="planet-material"]').count() >= 1);
   await page.getByRole("button",{name:/返回主星系/}).click();
   await page.locator('[data-el="planet-focus"]').waitFor();
-
   await page.locator('[data-el="planet-focus"] button[aria-label]').first().click();
+
+  // Physical interaction: drag one visible planet into another. This should
+  // select the pair and automatically start collision analysis.
+  await page.route("**/api/opinion/collide",route=>route.fulfill({status:200,contentType:"application/json",body:JSON.stringify(collisionPayload)}));
+  const visiblePlanets=page.locator('[data-el="opinion-planet"][aria-hidden="false"]');
+  assert.ok(await visiblePlanets.count()>=2);
+  const sourceBox=await visiblePlanets.nth(0).boundingBox();
+  const targetBox=await visiblePlanets.nth(1).boundingBox();
+  assert.ok(sourceBox&&targetBox);
+  await page.mouse.move(sourceBox.x+sourceBox.width/2,sourceBox.y+sourceBox.height/2);
+  await page.mouse.down();
+  await page.mouse.move(targetBox.x+targetBox.width/2,targetBox.y+targetBox.height/2,{steps:12});
+  await page.mouse.up();
+  await page.locator('[data-el="collision-panel"]').waitFor();
+  await page.locator('[data-el="collision-analysis"]').waitFor();
+  await shot("04-gravity-collision.png");
+
+  // Keep both planets and persist a semantic bridge instead of creating a new node.
+  await page.getByRole("button",{name:"条件",exact:true}).click();
+  await page.locator('[data-el="connect-planets"]').click();
+  await page.getByRole("status").filter({hasText:"认知桥已建立"}).waitFor();
+  assert.ok(await page.getByText(/条关系/).count()>=2);
+  await shot("05-bridge.png");
+
+  // Button selection remains as the keyboard/mobile fallback, then Fusion
+  // materializes a third planet from a real AI collision result.
   await page.locator('[data-el="collision-select"]').nth(0).click();
   await page.locator('[data-el="collision-select"]').nth(1).click();
-  await page.route("**/api/opinion/collide",route=>route.fulfill({status:200,contentType:"application/json",body:JSON.stringify({ok:true,analysis:{
-    consensus:"都承认选择存在真实成本。",coreDisagreement:"两者对哪一种成本更优先有不同判断。",
-    conditions:{a:"身心损耗明显",b:"经济压力可控"},
-    evidence:{a:"经验材料",b:"风险材料",verdict:"两类材料互补，暂不能互相替代。"},
-    missing:["长期结果"],candidate:{title:"把退出成本与持续损耗一起比较",summary:"不要只看离开的成本，也比较继续留下的成本。"},source:"ai"
-  }})}));
   await page.getByRole("button",{name:/分析观点碰撞/}).click();
   await page.locator('[data-el="collision-analysis"]').waitFor();
-  await shot("04-collision.png");
   await page.locator('[data-el="fuse-planets"]').click();
   await page.waitForURL(url=>(url.searchParams.get("opinion")||"").startsWith("fusion_"));
   await page.locator('[data-el="planet-focus"]').waitFor();
   assert.match(await page.locator('[data-el="planet-focus"] h2').innerText(),/退出成本/);
+  await shot("06-fusion.png");
   await page.unroute("**/api/opinion/collide");
 
   await page.locator('[data-el="reset-galaxy"]').click();
@@ -121,7 +147,7 @@ try {
   await page.locator('[data-el="planet-focus"]').waitFor();
   assert.match(await page.locator('[data-el="planet-focus"] h2').innerText(),/适用边界/);
   assert.equal(await page.locator('[data-el="opinion-planet"]').count(),48);
-  await shot("05-merge-result.png");
+  await shot("07-merge-result.png");
   await page.unroute("**/api/opinion/synthesize");
 
   await page.locator('[data-el="reset-galaxy"]').click();
@@ -132,10 +158,10 @@ try {
   await page.goto("http://localhost:3000/world/o_stoploss",{waitUntil:"domcontentloaded"});
   await page.locator('[data-el="planet-synthesis-mvp"]').waitFor();
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
-  await shot("06-mobile-planet.png");
+  await shot("08-mobile-planet.png");
   assert.deepEqual(errors,[]);
 
-  await fs.writeFile(path.join(out,"result.json"),JSON.stringify({ok:true,checks:["demo landing route","demo material labeling","grounded text selection","synthesis","fork persistence","generated planet re-entry","collision","fusion","merge","demo reset","mobile overflow"],pageErrors:errors},null,2));
+  await fs.writeFile(path.join(out,"result.json"),JSON.stringify({ok:true,checks:["demo landing route","demo material labeling","grounded text selection","synthesis","fork persistence","generated planet re-entry","gravity drag","auto collision","semantic bridge","button collision fallback","fusion","merge","demo reset","mobile overflow"],pageErrors:errors},null,2));
 } catch(error) {
   const detail={ok:false,url:page.url(),message:String(error),pageErrors:errors};
   console.error(JSON.stringify(detail));
