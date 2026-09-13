@@ -86,6 +86,7 @@ try {
   await page.getByRole("button",{name:/返回主星系/}).click();
   await page.locator('[data-el="planet-focus"]').waitFor();
   await page.locator('[data-el="planet-focus"] button[aria-label]').first().click();
+  await page.locator('[data-el="galaxy-exploration"][data-gravity-ready="true"]').waitFor();
 
   // Physical interaction: drag one visible planet into another. This should
   // select the pair and automatically start collision analysis.
