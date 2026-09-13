@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import type { CSSProperties } from "react";
 import type { GalaxyNode } from "@/lib/cognitive-galaxy/model";
 import type { OpinionGraph, RelationType } from "@/lib/opinion/types";
 import styles from "./planet-relations.module.css";
@@ -66,7 +67,7 @@ export function PlanetRelationOverlay({ graph,nodes,enabled,clusterId }: {
   },[enabled,graph.relations,ids,nodeKey,nodes,relationKey]);
 
   if(!enabled||!lines.length)return null;
-  return <svg className={styles.overlay} aria-hidden="true" style={{"--relation-color":`var(--cg-${clusterId})`} as React.CSSProperties}>
+  return <svg className={styles.overlay} aria-hidden="true" style={{"--relation-color":`var(--cg-${clusterId})`} as CSSProperties}>
     {lines.map((line)=>{
       const mx=(line.a.x+line.b.x)/2,my=(line.a.y+line.b.y)/2;
       const distance=Math.hypot(line.a.x-line.b.x,line.a.y-line.b.y);
