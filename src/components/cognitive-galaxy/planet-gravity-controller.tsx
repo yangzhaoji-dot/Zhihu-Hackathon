@@ -144,6 +144,7 @@ export function PlanetGravityController({ nodes, enabled, onPair }: {
     };
 
     for (const entry of entries) entry.el.addEventListener("pointerdown",onDown);
+    root.dataset.gravityReady = entries.length >= 2 ? "true" : "false";
     const move=(event:globalThis.PointerEvent)=>onMove(event);
     const up=(event:globalThis.PointerEvent)=>finish(event,false);
     const cancel=(event:globalThis.PointerEvent)=>finish(event,true);
@@ -154,6 +155,7 @@ export function PlanetGravityController({ nodes, enabled, onPair }: {
       const current=drag.current;
       if (current) current.entry.parent.setAttribute("transform",current.originalTransform);
       drag.current=null; clearTargets();
+      delete root.dataset.gravityReady;
       for (const entry of entries) entry.el.removeEventListener("pointerdown",onDown);
       window.removeEventListener("pointermove",move,{capture:true});
       window.removeEventListener("pointerup",up,{capture:true});
