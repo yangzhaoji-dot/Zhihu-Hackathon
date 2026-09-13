@@ -21,7 +21,7 @@ const EVALUATION_SYSTEM: AiMessage = {
     "只输出规范 JSON。",
 };
 
-function materialBlock(selections: readonly SelectedExcerptInput[], _sources: readonly OpinionSource[]): string {
+function materialBlock(selections: readonly SelectedExcerptInput[]): string {
   // Viewpoint formation is intentionally driven by what the user selected,
   // not by author popularity, upvotes or demo fixture metadata.
   return selections
@@ -34,7 +34,7 @@ export async function synthesizePlanetViewpoint(input: {
   selections: SelectedExcerptInput[];
   sources: OpinionSource[];
 }): Promise<PlanetSynthesisResult | null> {
-  const materials = materialBlock(input.selections, input.sources);
+  const materials = materialBlock(input.selections);
 
   // Phase 1 deliberately does not see the source planet's original viewpoint.
   // This prevents the model from simply paraphrasing the target opinion.
