@@ -13,12 +13,14 @@
 
 用户不只是“看观点”，而是可以进入一个观点、阅读相关原文、选择真正影响自己判断的文本，再让 AI 帮助这些材料形成新的观点。
 
-新的观点可以：
+新的观点和已有观点还可以继续发生关系：
 
 - **Merge**：补充 / 修正原星球
 - **Fork**：形成新的观点星球
-- **Collision**：和另一颗星球比较共识、分歧、条件和证据
-- **Fusion**：融合出第三颗星球
+- **Gravity**：拖动两颗星球靠近，感知潜在关系
+- **Collision**：比较共识、分歧、条件和证据
+- **Bridge**：保留两颗观点，建立补充 / 条件 / 对立 / 支持 / 反驳关系
+- **Fusion**：在两个观点基础上形成第三颗星球
 
 最终，这不是一张静态观点图，而是一片会随着用户继续思考而生长的认知宇宙。
 
@@ -26,17 +28,23 @@
 
 ## 当前产品版本
 
-当前完整闭环位于：
+当前最新交互版本位于：
 
 ```bash
-cognitive-universe-v1
+cognitive-orbit-v1
 ```
 
-对应 PR：`#6 feat: 完整认知宇宙闭环 — 星球演化、碰撞与融合`
+对应 PR：`#7 feat: 星球引力、碰撞、建桥与融合交互`
 
-完整产品设计见：
+基础完整闭环位于 `cognitive-universe-v1` / PR #6。
+
+完整产品设计：
 
 > [`docs/cognitive-universe-v1.md`](./docs/cognitive-universe-v1.md)
+
+星球之间交互设计：
+
+> [`docs/planet-interaction-v1.md`](./docs/planet-interaction-v1.md)
 
 ---
 
@@ -67,7 +75,11 @@ Merge / Fork
   ↓
 返回星系看到变化
   ↓
-观点碰撞 / Fusion
+Gravity → Collision
+  ↓
+Bridge / Fusion
+  ↓
+认知宇宙继续生长
 ```
 
 ---
@@ -98,11 +110,17 @@ Cluster 不是“支持 / 反对”阵营，而是不同的思考维度，例如
 
 AI 建议关系，但最终决定权属于用户。
 
-### 3. 星球之间：碰撞 / 融合
+### 3. 星球之间：感应 / 碰撞 / 建桥 / 融合
 
-同一星群内可以选择两颗观点进行碰撞。
+星球之间的互动不是装饰，而是认知图上的真实操作。
 
-AI 会展示：
+**Gravity**
+
+在星群里直接拖动一颗观点星球。靠近另一颗时出现“认知引力”，但不会立刻修改数据，也不会偷偷调用 AI。
+
+**Collision**
+
+两颗星球真正接触并松手后，进入深分析：
 
 - 共识
 - 核心分歧
@@ -111,7 +129,27 @@ AI 会展示：
 - 缺失信息
 - 可能的综合观点
 
-用户确认后，可以生成一颗新的融合星球。
+**Bridge**
+
+如果两颗观点都值得保留，用户可以建立认知桥：
+
+- 补充
+- 条件
+- 对立
+- 支持
+- 反驳
+
+Bridge 不新增观点，只把关系写回星群。
+
+**Fusion**
+
+如果碰撞真正产生了一个独立的新判断，用户可以确认 Fusion，形成第三颗星球。原来的两个观点仍然保留，新星球记录两个 parent 和来源集合。
+
+核心区别：
+
+> **Bridge 表达关系，Fusion 表达新思想。**
+
+拖动不是唯一入口。手机 / 键盘用户仍然可以使用列表中的「碰撞」按钮完成同样的核心流程。
 
 ---
 
@@ -129,6 +167,8 @@ AI 不是一个悬浮聊天框，而是整个系统背后的认知引擎：
 
 > **AI 不替代知乎的人类内容，而是重新组织人类内容。**
 
+同时，AI 不自动替用户修改宇宙：Collision 结果必须先展示，Merge / Fork / Bridge / Fusion 最终都由用户确认。
+
 ---
 
 ## 数据可信度原则
@@ -142,6 +182,7 @@ AI 不是一个悬浮聊天框，而是整个系统背后的认知引擎：
 - AI 生成阶段看不到原星球观点，避免直接复述目标
 - AI 生成阶段不使用赞同数作为输入
 - AI 不可用时不伪造生成结果
+- fallback Collision 不允许自动 Fusion 成新星球
 - 不暴露或依赖模型私有 Chain-of-Thought
 
 ---
@@ -159,6 +200,10 @@ AI 不是一个悬浮聊天框，而是整个系统背后的认知引擎：
 - Semantic Zoom
 - 星云 / 光场 / 粒子 / 视差
 - 点击 / Hover / 拖动 / 滚动 / 文本选择
+
+星球之间统一使用物理隐喻：
+
+> **靠近 = 引力，接触 = 碰撞，连线 = 关系，生成第三颗星球 = 新观点。**
 
 不做自由移动的 3D / 2.5D 游戏控制。
 
@@ -180,7 +225,11 @@ AI 不是一个悬浮聊天框，而是整个系统背后的认知引擎：
 - AI Evaluation
 - Merge / Fork
 - 新星球回到星系并可再次登陆
+- 直接拖动观点星球
+- Gravity 引力反馈
 - Planet Collision
+- Semantic Bridge
+- Persistent Relation Overlay
 - Fusion
 - Session Persistence
 - Demo Reset
@@ -194,7 +243,7 @@ AI 不是一个悬浮聊天框，而是整个系统背后的认知引擎：
 
 ```bash
 git fetch origin
-git switch cognitive-universe-v1
+git switch cognitive-orbit-v1
 bun install --frozen-lockfile
 bun dev
 ```
@@ -228,13 +277,14 @@ cp .env.example .env
 
 ## 验证
 
-当前整合分支已经覆盖：
+当前分支覆盖：
 
 - 单元测试
 - ESLint
 - Next.js production build / TypeScript
 - Chromium 主流程验收
-- Merge / Fork / Collision / Fusion
+- Merge / Fork
+- Gravity / Collision / Bridge / Fusion
 - Session 演化与 Demo Reset
 - 手机端横向溢出检查
 
@@ -242,14 +292,20 @@ cp .env.example .env
 
 ## 下一阶段
 
-当前 hackathon 主闭环已经成立，下一阶段可以继续扩展：
+当前最值得继续做深的是 **Carry Fragment / 携带碎片**：
+
+> 在星球 A 里读到的一段材料，可以被用户带到星球 B，让它参与 B 的观点形成，同时保持来源归属可追溯。
+
+它会真正把“星球内部”和“星球之间”连接成同一个认知系统。
+
+更远期还可以扩展：
 
 - 云端持久化个人认知宇宙
 - 多用户共同演化
 - 观点匹配 / 社交
 - 社会统计与阵营分布
 - 跨问题星系跳转
-- 更丰富的星球之间交互
+- 三颗以上观点的 Constellation / 多观点合成
 - 自部署模型后的 token-level / hidden-state 实验
 
 ---
