@@ -90,10 +90,49 @@
 
 .footer {
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  margin-top: 10px;
+  gap: 12px;
+  margin-top: 12px;
   color: rgba(245, 241, 232, 0.5);
   font-size: 11px;
+}
+
+.pager {
+  display: flex;
+  gap: 8px;
+}
+
+.pageButton {
+  display: inline-flex;
+  min-height: 34px;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #f5f1e8;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.pageButton:hover:not(:disabled),
+.pageButton:focus-visible {
+  border-color: var(--world-accent);
+  background: color-mix(in srgb, var(--world-accent) 18%, rgba(7, 10, 15, 0.8));
+}
+
+.pageButton:disabled {
+  opacity: 0.34;
+  cursor: not-allowed;
+}
+
+.pageButtonPrimary {
+  border-color: color-mix(in srgb, var(--world-accent) 58%, transparent);
+  background: color-mix(in srgb, var(--world-accent) 18%, rgba(7, 10, 15, 0.8));
 }
 
 .sourcePop {
@@ -191,4 +230,5 @@
   .overlay { padding: 0 12px 14px; }
   .box { width: calc(100vw - 24px); padding: 12px 14px; }
   .sourcePop { bottom: 170px; width: calc(100vw - 24px); }
+  .pageButton { min-width: 42px; padding-inline: 9px; }
 }

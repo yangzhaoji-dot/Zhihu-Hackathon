@@ -746,13 +746,17 @@ export class CosmosEngine3D {
       d.node.locked = true;
       d.node.group.position.copy(d.node.pos);
     }
-    if (d.moved) this.checkCollision(d.node);
   };
 
   private onPointerUp = () => {
     if (this.longPressTimer) clearTimeout(this.longPressTimer);
-    if (this.drag && !this.drag.moved) {
-      this.cb.onTap(this.drag.node);
+    const drag = this.drag;
+    if (drag && !drag.moved) {
+      this.cb.onTap(drag.node);
+    } else if (drag?.moved) {
+      // A node may pass through other nodes while it is being positioned.
+      // Only the final placement at pointer release confirms a collision.
+      this.checkCollision(drag.node);
     }
     this.endDrag();
   };

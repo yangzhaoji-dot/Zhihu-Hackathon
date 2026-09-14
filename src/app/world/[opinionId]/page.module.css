@@ -66,6 +66,33 @@
   backdrop-filter: blur(10px);
 }
 
+.bridgeNotice {
+  position: absolute;
+  top: 86px;
+  left: 50%;
+  z-index: 14;
+  width: max-content;
+  max-width: min(760px, calc(100vw - 32px));
+  transform: translateX(-50%);
+  padding: 10px 18px;
+  border: 1px solid color-mix(in srgb, var(--world-accent) 55%, transparent);
+  border-radius: 999px;
+  background: rgba(5, 8, 12, 0.9);
+  color: #f5f1e8;
+  font-size: 13px;
+  line-height: 1.5;
+  text-align: center;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.4);
+  pointer-events: none;
+  backdrop-filter: blur(10px);
+  animation: noticeIn 180ms ease-out;
+}
+
+@keyframes noticeIn {
+  from { transform: translate(-50%, -5px); opacity: 0; }
+  to { transform: translate(-50%, 0); opacity: 1; }
+}
+
 /* ── 降落 / 返回动画 ─────────────────────────────────────── */
 .landing,
 .leaving {
@@ -173,12 +200,14 @@
   .header small { display: none; }
   .header h1 { max-width: 58vw; }
   .toast { max-width: calc(100vw - 32px); white-space: normal; }
+  .bridgeNotice { top: 78px; border-radius: 16px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .landingRocket,
   .leavingRocket { animation-duration: 1ms; }
   .toast { animation: none; }
+  .bridgeNotice { animation: none; }
 }
 
 /* ── 背包"查看原文"弹层（M3 §5.3） ───────────────────────── */

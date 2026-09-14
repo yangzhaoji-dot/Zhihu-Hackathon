@@ -174,7 +174,6 @@ export default function OpinionWorldPage() {
   const progressRef = useRef<ExplorationProgressDto | null>(null);
   const dialogueRef = useRef<DialogueState | null>(null);
   const progressOfflineNotifiedRef = useRef(false);
-  const lastBlockedToastRef = useRef(0);
   const hintIdRef = useRef<string | null>(null);
   const toastSeqRef = useRef(0);
 
@@ -475,7 +474,14 @@ export default function OpinionWorldPage() {
     }
     for (const poi of world.config.pois) {
       if (poi.kind === "fog" || poi.kind === "chest") continue;
-      const d = distance(center, { x: poi.pos.x + 0.5, y: poi.pos.y + 0.5 });
+      // The bridge is a three-tile physical object, so proximity is measured
+      // against its full deck instead of only its original anchor tile.
+      const d = poi.kind === "bridge"
+        ? distance(center, {
+            x: Math.max(poi.pos.x - 1, Math.min(poi.pos.x + 2, center.x)),
+            y: poi.pos.y + 0.5,
+          })
+        : distance(center, { x: poi.pos.x + 0.5, y: poi.pos.y + 0.5 });
       if (d <= INTERACT_RANGE && (!best || d < best.d)) {
         best = { target: { type: "poi", id: poi.id, poi }, d };
       }
@@ -543,7 +549,6 @@ export default function OpinionWorldPage() {
         case "gate":
           if (!isPoiRequirementMet(poi, walkCtx)) {
             emitSfx("sfx.blocked");
-            pushToast(blockedText(poiRequirementReason(poi, walkCtx)));
           }
           return;
         case "monument": {
@@ -622,22 +627,6 @@ export default function OpinionWorldPage() {
       return null;
     };
 
-    const notifyBlocked = (reason: BlockReason | null) => {
-      if (!reason) return;
-      if (
-        reason.kind !== "requires-sources" &&
-        reason.kind !== "requires-compare" &&
-        reason.kind !== "requires-stance"
-      ) {
-        return;
-      }
-      const now = performance.now();
-      if (now - lastBlockedToastRef.current < 1600) return;
-      lastBlockedToastRef.current = now;
-      emitSfx("sfx.blocked");
-      pushToast(blockedText(reason));
-    };
-
     let raf = 0;
     let last = performance.now();
     const step = (now: number) => {
@@ -679,12 +668,10 @@ export default function OpinionWorldPage() {
         const tryX = { x: pos.x + dx, y: pos.y };
         const reasonX = blockedAt(tryX);
         if (!reasonX) posRef.current = tryX;
-        else if (tapTargetRef.current || dx !== 0) notifyBlocked(reasonX);
         const afterX = posRef.current;
         const tryY = { x: afterX.x, y: afterX.y + dy };
         const reasonY = blockedAt(tryY);
         if (!reasonY) posRef.current = tryY;
-        else if (tapTargetRef.current || dy !== 0) notifyBlocked(reasonY);
         // 点按移动被完全挡住时放弃目的地
         if (tapTargetRef.current && reasonX && reasonY) tapTargetRef.current = null;
       }
@@ -752,7 +739,7 @@ export default function OpinionWorldPage() {
     };
     raf = requestAnimationFrame(step);
     return () => cancelAnimationFrame(raf);
-  }, [phase, world, walkCtx, nearestInteractable, fireTrigger, pushToast, blockedText]);
+  }, [phase, world, walkCtx, nearestInteractable, fireTrigger]);
 
   const closeDialogue = useCallback(() => {
     const after = dialogue?.after;
@@ -978,6 +965,13 @@ export default function OpinionWorldPage() {
             })
           : null;
 
+  const bridgeNotice =
+    hint?.type === "poi" &&
+    (hint.poi.kind === "bridge" || hint.poi.kind === "gate") &&
+    !isPoiRequirementMet(hint.poi, walkCtx)
+      ? blockedText(poiRequirementReason(hint.poi, walkCtx))
+      : null;
+
   return (
     <main
       className={styles.world}
@@ -1008,6 +1002,7 @@ export default function OpinionWorldPage() {
           worldElRef={worldElRef}
           playerElRef={playerElRef}
           highlightId={hint?.id ?? null}
+          collectedOpinionIds={collectedIds}
           onTap={(pos, npcId) => {
             if (phaseRef.current !== "explore") return;
             if (npcId) {
@@ -1046,6 +1041,12 @@ export default function OpinionWorldPage() {
         <button type="button" className={styles.interact} onClick={() => interactRef.current()}>
           E · {hintLabel}
         </button>
+      )}
+
+      {phase === "explore" && bridgeNotice && (
+        <div className={styles.bridgeNotice} role="status">
+          {bridgeNotice}
+        </div>
       )}
 
       {phase === "dialogue" && dialogue && dialogueLines.length > 0 && (
