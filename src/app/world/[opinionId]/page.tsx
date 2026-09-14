@@ -22,15 +22,18 @@ export default function PlanetPage() {
   const search = useSearchParams();
   const opinionId = decodeURIComponent(params.opinionId);
 
-  // Authored reference planet keeps its hand-crafted saddle-node narrative.
-  if (LAW_MVP_OPINIONS.has(opinionId)) {
-    return <PlanetLawMvp opinionId={opinionId} />;
-  }
-
-  // Every planet entered from a generated galaxy now uses the same
-  // "opinion -> curated mathematical law -> archive" product grammar.
+  // Anything entered from a galaxy — including the authored demo — uses the
+  // same product grammar: viewpoint -> cross-domain explanatory model ->
+  // structural mapping -> human evidence. This keeps the demo and live path
+  // visually consistent.
   if (search.has("galaxy")) {
     return <DynamicPlanetLawV2 opinionId={opinionId} />;
+  }
+
+  // Keep the original hand-authored saddle-node story available as a direct
+  // reference route, but do not let it override the actual planet experience.
+  if (LAW_MVP_OPINIONS.has(opinionId)) {
+    return <PlanetLawMvp opinionId={opinionId} />;
   }
 
   return (
