@@ -52,11 +52,15 @@ export default function LostUniversePage() {
       router.push(galaxyUrl(questionId));
       return;
     }
-    const url = questionUrl(question);
-    if (!url) { setError("这处星系的原始坐标已经损坏。"); return; }
     setBusyId(question.id);
     try {
-      const result = await searchGalaxy(question.title, url, question.title);
+      const url = questionUrl(question);
+      let result = await searchGalaxy(question.title, url ?? undefined, url ? question.title : undefined);
+      if (result.selectionRequired) {
+        const candidate = result.questions[0];
+        if (!candidate) throw new Error("question_unresolved");
+        result = await searchGalaxy(question.title, candidate.url, candidate.title);
+      }
       if (result.selectionRequired) throw new Error("question_unresolved");
       saveGalaxy(result.graph);
       router.push(galaxyUrl(result.graph.questionId));
