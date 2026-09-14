@@ -1,11 +1,11 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { analyzeCollision } from "@/lib/opinion/ai";
+import { analyzeDemoCollision } from "@/lib/cognitive-galaxy/demo-collision";
 import { AppAIUnavailableError } from "@/lib/eazo-ai-billing";
 import type { OpinionGraph } from "@/lib/opinion/types";
 
 // POST /api/opinion/collide { aId, bId, graph? }
-// Analyze two viewpoints from either the server seed or the current client-side
-// galaxy snapshot. The returned candidate is only materialized after user confirmation.
+// Homepage demos use authored deterministic analysis; live graphs keep the AI path.
 export async function POST(request: NextRequest) {
   let body: { aId?: unknown; bId?: unknown; graph?: unknown };
   try {
@@ -20,6 +20,12 @@ export async function POST(request: NextRequest) {
   }
   try {
     const graph = isOpinionGraph(body.graph) ? body.graph : undefined;
+    if (graph?.sourceScope === "demo") {
+      const a = graph.opinions.find((item) => item.id === aId);
+      const b = graph.opinions.find((item) => item.id === bId);
+      if (!a || !b) return NextResponse.json({ ok: false, error: "opinion_not_found" }, { status: 404 });
+      return NextResponse.json({ ok: true, analysis: analyzeDemoCollision(a, b) });
+    }
     const analysis = await analyzeCollision(aId, bId, graph);
     return NextResponse.json({ ok: true, analysis });
   } catch (error) {
