@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import "@/components/world/planet-synthesis-extra.module.css";
@@ -26,18 +26,18 @@ export default function PlanetPage() {
   const opinionId = decodeURIComponent(params.opinionId);
   const galaxyId = search.get("galaxy");
   const originId = search.get("origin") ?? opinionId;
+  const cluster = search.get("cluster");
 
-  const exitPlanet = () => {
+  const exitPlanet = useCallback(() => {
     if (!galaxyId) {
       router.back();
       return;
     }
     const query = new URLSearchParams();
-    const cluster = search.get("cluster");
     if (cluster) query.set("cluster", cluster);
     query.set("opinion", originId);
     router.push(`/galaxy/${encodeURIComponent(galaxyId)}?${query.toString()}`);
-  };
+  }, [cluster, galaxyId, originId, router]);
 
   useEffect(() => {
     if (!galaxyId) return;
@@ -46,7 +46,7 @@ export default function PlanetPage() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  });
+  }, [exitPlanet, galaxyId]);
 
   // Every planet entered from a galaxy uses the same paced six-page story:
   // viewpoint -> human scientific legacy -> property -> structural echo ->
