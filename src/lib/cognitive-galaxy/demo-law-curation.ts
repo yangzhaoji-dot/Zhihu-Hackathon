@@ -1,0 +1,1 @@
+export const DEMO_LAW_CURATION_VERSION = 2;
