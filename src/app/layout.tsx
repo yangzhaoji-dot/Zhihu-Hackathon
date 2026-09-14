@@ -2,10 +2,8 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import Script from "next/script";
 import { Geist } from "next/font/google";
-import { EazoProvider } from "@eazo/sdk/react";
 import { cn } from "@/utils/utils";
 import { Toaster } from "@/components/ui/sonner";
-import { UserSyncEffect } from "@/components/user-profile/user-sync-effect";
 import { I18nProvider } from "@/components/i18n/i18n-provider";
 import { LocaleSyncEffect } from "@/components/i18n/locale-sync-effect";
 import { AiStationDock } from "@/components/cosmos/ai-station-dock";
@@ -75,14 +73,11 @@ export default async function RootLayout({
         data-eazo-preview-inspector-runtime=""
       >
         <I18nProvider>
-          <EazoProvider>
-            <LocaleSyncEffect />
-            <UserSyncEffect />
-            <InteractionSoundscape />
-            <AiStationDock />
-            {children}
-            <Toaster />
-          </EazoProvider>
+          <LocaleSyncEffect />
+          <InteractionSoundscape />
+          <AiStationDock />
+          {children}
+          <Toaster />
         </I18nProvider>
         <Script
           src={EAZO_INSPECTOR_SRC}
