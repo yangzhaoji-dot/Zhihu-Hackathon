@@ -11,7 +11,7 @@ const out = path.resolve(process.env.GALAXY_SCREENSHOTS || "test-artifacts/galax
 await fs.mkdir(out, { recursive: true });
 const browser = await chromium.launch({ headless: true });
 const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, locale: "zh-CN" });
-await context.addInitScript(() => localStorage.setItem("cognitive-galaxy:intro:v2", "seen"));
+await context.addInitScript(() => localStorage.setItem("cognitive-galaxy:intro:v2", "ci-skip"));
 const page = await context.newPage();
 const errors = [];
 page.setDefaultTimeout(20000);
@@ -35,26 +35,32 @@ try {
 
   await demos.first().click({ force: true });
   await isolateProductUi();
+  await page.locator('[data-el="lost-universe-network"]').waitFor();
+  assert.equal(await page.locator('[data-el="core-question-galaxy"]').count(), 1);
+  assert.equal(await page.locator('[data-el="related-question-galaxy"]').count(), 5);
+  await capture("02-question-network.png");
+
+  await page.locator('[data-el="core-question-galaxy"]').click({ force: true });
   await page.locator('[data-el="galaxy-cluster"]').first().waitFor();
   assert.equal(await page.locator('[data-el="galaxy-cluster"]').count(), 6);
   assert.equal(await page.locator('[data-el="opinion-planet"]').count(), 48);
-  await capture("02-overview.png");
+  await capture("03-overview.png");
 
   await page.locator('[data-el="cluster-shortcut"]').first().click({ force: true });
   await page.locator('[data-el="opinion-shortcut"]').first().waitFor();
   assert.equal(await page.locator('[data-el="opinion-shortcut"]').count(), 8);
-  await capture("03-cluster.png");
+  await capture("04-cluster.png");
 
   await page.locator('[data-el="opinion-shortcut"]').first().click({ force: true });
   await page.locator('[data-el="planet-focus"]').waitFor();
-  await capture("04-focus.png");
+  await capture("05-focus.png");
 
   await page.locator('[data-el="land-planet"]').click({ force: true });
   await waitUrl(/\/world\//);
   await isolateProductUi();
   await page.locator('[data-el="dynamic-planet-story-v5"]').waitFor();
-  await page.goBack({ waitUntil: "domcontentloaded" });
-  await isolateProductUi();
+  await page.locator('[data-el="exit-planet"]').waitFor();
+  await page.keyboard.press("Escape");
   await page.locator('[data-el="planet-focus"]').waitFor();
 
   await page.keyboard.press("Escape");
@@ -76,7 +82,7 @@ try {
   assert.equal(await page.locator('[data-el^="enter-demo-"]').count(), 4);
   await page.unroute("**/api/opinion/build");
 
-  // Search now enters the lost question-network layer before the opinion galaxy.
+  // Search enters the lost question-network layer before the opinion galaxy.
   await page.route("**/api/opinion/build", async (route) => {
     const body = route.request().postDataJSON();
     const graph = { questionId: "q_test_contract", questionTitle: "测试星系", questionUrl: "https://www.zhihu.com/question/123", sourceScope: "zhihu-question-answers", opinions: [{ id: "test-health", questionId: "q_test_contract", title: "心理健康也是重要条件", summary: "仅用于接口测试", kind: "human", sourceIds: [], support: 0, x: 0, y: 0 }], sources: [], authors: [], relations: [] };
@@ -108,15 +114,18 @@ try {
   await isolateProductUi();
   const mobileDemo = page.locator('[data-el^="enter-demo-"]').first();
   await mobileDemo.waitFor();
-  await capture("05-mobile-home.png");
+  await capture("06-mobile-home.png");
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
   await mobileDemo.click({ force: true });
+  await page.locator('[data-el="lost-universe-network"]').waitFor();
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+  await page.locator('[data-el="core-question-galaxy"]').click({ force: true });
   await page.locator('[data-el="cluster-shortcut"]').first().waitFor();
-  await capture("06-mobile-overview.png");
+  await capture("07-mobile-overview.png");
   await page.locator('[data-el="cluster-shortcut"]').first().click({ force: true });
   await page.locator('[data-el="opinion-shortcut"]').first().click({ force: true });
   await page.locator('[data-el="planet-focus"]').waitFor();
-  await capture("07-mobile-focus.png");
+  await capture("08-mobile-focus.png");
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
 
   await page.emulateMedia({ reducedMotion: "no-preference" });
@@ -125,7 +134,7 @@ try {
   await fs.writeFile(path.join(out, "result.json"), JSON.stringify({
     ok: true,
     pageErrors: errors,
-    checks: ["four homepage demos", "48 unique planets", "6 clusters", "8 viewpoints per cluster", "focus", "planet landing", "Escape", "browser Back", "keyboard", "search error", "lost-universe search layer", "invalid view query", "mobile overflow", "reduced motion"],
+    checks: ["four homepage demos", "demo question network", "related-question links", "48 unique planets", "6 clusters", "8 viewpoints per cluster", "focus", "planet law story", "exit planet", "Escape", "browser Back", "keyboard", "search error", "lost-universe search layer", "invalid view query", "mobile overflow", "reduced motion"],
   }, null, 2));
 } catch (error) {
   const detail = { ok: false, url: page.url(), message: String(error), pageErrors: errors };
