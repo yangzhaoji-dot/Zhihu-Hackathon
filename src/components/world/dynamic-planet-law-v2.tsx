@@ -41,6 +41,38 @@ function qualityLabel(match: Match) {
   return "探索性匹配";
 }
 
+function humanLegacy(law: PlanetLawDefinition) {
+  const known: Record<string, string> = {
+    saddle_node:
+      "在人类纪元，研究者用这条规范形研究一个系统如何在临界点附近失去原有的稳定状态。它曾属于非线性动力系统、工程稳定性与分岔理论；如今我们保留下来的，不是它对现实人生的答案，而是它关于“稳定会消失”的结构。",
+    bayes:
+      "在人类纪元，人们用贝叶斯更新处理诊断、科学推断与信号判断：新证据到来以后，原先的相信程度应该被重新计算。它提醒我们，判断不是一次性完成的，而应随着证据改变。",
+    pareto:
+      "在人类纪元，这个概念被用来描述多目标选择中的边界：有些方案已经无法在不牺牲另一目标的情况下继续改进。它让“哪个最好”转化成了“愿意交换什么”。",
+    nash:
+      "在人类纪元，纳什均衡被用来理解经济、竞争与战略互动中的稳定局面。它最重要的遗产之一，是让人们看到：一个状态可以稳定，却并不意味着它对所有人都理想。",
+    optimal_stopping:
+      "在人类纪元，最优停止问题被用于搜索、交易、招聘与随机决策：真正困难的不是会不会继续，而是什么时候继续等待已经不再值得。",
+    bellman:
+      "在人类纪元，贝尔曼思想曾进入运筹学、自动控制、机器人与强化学习。它把长期选择拆成当前结果与未来状态，让人们能够讨论一个动作如何改变之后还能做什么。",
+    logistic:
+      "在人类纪元，人们用 Logistic 方程描述种群、资源与容量约束下的增长。它留下的核心直觉是：增长并不会永远保持早期速度，越接近承载上限，新增投入带来的变化越小。",
+    entropy:
+      "在人类纪元，香农熵帮助人们建立现代信息论与通信系统。它把“不确定”变成可以计算的量，让通信、编码与信息压缩第一次共享同一种语言。",
+    little_law:
+      "在人类纪元，Little 定律被用于排队系统、通信网络与运营流程。它用极简关系连接堆积、到达与等待，说明系统中的拥堵往往不是感受，而是结构性的结果。",
+    exponential:
+      "在人类纪元，人们在种群增长、连锁反应、复利与许多自然过程中反复遇到指数结构。它告诉他们：长期结果常常不是线性累加，而是比例变化被时间不断复合。",
+    prospect_theory:
+      "在人类纪元，前景理论被提出用来解释真实人的风险选择为何偏离简单的期望效用。它记录下一个很顽固的现象：同样大小的损失，往往比收益更能改变人的选择。",
+    hyperbolic_discounting:
+      "在人类纪元，双曲折扣被用来刻画人对未来价值的非一致折扣。它保存下一个常见矛盾：远处看起来合理的长期计划，在临近行动时可能突然被眼前诱因推翻。",
+  };
+
+  return known[law.id]
+    ?? `在人类纪元，${law.name}曾被用于${law.field}中的分析与建模。我们在这里保存的不是一个可以直接套在人生上的答案，而是这个模型经过长期使用后留下来的结构：${law.mechanism}`;
+}
+
 function ModelDiagram({ law }: { law: PlanetLawDefinition }) {
   const visual: LawVisual = law.visual;
   const curveAxes = [
@@ -303,8 +335,8 @@ export function DynamicPlanetLawV2({ opinionId }: { opinionId: string }) {
           <section className={styles.loading}>
             <div className={styles.loadingCore}>
               <LoaderCircle className={styles.spin} size={38} />
-              <h1>正在寻找这颗星球的解释模型。</h1>
-              <p>候选来自数学、经济学、心理学、统计学、系统科学与社会科学；只从人工整理的真实模型中选择，不现场发明。</p>
+              <h1>正在从人类留下的科学法则中寻找回响。</h1>
+              <p>候选来自数学、物理、化学、生物、信息科学、经济与决策科学；只从真实存在的公式、定律与形式模型中选择，不现场发明。</p>
             </div>
           </section>
         </div>
@@ -322,8 +354,8 @@ export function DynamicPlanetLawV2({ opinionId }: { opinionId: string }) {
           </header>
           <section className={styles.loading}>
             <div className={styles.loadingCore}>
-              <h1>这颗星球暂时没有可靠的解释模型。</h1>
-              <p>观点仍然保留。模型解析失败时，不用一个看似漂亮的公式强行覆盖现实。</p>
+              <h1>这颗星球暂时没有可靠的科学回响。</h1>
+              <p>观点仍然保留。没有足够强的结构匹配时，不用一个看似漂亮的公式强行覆盖现实。</p>
             </div>
           </section>
         </div>
@@ -372,7 +404,7 @@ export function DynamicPlanetLawV2({ opinionId }: { opinionId: string }) {
           <article className={styles.lawPanel}>
             <div className={styles.lawIdentity}>
               <div>
-                <span className={styles.kicker}>EXPLANATORY MODEL · {law.kindLabel}</span>
+                <span className={styles.kicker}>HUMAN LEGACY · {law.kindLabel}</span>
                 <h2 className={styles.lawName}>{law.name}</h2>
                 <div className={styles.lawField}>{law.field}</div>
                 <div
@@ -396,16 +428,24 @@ export function DynamicPlanetLawV2({ opinionId }: { opinionId: string }) {
 
         <section className={styles.workspace}>
           <nav className={styles.tabBar} aria-label="星球内部视图">
-            <button type="button" className={`${styles.tab} ${mode === "model" ? styles.tabActive : ""}`} onClick={() => setMode("model")}>解释模型</button>
+            <button type="button" className={`${styles.tab} ${mode === "model" ? styles.tabActive : ""}`} onClick={() => setMode("model")}>人类法则</button>
             <button type="button" className={`${styles.tab} ${mode === "mapping" ? styles.tabActive : ""}`} onClick={() => setMode("mapping")}>结构映射</button>
             <button type="button" className={`${styles.tab} ${mode === "evidence" ? styles.tabActive : ""}`} onClick={() => setMode("evidence")}>人类证据</button>
           </nav>
 
           {mode === "model" ? (
             <div className={styles.contentGrid}>
+              <article
+                className={styles.card}
+                style={{ gridColumn: "1 / -1", minHeight: 0, background: "linear-gradient(120deg, rgba(31, 28, 24, .48), rgba(12, 17, 27, .62))", borderColor: "rgba(226, 202, 149, .16)" }}
+              >
+                <span className={styles.cardLabel}>HUMAN LEGACY · 人类纪元遗留法则</span>
+                <h2>在很久以前，人们曾用它理解世界的一部分。</h2>
+                <p>{humanLegacy(law)}</p>
+              </article>
               <article className={styles.card}>
-                <span className={styles.cardLabel}>MODEL ORIGIN</span>
-                <h2>{law.formula ? "这个形式原本在解释什么" : "这个模型原本在解释什么"}</h2>
+                <span className={styles.cardLabel}>ORIGINAL MEANING</span>
+                <h2>{law.formula ? "这条公式原本在解释什么" : "这个形式原本在解释什么"}</h2>
                 <p>{law.definition}</p>
               </article>
               <article className={styles.card}>
@@ -415,9 +455,9 @@ export function DynamicPlanetLawV2({ opinionId }: { opinionId: string }) {
               </article>
               <article className={styles.card}>
                 <span className={styles.cardLabel}>MODEL RANGE</span>
-                <h2>它适合照亮什么</h2>
+                <h2>它可以照亮什么，也不能解释什么</h2>
                 <div className={styles.chipList}>{law.goodFor.map((item) => <span className={styles.chip} key={item}>{item}</span>)}</div>
-                <div className={styles.chipList}>{law.badFor.map((item) => <span className={styles.chip} key={item}>不适合 · {item}</span>)}</div>
+                <div className={styles.chipList}>{law.badFor.map((item) => <span className={styles.chip} key={item}>边界 · {item}</span>)}</div>
               </article>
             </div>
           ) : null}
@@ -426,20 +466,20 @@ export function DynamicPlanetLawV2({ opinionId }: { opinionId: string }) {
             <div className={styles.contentGrid}>
               <article className={styles.bridge}>
                 <div className={styles.bridgeSide}>
-                  <span className={styles.cardLabel}>原模型中</span>
+                  <span className={styles.cardLabel}>在人类科学中</span>
                   <h2>{law.mechanism}</h2>
                   <p>{law.definition}</p>
                 </div>
                 <div className={styles.bridgeArrow} aria-hidden />
                 <div className={styles.bridgeSide}>
-                  <span className={styles.cardLabel}>这个观点里</span>
+                  <span className={styles.cardLabel}>在这颗观点星球上</span>
                   <h2>{match.mechanism}</h2>
                   <p>{match.mapping}</p>
                 </div>
               </article>
               <article className={styles.boundaryCard}>
                 <span className={styles.cardLabel}>MODEL BOUNDARY</span>
-                <h2>模型到这里为止</h2>
+                <h2>回响到这里为止</h2>
                 <p>{match.boundary}</p>
               </article>
             </div>
@@ -472,7 +512,7 @@ export function DynamicPlanetLawV2({ opinionId }: { opinionId: string }) {
 
         <div className={styles.bottomDock}>
           <div className={styles.dockCopy}>
-            解释模型负责暴露结构，知乎回答负责保留经验、条件与反例。模型不是判决，也不替现实下结论。
+            这些法则曾帮助人类描述自然、系统与选择。现在我们只借用它们留下的结构，去重新观察一条观点；它们不是判决，也不替现实下结论。
           </div>
           <button type="button" className={styles.archiveButton} onClick={() => setArchiveOpen(true)}>
             <BookOpen size={16} />展开完整遗声档案
