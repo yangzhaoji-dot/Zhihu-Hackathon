@@ -4,6 +4,29 @@
   "home": "Back to universe",
   "language": "中文",
   "replay": "Replay prologue",
+  "zhihuOAuth": {
+    "loading": "Checking Zhihu account connection",
+    "connect": "Connect Zhihu",
+    "connected": "Zhihu connected",
+    "waiting": "OAuth pending",
+    "notConfigured": "Deployment secrets are not configured",
+    "panelTitle": "Zhihu account connection",
+    "verify": "Verify authorized data",
+    "verifyFailed": "Authorized data could not be verified. Check the secrets or authorize again.",
+    "logout": "Disconnect Zhihu",
+    "endpoints": {
+      "contents": "Creations",
+      "followees": "Following",
+      "favlists": "Favorite lists",
+      "favlistContents": "Favorite items",
+      "recent": "Recent favorites"
+    },
+    "states": {
+      "success": "Success",
+      "empty": "No data",
+      "failed": "Failed"
+    }
+  },
   "skip": "Skip prologue",
   "continue": "Continue",
   "pause": "Pause",

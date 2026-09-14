@@ -8,6 +8,7 @@ import { ArrowRight, ArrowUpRight, Search, RotateCcw, LoaderCircle } from "lucid
 import { useTranslation } from "react-i18next";
 import { SpaceShell } from "@/components/cognitive-galaxy/space-shell";
 import { Opening } from "@/components/cognitive-galaxy/opening";
+import { ZhihuAccountButton } from "@/components/zhihu-oauth/zhihu-account-button";
 import { searchGalaxy, searchQuestionNetwork } from "@/lib/api/cognitive-galaxy";
 import type { ZhihuQuestionCandidate } from "@/lib/api/opinion";
 import { galaxyUrl, saveGalaxy, saveQuestionNetwork, universeUrl } from "@/lib/cognitive-galaxy/session";
@@ -96,7 +97,7 @@ export default function Home() {
   };
   const cancelSearch = () => { invalidateRequests(); setBusy(false); };
 
-  return <SpaceShell extra={<button type="button" onClick={() => setIntro(true)}><RotateCcw size={13}/>{t("replay")}</button>}>
+  return <SpaceShell extra={<><ZhihuAccountButton/><button type="button" onClick={() => setIntro(true)}><RotateCcw size={13}/>{t("replay")}</button></>}>
     <div inert={intro}>
       <main className={styles.home} data-el="galaxy-home">
         <div className={styles.celestial} aria-hidden="true"><div className={styles.orbitA}/><div className={styles.orbitB}/><div className={styles.rim}/><div className={styles.globe}/><div className={styles.smallMoon}/></div>

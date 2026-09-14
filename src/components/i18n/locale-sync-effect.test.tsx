@@ -33,10 +33,12 @@ beforeEach(async () => {
     value: "en-US",
   });
   browserWindow.localStorage.setItem(LOCALE_STORAGE_KEY, "system");
-  globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+  (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
   await i18n.changeLanguage("en-US");
-  root = createRoot(browserWindow.document.createElement("div"));
+  root = createRoot(
+    browserWindow.document.createElement("div") as unknown as Parameters<typeof createRoot>[0]
+  );
 });
 
 afterEach(async () => {
@@ -60,7 +62,7 @@ test("updates a system locale when the browser language changes", async () => {
   });
 
   await act(async () => {
-    window.dispatchEvent(new browserWindow.Event("languagechange"));
+    window.dispatchEvent(new browserWindow.Event("languagechange") as unknown as Event);
     await Promise.resolve();
   });
 

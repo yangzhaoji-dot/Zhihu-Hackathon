@@ -1,6 +1,6 @@
 {
     "framework": "nextjs",
-    "buildCommand": "bun run build",
+    "buildCommand": "bun run db:migrate && bun run build",
     "headers": [
         {
             "source": "/(.*)",

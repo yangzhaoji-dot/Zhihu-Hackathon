@@ -4,6 +4,29 @@
   "home": "返回宇宙",
   "language": "English",
   "replay": "重看序章",
+  "zhihuOAuth": {
+    "loading": "正在检查知乎账号连接",
+    "connect": "连接知乎账号",
+    "connected": "知乎已连接",
+    "waiting": "OAuth 待配置",
+    "notConfigured": "部署 Secret 尚未配置",
+    "panelTitle": "知乎账号连接",
+    "verify": "验证授权数据",
+    "verifyFailed": "授权数据验证失败，请检查 Secret 或重新授权。",
+    "logout": "断开知乎账号",
+    "endpoints": {
+      "contents": "创作",
+      "followees": "关注",
+      "favlists": "收藏夹",
+      "favlistContents": "收藏夹内容",
+      "recent": "近期收藏"
+    },
+    "states": {
+      "success": "成功",
+      "empty": "空数据",
+      "failed": "失败"
+    }
+  },
   "skip": "跳过序章",
   "continue": "继续",
   "pause": "暂停",
