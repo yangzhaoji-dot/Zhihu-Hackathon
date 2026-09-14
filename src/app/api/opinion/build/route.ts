@@ -21,7 +21,7 @@ function cachedGraph(query: string, questionUrl: string, questionTitle: string) 
   const cached = graphCache.get(key);
   if (cached && cached.expiresAt > Date.now()) return cached.result;
   const result = (async () => {
-    const answers = await fetchQuestionAnswers(questionUrl, 20);
+    const answers = await fetchQuestionAnswers(questionUrl, 20, questionTitle);
     if (answers.items.length < 2) throw new Error("zhihu_not_enough_answers");
     const graph = await buildOpinionGraph(query, answers.items, questionTitle, questionUrl);
     return { graph, hasMore: answers.hasMore };
