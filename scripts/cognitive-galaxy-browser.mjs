@@ -22,9 +22,9 @@ page.on("pageerror", (error) => {
 });
 const open = async (url) => {
   const response = await page.goto(url, { waitUntil: "domcontentloaded" });
-  // The homepage is client-interactive. Give React a brief deterministic window
-  // to hydrate before clicks/submits so Playwright never falls back to native form behavior.
-  await page.waitForTimeout(300);
+  // Wait for Next.js chunks and React hydration before any client event.
+  await page.waitForLoadState("networkidle", { timeout: 5000 }).catch(() => {});
+  await page.waitForTimeout(250);
   return response;
 };
 const waitUrl = (url) => page.waitForURL(url, { waitUntil: "domcontentloaded" });
