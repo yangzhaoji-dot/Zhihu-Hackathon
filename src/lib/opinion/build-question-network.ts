@@ -4,12 +4,12 @@ import type { Question, QuestionNetwork, QuestionRelation } from "./types";
 import { canonicalQuestionUrl, searchZhihu, type ZhihuSearchItem } from "./zhihu-search";
 
 const POSITIONS = [
-  { x: 0.16, y: 0.28 },
-  { x: 0.45, y: 0.16 },
-  { x: 0.80, y: 0.25 },
-  { x: 0.17, y: 0.73 },
-  { x: 0.51, y: 0.83 },
-  { x: 0.83, y: 0.69 },
+  { x: 0.13, y: 0.24 },
+  { x: 0.43, y: 0.12 },
+  { x: 0.84, y: 0.22 },
+  { x: 0.12, y: 0.74 },
+  { x: 0.50, y: 0.86 },
+  { x: 0.86, y: 0.70 },
 ] as const;
 
 function compact(value: unknown, max = 160) {
@@ -93,11 +93,10 @@ export async function buildQuestionNetwork(input: {
 
   const candidates = collect(items, coreUrl, coreTitle);
   const questions: Question[] = [
-    { id: input.coreQuestionId, title: coreTitle, url: coreUrl, x: .5, y: .49, core: true },
+    { id: input.coreQuestionId, title: coreTitle, x: .5, y: .49, core: true },
     ...candidates.map((candidate, index) => ({
       id: idFromUrl(candidate.url),
       title: candidate.title,
-      url: candidate.url,
       x: POSITIONS[index]?.x ?? .5,
       y: POSITIONS[index]?.y ?? .5,
       kind: inferKind(candidate.title),
