@@ -5,7 +5,9 @@ import { AppAIUnavailableError } from "@/lib/eazo-ai-billing";
 import type { OpinionGraph } from "@/lib/opinion/types";
 
 // POST /api/opinion/collide { aId, bId, graph? }
-// Homepage demos use authored deterministic analysis; live graphs keep the AI path.
+// Collision analysis is API-first for both live and demo graphs. Homepage demos
+// retain an authored deterministic fallback so the showcase still works when
+// external AI is unavailable (for example in CI or an offline preview).
 export async function POST(request: NextRequest) {
   let body: { aId?: unknown; bId?: unknown; graph?: unknown };
   try {
@@ -20,14 +22,19 @@ export async function POST(request: NextRequest) {
   }
   try {
     const graph = isOpinionGraph(body.graph) ? body.graph : undefined;
-    if (graph?.sourceScope === "demo") {
-      const a = graph.opinions.find((item) => item.id === aId);
-      const b = graph.opinions.find((item) => item.id === bId);
-      if (!a || !b) return NextResponse.json({ ok: false, error: "opinion_not_found" }, { status: 404 });
-      return NextResponse.json({ ok: true, analysis: analyzeDemoCollision(a, b) });
-    }
     const analysis = await analyzeCollision(aId, bId, graph);
-    return NextResponse.json({ ok: true, analysis });
+
+    if (analysis.source === "ai" || graph?.sourceScope !== "demo") {
+      return NextResponse.json({ ok: true, analysis });
+    }
+
+    // analyzeCollision already attempted the configured Zhihu/Eazo provider.
+    // If neither provider is available, keep the curated demo deterministic
+    // instead of exposing the generic AI-unavailable fallback to the showcase.
+    const a = graph.opinions.find((item) => item.id === aId);
+    const b = graph.opinions.find((item) => item.id === bId);
+    if (!a || !b) return NextResponse.json({ ok: false, error: "opinion_not_found" }, { status: 404 });
+    return NextResponse.json({ ok: true, analysis: analyzeDemoCollision(a, b) });
   } catch (error) {
     if (error instanceof AppAIUnavailableError) {
       return NextResponse.json(
