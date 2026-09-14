@@ -150,14 +150,72 @@ function compact(value: string | undefined) {
   return typeof value === "string" ? value.replace(/\s+/g, " ").trim().slice(0, 160) : "";
 }
 
+function normalizeTitle(value: string | undefined) {
+  return compact(value)
+    .replace(/<[^>]+>/g, "")
+    .replace(/[\s?？!！,，.。:：;；、“”‘’"'《》【】()（）]/g, "")
+    .toLocaleLowerCase("zh-CN");
+}
+
+function titleSimilarity(left: string | undefined, right: string | undefined) {
+  const a = normalizeTitle(left);
+  const b = normalizeTitle(right);
+  if (!a || !b) return 0;
+  if (a === b) return 1;
+  if ((a.length >= 6 && b.includes(a)) || (b.length >= 6 && a.includes(b))) return 0.95;
+
+  const grams = (value: string) => {
+    const result = new Set<string>();
+    if (value.length === 1) result.add(value);
+    for (let index = 0; index < value.length - 1; index += 1) {
+      result.add(value.slice(index, index + 2));
+    }
+    return result;
+  };
+  const ga = grams(a);
+  const gb = grams(b);
+  let overlap = 0;
+  for (const gram of ga) if (gb.has(gram)) overlap += 1;
+  return overlap / Math.max(ga.size, gb.size, 1);
+}
+
+function isAnswer(item: ZhihuSearchItem) {
+  return compact(item.ContentType).toLocaleLowerCase("en-US") === "answer";
+}
+
+async function fetchQuestionAnswersWithHttp(
+  questionTitle: string,
+  limit: number,
+): Promise<ZhihuSearchResult> {
+  const safeLimit = Math.max(1, Math.min(10, Math.round(limit)));
+  const result = await searchZhihu(questionTitle, safeLimit);
+  const ranked = result.items
+    .filter((item) => isAnswer(item) && Boolean(item.Summary || item.ContentText))
+    .map((item) => ({ item, score: titleSimilarity(item.Title, questionTitle) }))
+    .filter(({ score }) => score >= 0.55)
+    .sort((left, right) => right.score - left.score || (right.item.VoteUpCount ?? 0) - (left.item.VoteUpCount ?? 0))
+    .slice(0, safeLimit)
+    .map(({ item }) => item);
+
+  return { ...result, items: ranked };
+}
+
 export async function fetchQuestionAnswers(
   questionUrl: string,
   limit = 20,
+  questionTitle?: string,
 ): Promise<ZhihuSearchResult> {
   const canonical = canonicalQuestionUrl(questionUrl);
   if (!canonical) throw new Error("invalid_question_url");
+
+  const secret = process.env.ZHIHU_ACCESS_SECRET?.trim();
+  const normalizedTitle = compact(questionTitle);
+  if (secret && normalizedTitle) {
+    return fetchQuestionAnswersWithHttp(normalizedTitle, limit);
+  }
+
   if (process.platform !== "win32" || !process.env.LOCALAPPDATA) {
-    throw new Error("zhihu_auth_not_configured");
+    throw new Error(secret ? "zhihu_question_title_required" : "zhihu_auth_not_configured");
   }
   const cli = `${process.env.LOCALAPPDATA}\\ZhihuCLI\\current\\zhihu-cli.exe`;
   try {
