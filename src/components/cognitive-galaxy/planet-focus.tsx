@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, useReducedMotion } from "framer-motion";
 import { ArrowRight, ExternalLink, X } from "lucide-react";
@@ -11,9 +10,7 @@ import styles from "./galaxy.module.css";
 
 const INTERACTIVE_PLANET_ROUTES: Record<string, string> = {
   o_stoploss: "o_stoploss",
-  // The first health opinion in the authored demo is the visual stand-in for
-  // the grounded stop-loss sample. Its evolution is still written back to
-  // demo-health-0 in the originating demo galaxy.
+  // Keep the hand-authored reference planet for the first demo opinion.
   "demo-health-0": "o_stoploss",
 };
 
@@ -26,7 +23,6 @@ export function PlanetFocus({ node, galaxy, onClose }: { node: GalaxyNode; galax
   const router = useRouter();
   const search = useSearchParams();
   const reduced = useReducedMotion();
-  const [landed, setLanded] = useState(false);
   const opinion = node.opinion;
   const sources = galaxy.graph.sources.filter((source) => opinion.sourceIds.includes(source.id));
   const related = galaxy.graph.relations.filter((relation) => relation.from === opinion.id || relation.to === opinion.id);
@@ -36,25 +32,25 @@ export function PlanetFocus({ node, galaxy, onClose }: { node: GalaxyNode; galax
     return other ? {relation,other} : null;
   }).filter((item): item is NonNullable<typeof item> => Boolean(item));
   const mapped = INTERACTIVE_PLANET_ROUTES[opinion.id];
-  const canLand = Boolean(mapped || opinion.sourceIds.length > 0);
+
   const land = () => {
-    if (canLand) {
-      const targetOpinionId = mapped ?? opinion.id;
-      const params = new URLSearchParams({ galaxy: galaxy.graph.questionId, origin: opinion.id });
-      const cluster = search.get("cluster");
-      if (cluster) params.set("cluster", cluster);
-      router.push(`/world/${encodeURIComponent(targetOpinionId)}?${params.toString()}`);
-      return;
-    }
-    setLanded(true);
+    // Every opinion can now open a planet interior. Live opinions carry real
+    // sources; authored demo opinions can still be explored with their claim
+    // alone and simply show an empty evidence layer.
+    const targetOpinionId = mapped ?? opinion.id;
+    const params = new URLSearchParams({ galaxy: galaxy.graph.questionId, origin: opinion.id });
+    const cluster = search.get("cluster");
+    if (cluster) params.set("cluster", cluster);
+    router.push(`/world/${encodeURIComponent(targetOpinionId)}?${params.toString()}`);
   };
+
   return <motion.aside className={styles.focus} aria-label={t("focusSummary")} data-el="planet-focus" initial={{ opacity:0, y:reduced ? 0 : 12 }} animate={{ opacity:1, y:0 }} exit={{ opacity:0 }} transition={{ duration:reduced ? 0 : .35 }}>
     <button type="button" className={styles.focusClose} onClick={onClose} aria-label={t("close")}><X size={16}/></button>
     <span className={styles.eyebrow}>{t("focusKicker")}</span>
     <h2>{opinion.title}</h2>
     {opinion.summary !== opinion.title && <p className={styles.summary}>{opinion.summary}</p>}
     <div className={styles.metadata}>
-      <span>{node.sourceCount ? t("sourceCount",{ count:node.sourceCount }) : t("sourceMissing")}</span>
+      <span>{node.sourceCount ? t("sourceCount",{ count:node.sourceCount }) : (galaxy.demo ? "演示观点 · 无原始知乎来源" : t("sourceMissing"))}</span>
       {related.length > 0 && <span>{t("relatedCount",{ count:related.length })}</span>}
       {opinion.derivedFrom?.length ? <span>AI 辅助形成</span> : null}
     </div>
@@ -67,6 +63,6 @@ export function PlanetFocus({ node, galaxy, onClose }: { node: GalaxyNode; galax
       return url ? <a key={source.id} className={styles.sourceLink} href={url} target="_blank" rel="noopener noreferrer">{t("sourceRead")} {index+1} <ExternalLink size={11} style={{ display:"inline" }}/></a> : null;
     })}
     {galaxy.demo && <p className={styles.notice}>{t("demoNotice")}</p>}
-    {!landed ? <button type="button" className={styles.landing} onClick={land} data-el="land-planet">{t("landing")}<ArrowRight size={16}/></button> : <div className={styles.endNote} role="status"><h3>{t("landingSoon")}</h3><p>{t("landingDetail")}</p><button type="button" onClick={onClose}>{t("backToCluster")} →</button></div>}
+    <button type="button" className={styles.landing} onClick={land} data-el="land-planet">{t("landing")}<ArrowRight size={16}/></button>
   </motion.aside>;
 }
