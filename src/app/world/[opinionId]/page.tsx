@@ -2,7 +2,7 @@
 
 import { useParams, useSearchParams } from "next/navigation";
 import "@/components/world/planet-synthesis-extra.module.css";
-import { DynamicPlanetLaw } from "@/components/world/dynamic-planet-law";
+import { DynamicPlanetLawV2 } from "@/components/world/dynamic-planet-law-v2";
 import { EnvironmentGuidanceLayer } from "@/components/world/environment-guidance-layer";
 import { FirstCarrierCue } from "@/components/world/first-carrier-cue";
 import { FirstFragmentCue } from "@/components/world/first-fragment-cue";
@@ -30,7 +30,7 @@ export default function PlanetPage() {
   // Every planet entered from a generated galaxy now uses the same
   // "opinion -> curated mathematical law -> archive" product grammar.
   if (search.has("galaxy")) {
-    return <DynamicPlanetLaw opinionId={opinionId} />;
+    return <DynamicPlanetLawV2 opinionId={opinionId} />;
   }
 
   return (
