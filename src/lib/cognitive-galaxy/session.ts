@@ -1,7 +1,7 @@
 import type { OpinionGraph, QuestionNetwork } from "../opinion/types";
 import { getDemoGraph } from "./demo";
 
-const PREFIX = "cognitive-galaxy:v1:";
+const PREFIX = "cognitive-galaxy:v2:";
 const NETWORK_PREFIX = "lost-universe:v1:";
 const memory = new Map<string, OpinionGraph>();
 const networkMemory = new Map<string, QuestionNetwork>();
