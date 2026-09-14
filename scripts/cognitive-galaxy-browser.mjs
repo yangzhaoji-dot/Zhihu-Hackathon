@@ -76,15 +76,17 @@ try {
   await open("http://localhost:3000/galaxy/demo-luoci?cluster=bogus&opinion=bogus");
   await page.locator('[data-el="galaxy-cluster"]').first().waitFor();
 
-  // Mobile: home → question network → opinion galaxy → focus without overflow.
-  await page.emulateMedia({ reducedMotion: "reduce" });
+  // Mobile: hydrate the homepage with the server-compatible media state first,
+  // then switch to reduced motion for the interactive routes we want to verify.
   await page.setViewportSize({ width: 390, height: 844 });
+  await page.emulateMedia({ reducedMotion: "no-preference" });
   await open("http://localhost:3000/");
   await isolateProductUi();
   const mobileDemo = page.locator('[data-el^="enter-demo-"]').first();
   await mobileDemo.waitFor();
   await capture("06-mobile-home.png");
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+  await page.emulateMedia({ reducedMotion: "reduce" });
   await mobileDemo.click({ force: true });
   await page.locator('[data-el="lost-universe-network"]').waitFor();
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
