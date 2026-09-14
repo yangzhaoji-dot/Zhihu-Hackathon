@@ -9,17 +9,21 @@ import type { LawVisual, PlanetLawDefinition } from "@/lib/opinion/law-catalog";
 import { DynamicArchivePanel } from "./dynamic-archive-panel";
 import styles from "./planet-interior-v3.module.css";
 
+type MatchQuality = "strong" | "plausible" | "exploratory";
+
 type Match = {
   confidence: number;
+  quality?: MatchQuality;
   mechanism: string;
   reason: string;
   mapping: string;
   boundary: string;
   source: "ai" | "fallback";
+  model?: string;
 };
 
 type Result = { law: PlanetLawDefinition; match: Match };
-type ViewMode = "law" | "mapping" | "evidence";
+type ViewMode = "model" | "mapping" | "evidence";
 
 function compact(value: string, limit = 210) {
   const clean = value.replace(/\s+/g, " ").trim();
@@ -30,13 +34,36 @@ function safeZhihuUrl(value: string) {
   return /^https:\/\/(www\.)?zhihu\.com\//i.test(value) ? value : null;
 }
 
-function LawDiagram({ law }: { law: PlanetLawDefinition }) {
+function qualityLabel(match: Match) {
+  const quality = match.quality ?? (match.confidence >= 0.72 ? "strong" : match.confidence >= 0.48 ? "plausible" : "exploratory");
+  if (quality === "strong") return "高结构匹配";
+  if (quality === "plausible") return "可解释匹配";
+  return "探索性匹配";
+}
+
+function ModelDiagram({ law }: { law: PlanetLawDefinition }) {
   const visual: LawVisual = law.visual;
+  const curveAxes = [
+    "bifurcation",
+    "belief",
+    "pareto",
+    "entropy",
+    "growth",
+    "exponential",
+    "loss_aversion",
+    "discount",
+    "diffusion",
+  ].includes(visual);
+
   return (
     <div className={styles.diagramBox} aria-hidden>
       <svg viewBox="0 0 520 280">
-        <line className={styles.axis} x1="52" y1="236" x2="470" y2="236" />
-        <line className={styles.axis} x1="52" y1="236" x2="52" y2="44" />
+        {curveAxes ? (
+          <>
+            <line className={styles.axis} x1="52" y1="236" x2="470" y2="236" />
+            <line className={styles.axis} x1="52" y1="236" x2="52" y2="44" />
+          </>
+        ) : null}
 
         {visual === "bifurcation" ? (
           <>
@@ -66,10 +93,11 @@ function LawDiagram({ law }: { law: PlanetLawDefinition }) {
 
         {visual === "game" ? (
           <>
-            <rect x="132" y="62" width="270" height="174" rx="20" fill="none" stroke="rgba(184,202,234,.14)" />
-            <line className={styles.axis} x1="267" y1="62" x2="267" y2="236" />
-            <line className={styles.axis} x1="132" y1="149" x2="402" y2="149" />
-            <circle className={styles.point} cx="335" cy="194" r="8" />
+            <rect x="132" y="54" width="270" height="182" rx="20" fill="none" stroke="rgba(184,202,234,.14)" />
+            <line className={styles.axis} x1="267" y1="54" x2="267" y2="236" />
+            <line className={styles.axis} x1="132" y1="145" x2="402" y2="145" />
+            <circle className={styles.point} cx="335" cy="192" r="8" />
+            <text x="301" y="218" fill="rgba(226,202,149,.58)" fontSize="11">均衡</text>
           </>
         ) : null}
 
@@ -80,6 +108,8 @@ function LawDiagram({ law }: { law: PlanetLawDefinition }) {
             <path className={styles.secondaryLine} d="M106 150 C162 150 188 212 254 212" />
             <path className={styles.primaryLine} d="M262 92 C322 92 352 70 430 70" />
             <path className={styles.secondaryLine} d="M262 92 C322 92 352 126 430 126" />
+            <text x="276" y="82" fill="rgba(204,218,244,.5)" fontSize="11">继续</text>
+            <text x="276" y="226" fill="rgba(226,202,149,.58)" fontSize="11">停止 / 改道</text>
           </>
         ) : null}
 
@@ -102,14 +132,15 @@ function LawDiagram({ law }: { law: PlanetLawDefinition }) {
             {[0, 1, 2, 3, 4, 5].map((index) => (
               <circle
                 key={index}
-                cx={86 + index * 50}
+                cx={76 + index * 48}
                 cy="150"
                 r="13"
                 fill="rgba(148,177,235,.2)"
                 stroke="rgba(190,207,238,.28)"
               />
             ))}
-            <rect x="390" y="106" width="62" height="88" rx="10" fill="rgba(226,202,149,.08)" stroke="rgba(226,202,149,.28)" />
+            <path className={styles.primaryLine} d="M344 150 L382 150" />
+            <rect x="386" y="105" width="70" height="90" rx="10" fill="rgba(226,202,149,.08)" stroke="rgba(226,202,149,.28)" />
           </>
         ) : null}
 
@@ -120,6 +151,74 @@ function LawDiagram({ law }: { law: PlanetLawDefinition }) {
               ? "M58 226 C106 222 152 204 188 168 C238 118 280 76 382 76 C420 76 445 77 466 77"
               : "M58 228 C158 226 242 207 300 164 C356 122 401 80 462 48"}
           />
+        ) : null}
+
+        {visual === "loss_aversion" ? (
+          <>
+            <line className={styles.axis} x1="260" y1="42" x2="260" y2="238" />
+            <line className={styles.axis} x1="62" y1="142" x2="468" y2="142" />
+            <path className={styles.primaryLine} d="M260 142 C304 112 350 90 458 66" />
+            <path className={styles.secondaryLine} d="M260 142 C220 176 176 208 82 236" />
+            <text x="372" y="56" fill="rgba(204,218,244,.5)" fontSize="11">收益</text>
+            <text x="82" y="218" fill="rgba(226,202,149,.58)" fontSize="11">损失侧更陡</text>
+          </>
+        ) : null}
+
+        {visual === "load" ? (
+          <>
+            <rect x="120" y="76" width="280" height="130" rx="22" fill="rgba(145,174,232,.06)" stroke="rgba(187,204,235,.2)" />
+            <rect x="140" y="96" width="112" height="90" rx="12" fill="rgba(145,174,232,.2)" />
+            <rect x="260" y="96" width="92" height="90" rx="12" fill="rgba(226,202,149,.22)" />
+            <rect x="360" y="96" width="58" height="90" rx="12" fill="rgba(219,147,147,.15)" stroke="rgba(219,147,147,.24)" />
+            <text x="154" y="145" fill="rgba(218,228,244,.6)" fontSize="11">任务本身</text>
+            <text x="270" y="145" fill="rgba(232,214,174,.65)" fontSize="11">外在干扰</text>
+            <text x="365" y="145" fill="rgba(226,177,177,.6)" fontSize="11">溢出</text>
+            <text x="195" y="226" fill="rgba(204,218,244,.42)" fontSize="11">有限工作记忆容量</text>
+          </>
+        ) : null}
+
+        {visual === "selection" ? (
+          <>
+            {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((index) => (
+              <circle key={index} cx={84 + (index % 4) * 38} cy={86 + Math.floor(index / 4) * 48} r="8" fill="rgba(151,179,234,.22)" />
+            ))}
+            <rect x="250" y="62" width="32" height="160" rx="12" fill="rgba(226,202,149,.08)" stroke="rgba(226,202,149,.25)" />
+            <path className={styles.secondaryLine} d="M210 142 L248 142" />
+            {[0, 1, 2, 3].map((index) => (
+              <circle key={index} className={styles.point} cx={346 + (index % 2) * 46} cy={112 + Math.floor(index / 2) * 58} r="8" />
+            ))}
+            <text x="72" y="236" fill="rgba(204,218,244,.42)" fontSize="11">原始总体</text>
+            <text x="332" y="208" fill="rgba(226,202,149,.58)" fontSize="11">可见样本</text>
+          </>
+        ) : null}
+
+        {visual === "discount" ? (
+          <>
+            <path className={styles.primaryLine} d="M64 64 C100 96 128 142 166 176 C214 218 292 230 462 232" />
+            <line className={styles.secondaryLine} x1="64" y1="64" x2="462" y2="232" />
+            <circle className={styles.point} cx="124" cy="136" r="6" />
+          </>
+        ) : null}
+
+        {visual === "feedback" ? (
+          <>
+            <circle cx="150" cy="140" r="42" fill="rgba(147,176,234,.08)" stroke="rgba(187,204,235,.2)" />
+            <circle cx="370" cy="140" r="42" fill="rgba(226,202,149,.08)" stroke="rgba(226,202,149,.22)" />
+            <path className={styles.primaryLine} d="M192 120 C240 70 310 70 328 120" />
+            <path className={styles.secondaryLine} d="M328 160 C286 214 220 214 192 160" />
+            <text x="124" y="145" fill="rgba(215,225,242,.6)" fontSize="11">状态 A</text>
+            <text x="344" y="145" fill="rgba(232,214,174,.66)" fontSize="11">状态 B</text>
+            <text x="208" y="66" fill="rgba(204,218,244,.42)" fontSize="11">结果反过来改变条件</text>
+          </>
+        ) : null}
+
+        {visual === "diffusion" ? (
+          <>
+            <path className={styles.primaryLine} d="M58 226 C132 224 164 214 198 184 C238 148 244 96 302 72 C344 54 398 52 462 52" />
+            {[0, 1, 2, 3].map((index) => (
+              <circle key={index} className={styles.point} cx={116 + index * 88} cy={[220, 182, 92, 56][index]} r="5" />
+            ))}
+          </>
         ) : null}
       </svg>
       <div className={styles.diagramNote}>{law.mechanism}</div>
@@ -135,7 +234,7 @@ export function DynamicPlanetLawV2({ opinionId }: { opinionId: string }) {
   const [graph, setGraph] = useState<OpinionGraph | null | undefined>(undefined);
   const [result, setResult] = useState<Result | null>(null);
   const [failed, setFailed] = useState(false);
-  const [mode, setMode] = useState<ViewMode>("law");
+  const [mode, setMode] = useState<ViewMode>("model");
   const [archiveOpen, setArchiveOpen] = useState(false);
 
   useEffect(() => {
@@ -160,7 +259,7 @@ export function DynamicPlanetLawV2({ opinionId }: { opinionId: string }) {
     const controller = new AbortController();
     setResult(null);
     setFailed(false);
-    setMode("law");
+    setMode("model");
     setArchiveOpen(false);
 
     void fetch("/api/opinion/law", {
@@ -171,7 +270,7 @@ export function DynamicPlanetLawV2({ opinionId }: { opinionId: string }) {
     })
       .then(async (response) => {
         const data = await response.json();
-        if (!response.ok || data?.ok !== true) throw new Error(data?.error || "law_match_failed");
+        if (!response.ok || data?.ok !== true) throw new Error(data?.error || "model_match_failed");
         setResult({ law: data.law, match: data.match });
       })
       .catch((error) => {
@@ -204,8 +303,8 @@ export function DynamicPlanetLawV2({ opinionId }: { opinionId: string }) {
           <section className={styles.loading}>
             <div className={styles.loadingCore}>
               <LoaderCircle className={styles.spin} size={38} />
-              <h1>正在校准这颗星球的法则。</h1>
-              <p>只从已经校验的数学原型中匹配，不现场发明公式。</p>
+              <h1>正在寻找这颗星球的解释模型。</h1>
+              <p>候选来自数学、经济学、心理学、统计学、系统科学与社会科学；只从人工整理的真实模型中选择，不现场发明。</p>
             </div>
           </section>
         </div>
@@ -223,8 +322,8 @@ export function DynamicPlanetLawV2({ opinionId }: { opinionId: string }) {
           </header>
           <section className={styles.loading}>
             <div className={styles.loadingCore}>
-              <h1>这颗星球暂时没有可靠法则。</h1>
-              <p>观点仍然保留。没有足够强的结构匹配时，不强行给它套一个公式。</p>
+              <h1>这颗星球暂时没有可靠的解释模型。</h1>
+              <p>观点仍然保留。模型解析失败时，不用一个看似漂亮的公式强行覆盖现实。</p>
             </div>
           </section>
         </div>
@@ -247,13 +346,14 @@ export function DynamicPlanetLawV2({ opinionId }: { opinionId: string }) {
   }
 
   const visibleRecords = sources.slice(0, 3);
+  const conceptual = !law.formula;
 
   return (
     <main className={styles.page} data-el="dynamic-planet-interior">
       <div className={styles.shell}>
         <header className={styles.topbar}>
           <button type="button" onClick={back} className={styles.backButton}><ArrowLeft size={15} />返回主星系</button>
-          <span className={styles.coordinates}>PLANET INTERIOR · {law.name.toUpperCase()}</span>
+          <span className={styles.coordinates}>PLANET INTERIOR · {law.kindLabel.toUpperCase()}</span>
         </header>
 
         <section className={styles.hero}>
@@ -272,43 +372,50 @@ export function DynamicPlanetLawV2({ opinionId }: { opinionId: string }) {
           <article className={styles.lawPanel}>
             <div className={styles.lawIdentity}>
               <div>
-                <span className={styles.kicker}>PLANET LAW</span>
+                <span className={styles.kicker}>EXPLANATORY MODEL · {law.kindLabel}</span>
                 <h2 className={styles.lawName}>{law.name}</h2>
                 <div className={styles.lawField}>{law.field}</div>
-                <div className={styles.formula}>{law.formula}</div>
+                <div
+                  className={styles.formula}
+                  style={conceptual ? { fontSize: "clamp(24px, 2.7vw, 42px)", lineHeight: 1.28, letterSpacing: "-.012em" } : undefined}
+                >
+                  {law.formula ?? law.signature}
+                </div>
+                {law.formula ? <div className={styles.lawField}>{law.signature}</div> : null}
+                <div className={styles.lawField}>{law.provenance}</div>
               </div>
               <div className={styles.confidence}>
-                <span>结构匹配</span>
+                <span>{qualityLabel(match)}</span>
                 <strong>{Math.round(match.confidence * 100)}%</strong>
                 <div className={styles.confidenceTrack}><i style={{ width: `${Math.round(match.confidence * 100)}%` }} /></div>
               </div>
             </div>
-            <LawDiagram law={law} />
+            <ModelDiagram law={law} />
           </article>
         </section>
 
         <section className={styles.workspace}>
           <nav className={styles.tabBar} aria-label="星球内部视图">
-            <button type="button" className={`${styles.tab} ${mode === "law" ? styles.tabActive : ""}`} onClick={() => setMode("law")}>法则</button>
+            <button type="button" className={`${styles.tab} ${mode === "model" ? styles.tabActive : ""}`} onClick={() => setMode("model")}>解释模型</button>
             <button type="button" className={`${styles.tab} ${mode === "mapping" ? styles.tabActive : ""}`} onClick={() => setMode("mapping")}>结构映射</button>
-            <button type="button" className={`${styles.tab} ${mode === "evidence" ? styles.tabActive : ""}`} onClick={() => setMode("evidence")}>知乎证据</button>
+            <button type="button" className={`${styles.tab} ${mode === "evidence" ? styles.tabActive : ""}`} onClick={() => setMode("evidence")}>人类证据</button>
           </nav>
 
-          {mode === "law" ? (
+          {mode === "model" ? (
             <div className={styles.contentGrid}>
               <article className={styles.card}>
-                <span className={styles.cardLabel}>法则原义</span>
-                <h2>这个公式本来在说什么</h2>
+                <span className={styles.cardLabel}>MODEL ORIGIN</span>
+                <h2>{law.formula ? "这个形式原本在解释什么" : "这个模型原本在解释什么"}</h2>
                 <p>{law.definition}</p>
               </article>
               <article className={styles.card}>
-                <span className={styles.cardLabel}>数学机制</span>
+                <span className={styles.cardLabel}>CORE MECHANISM</span>
                 <h2>{law.mechanism}</h2>
                 <p>{match.reason}</p>
               </article>
               <article className={styles.card}>
-                <span className={styles.cardLabel}>适用范围</span>
-                <h2>适合观察这些结构</h2>
+                <span className={styles.cardLabel}>MODEL RANGE</span>
+                <h2>它适合照亮什么</h2>
                 <div className={styles.chipList}>{law.goodFor.map((item) => <span className={styles.chip} key={item}>{item}</span>)}</div>
                 <div className={styles.chipList}>{law.badFor.map((item) => <span className={styles.chip} key={item}>不适合 · {item}</span>)}</div>
               </article>
@@ -319,7 +426,7 @@ export function DynamicPlanetLawV2({ opinionId }: { opinionId: string }) {
             <div className={styles.contentGrid}>
               <article className={styles.bridge}>
                 <div className={styles.bridgeSide}>
-                  <span className={styles.cardLabel}>数学里</span>
+                  <span className={styles.cardLabel}>原模型中</span>
                   <h2>{law.mechanism}</h2>
                   <p>{law.definition}</p>
                 </div>
@@ -331,8 +438,8 @@ export function DynamicPlanetLawV2({ opinionId }: { opinionId: string }) {
                 </div>
               </article>
               <article className={styles.boundaryCard}>
-                <span className={styles.cardLabel}>LAW BOUNDARY</span>
-                <h2>法则到这里为止</h2>
+                <span className={styles.cardLabel}>MODEL BOUNDARY</span>
+                <h2>模型到这里为止</h2>
                 <p>{match.boundary}</p>
               </article>
             </div>
@@ -365,7 +472,7 @@ export function DynamicPlanetLawV2({ opinionId }: { opinionId: string }) {
 
         <div className={styles.bottomDock}>
           <div className={styles.dockCopy}>
-            公式负责暴露结构，知乎回答负责保留经验与反例。两者不会互相替代。
+            解释模型负责暴露结构，知乎回答负责保留经验、条件与反例。模型不是判决，也不替现实下结论。
           </div>
           <button type="button" className={styles.archiveButton} onClick={() => setArchiveOpen(true)}>
             <BookOpen size={16} />展开完整遗声档案
