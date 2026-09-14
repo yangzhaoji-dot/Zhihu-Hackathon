@@ -1,9 +1,9 @@
 import type { OpinionGraph } from "../opinion/types";
-import { DEMO_GRAPH, DEMO_ID } from "./demo";
+import { getDemoGraph } from "./demo";
 
 const PREFIX = "cognitive-galaxy:v1:";
 const memory = new Map<string, OpinionGraph>();
-const MAX_ENTRIES = 5;
+const MAX_ENTRIES = 8;
 
 function cloneGraph(graph: OpinionGraph): OpinionGraph {
   return JSON.parse(JSON.stringify(graph)) as OpinionGraph;
@@ -46,9 +46,10 @@ export function readGalaxy(id: string): OpinionGraph | null {
       }
     } catch { /* fall through */ }
   }
-  // The authored demo is the pristine fallback. Once the user evolves it,
-  // the saved session snapshot above wins over this fixture.
-  return id === DEMO_ID ? cloneGraph(DEMO_GRAPH) : null;
+  // Authored homepage demos are pristine local fixtures. Once the user evolves
+  // one, the saved session snapshot above wins over the authored original.
+  const demo = getDemoGraph(id);
+  return demo ? cloneGraph(demo) : null;
 }
 
 export function resetGalaxy(id: string): OpinionGraph | null {
@@ -60,7 +61,8 @@ export function resetGalaxy(id: string): OpinionGraph | null {
       sessionStorage.setItem(`${PREFIX}index`, JSON.stringify(ids.filter((item) => item !== id)));
     } catch { /* storage is optional */ }
   }
-  return id === DEMO_ID ? cloneGraph(DEMO_GRAPH) : null;
+  const demo = getDemoGraph(id);
+  return demo ? cloneGraph(demo) : null;
 }
 
 export function galaxyUrl(id: string, cluster?: string | null, opinion?: string | null): string {
