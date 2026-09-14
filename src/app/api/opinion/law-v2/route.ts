@@ -57,6 +57,21 @@ function fallbackLaw(text: string) {
   return hit ? { id: hit[1], confidence: hit[2] } : { id: "bellman", confidence: 0.36 };
 }
 
+function fallbackMatch(law: PlanetLawDefinitionLike, confidence: number, model: string) {
+  return {
+    confidence,
+    quality: quality(confidence),
+    mechanism: law.mechanism,
+    reason: `这条观点与“${law.mechanism}”存在可解释的结构相似性。`,
+    mapping: `借用 ${law.name} 观察观点中的条件、边界与变化关系，而不是把科学量直接替换成人生变量。`,
+    boundary: "这是结构类比，不是因果证明；模型不能替代现实条件、个体差异与真实证据。",
+    source: "fallback" as const,
+    model,
+  };
+}
+
+type PlanetLawDefinitionLike = (typeof ALL_LAWS)[number];
+
 export async function POST(request: NextRequest) {
   let body: { opinionId?: unknown; title?: unknown; summary?: unknown; sources?: unknown; demo?: unknown };
   try {
@@ -77,17 +92,29 @@ export async function POST(request: NextRequest) {
   if (demo) {
     if (!opinionId) return NextResponse.json({ ok: false, error: "missing_demo_opinion_id" }, { status: 400 });
     const preset = getDemoLawPreset(opinionId);
-    const law = preset ? findLaw(preset.lawId) : null;
-    if (!preset || !law) return NextResponse.json({ ok: false, error: "demo_law_not_curated" }, { status: 404 });
+    const curatedLaw = preset ? findLaw(preset.lawId) : null;
+    if (preset && curatedLaw) {
+      return NextResponse.json({
+        ok: true,
+        law: curatedLaw,
+        match: {
+          ...preset,
+          quality: quality(preset.confidence),
+          source: "fallback",
+          model: "authored-demo",
+        },
+      });
+    }
+
+    // Fusion/fork planets are created during a demo session and therefore do
+    // not exist in the authored preset table. Keep the demo complete offline
+    // by using the same deterministic structural fallback instead of calling AI.
+    const fallback = fallbackLaw(`${title} ${summary}`);
+    const fallbackModel = findLaw(fallback.id) ?? findLaw("bellman")!;
     return NextResponse.json({
       ok: true,
-      law,
-      match: {
-        ...preset,
-        quality: quality(preset.confidence),
-        source: "fallback",
-        model: "authored-demo",
-      },
+      law: fallbackModel,
+      match: fallbackMatch(fallbackModel, Math.max(0.52, fallback.confidence), "evolved-demo"),
     });
   }
 
