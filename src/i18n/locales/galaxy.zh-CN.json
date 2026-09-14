@@ -8,15 +8,15 @@
   "continue": "继续",
   "pause": "暂停",
   "play": "播放",
-  "introLabel": "认知宇宙序章",
+  "introLabel": "失落宇宙序章",
   "phase": "第一阶段 · 星图探索",
-  "heroKicker": "每一个问题，都是一片未曾抵达的星系。",
+  "heroKicker": "这里不是繁星，是旧文明留下的失落宇宙。",
   "heroTitle": "你想进入\n哪片星系？",
-  "heroDescription": "穿过观点的星群，靠近一种不同的思考。",
+  "heroDescription": "每一个问题都曾被无数人反复追问。如今，它们只剩下彼此之间微弱的引力。",
   "searchLabel": "搜索知乎问题",
-  "searchPlaceholder": "输入一个问题，开始探索…",
+  "searchPlaceholder": "输入一个问题，开始追寻旧文明留下的答案…",
   "search": "寻找星系",
-  "searching": "正在检索问题与观点…",
+  "searching": "正在恢复问题坐标与观点档案…",
   "cancel": "取消",
   "recommendations": "从这些问题启航",
   "demo": "演示星系",
@@ -27,10 +27,10 @@
   "gradeTitle": "大学应该卷绩点，还是做项目？",
   "liveRecommendation": "检索知乎讨论",
   "homeFootnote": "一个问题形成星系，每一个观点成为星球。",
-  "selectQuestion": "你想探索的是哪一个问题？",
+  "selectQuestion": "你想追寻的是哪一个问题？",
   "noCandidates": "没有找到可进入的问题，请换个关键词。",
-  "emptySearch": "先输入一个想探索的问题。",
-  "searchFailed": "暂时无法构建这个星系。可以重试，或先进入演示星系。",
+  "emptySearch": "先输入一个想追寻的问题。",
+  "searchFailed": "暂时无法恢复这个星系。可以重试，或先进入演示星系。",
   "searchUnavailable": "知乎检索服务尚未配置或授权。演示星系仍可完整体验。",
   "searchEmpty": "当前检索材料不足，尚不能形成观点星系。试试另一个问题。",
   "searchLimited": "检索服务暂时繁忙，请稍后重试。",
@@ -39,11 +39,11 @@
   "unavailable": "这片星系暂时无法恢复。",
   "unavailableDetail": "本次浏览器可能没有保存它的材料，或服务端暂时无法读取。返回主页重新搜索即可。",
   "overview": "星系全景",
-  "chooseDirection": "请选择一个方向，深入这片认知星系。",
-  "choosePlanet": "靠近一个观点，看看它在说什么。",
-  "overviewKicker": "问题星系 · 全景",
-  "clusterKicker": "思考星群",
-  "coreLabel": "问题核心",
+  "chooseDirection": "这座问题星系仍在旧文明的残骸中运转。选择一个思考方向，寻找围绕它留下的观点星球。",
+  "choosePlanet": "每颗星球都是旧人类曾真实持有的一种判断。靠近它，看看这种思考为何留下。",
+  "overviewKicker": "失落宇宙 · 问题星系",
+  "clusterKicker": "观点星群 · 人类认知遗迹",
+  "coreLabel": "未完的追问",
   "nodes": "{{count}} 条观点",
   "directions": "{{count}} 个方向",
   "demoNotice": "演示数据 · 观点为人工编写的交互样例，不代表知乎真实回答或统计。",
@@ -57,17 +57,17 @@
   "reset": "重置视角",
   "zoomIn": "放大",
   "zoomOut": "缩小",
-  "drag": "拖动空白处环顾 · 点击深入",
+  "drag": "拖动空白处环顾 · 点击进入遗迹",
   "back": "返回上一级",
   "close": "关闭",
-  "focusKicker": "观点星球",
+  "focusKicker": "人类观点遗迹 · 星球",
   "sourceCount": "{{count}} 条关联材料",
   "sourceMissing": "尚无可追溯材料",
   "sourceRead": "查看原回答",
   "relatedCount": "{{count}} 条观点关系",
-  "landing": "登陆星球",
+  "landing": "登陆遗迹星球",
   "landingSoon": "星球表面尚未开放",
-  "landingDetail": "你已抵达本阶段的终点。下一阶段将在这里展开主张、依据与边界。",
+  "landingDetail": "这颗星球保存着一条曾真实存在的人类判断。继续登陆，寻找它的主张、理由、条件与依据。",
   "backToCluster": "继续探索星群",
   "opinionsList": "这个方向中的观点",
   "emptyGalaxy": "这批材料还没有可展示的真人观点。",
@@ -129,28 +129,28 @@
   },
   "intro": [
     {
-      "line": "很久以前，人工智能革命爆发。",
-      "detail": "思考开始拥有另一种形态。"
+      "line": "很久以前，人类同时生活在现实与数字世界。",
+      "detail": "他们把问题、争论、经验与判断留在了网络深处。"
     },
     {
-      "line": "数字与现实，逐渐失去边界。",
-      "detail": "世界不再只有一种展开方式。"
+      "line": "后来，人类文明从这里消失了。",
+      "detail": "城市沉寂，海岸荒芜；但保存于知乎的认知档案仍在运行。"
     },
     {
-      "line": "后来，地球消失了。",
-      "detail": ""
+      "line": "某个无人知晓的时刻，数字世界与残存的物质世界发生了重合。",
+      "detail": "城市、海洋、森林与废墟，被问题和观点重新塑形。"
     },
     {
-      "line": "但人类的思想没有消失。",
-      "detail": "问题、争论与记忆，仍在黑暗中闪烁。"
+      "line": "旧人类的追问因此获得了新的引力。",
+      "detail": "相邻的问题彼此牵引，尚未结束的争论仍在黑暗中回响。"
     },
     {
-      "line": "它们坍缩成了一片高维认知宇宙。",
-      "detail": "立场之外，还有依据、前提与价值。"
+      "line": "问题形成星系；观点凝结成星球。",
+      "detail": "回答、理由、条件与依据沉入星球表面，成为文明遗迹。"
     },
     {
-      "line": "一个问题，一片星系。一个观点，一颗星球。",
-      "detail": "寻知者，从这里开始探索。"
+      "line": "这里不是答案之地。这里是一座失落的宇宙。",
+      "detail": "寻知者，沿着他们未完成的追问继续前行。"
     }
   ],
   "dimensionWords": [
