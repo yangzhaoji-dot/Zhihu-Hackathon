@@ -28,7 +28,7 @@ export function DynamicArchivePanel({
 }) {
   const opinion = graph.opinions.find((item) => item.id === originId || item.id === opinionId);
   const records = opinion
-    ? graph.sources.filter((source) => opinion.sourceIds.includes(source.id)).slice(0, 2)
+    ? graph.sources.filter((source) => opinion.sourceIds.includes(source.id)).slice(0, 3)
     : [];
 
   return (
@@ -36,7 +36,7 @@ export function DynamicArchivePanel({
       <header className={styles.topbar}>
         <button type="button" onClick={onBack} className={styles.backButton}>
           <ArrowLeft size={15} />
-          返回星球法则
+          返回星球内部
         </button>
         <span>ECHO ARCHIVE · LIVE</span>
       </header>
@@ -45,9 +45,9 @@ export function DynamicArchivePanel({
         <div className={styles.heroIcon}><Radar size={22} /></div>
         <div>
           <span className={styles.eyebrow}>纪元遗声 · 知乎档案</span>
-          <h1>法则之外，留下的是人的声音。</h1>
+          <h1>模型之外，留下的是人的声音。</h1>
           <p>
-            这些回答参与形成了这颗观点星球。它们不是数学法则的证明，而是被保存下来的经验、条件与反例。
+            这些回答参与形成了这颗观点星球。解释模型负责暴露结构，而这里保留真实经验、条件、反例与无法被模型压缩的细节。
           </p>
         </div>
       </section>
@@ -67,7 +67,7 @@ export function DynamicArchivePanel({
               <div className={styles.cardHead}>
                 <div>
                   <span className={styles.number}>ECHO RECORD {String(index + 1).padStart(2, "0")}</span>
-                  <h2>{index === 0 ? "最先被捕获的声音" : "另一条留下来的声音"}</h2>
+                  <h2>{index === 0 ? "最先被捕获的声音" : index === 1 ? "另一条留下来的声音" : "第三条现实切面"}</h2>
                 </div>
                 <span className={styles.upvotes}>{source.upvotes.toLocaleString()} 赞同 · 知乎记录</span>
               </div>
@@ -87,8 +87,8 @@ export function DynamicArchivePanel({
               ) : null}
 
               <div className={styles.interpretation}>
-                <span>与星球法则的回响</span>
-                <p>这条回答参与形成了当前观点。我们保留它，是为了让法则重新接受具体经验的检验，而不是让公式替现实下结论。</p>
+                <span>与解释模型的回响</span>
+                <p>这条回答参与形成了当前观点。保留它，是为了检查模型是否真正照到了现实机制，以及它遗漏了哪些条件和例外。</p>
               </div>
 
               <div className={styles.cardFoot}>
@@ -108,7 +108,7 @@ export function DynamicArchivePanel({
       <section className={styles.note}>
         <span>档案注记</span>
         <p>
-          当前单屏只展示两条代表记录。法则提供解释结构，知乎回答保留人的经验；两者只在相似机制上彼此照亮。
+          解释模型不是观点的证明。模型提供结构，知乎回答保留人的经验、条件和反例；当两者冲突时，应优先回到原始材料，而不是强迫现实服从模型。
         </p>
       </section>
     </main>
