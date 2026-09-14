@@ -1,9 +1,16 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { aiJsonWithProvider, type AiMessage } from "@/lib/opinion/ai-client";
 import { LAW_CATALOG, getPlanetLaw } from "@/lib/opinion/law-catalog";
+import { SCIENTIFIC_LAWS } from "@/lib/opinion/scientific-law-additions";
 import { DEMO_GRAPHS, getDemoLawPreset } from "@/lib/cognitive-galaxy/demo";
 
 export const runtime = "nodejs";
+
+const ALL_LAWS = [...LAW_CATALOG, ...SCIENTIFIC_LAWS];
+
+function findLaw(id: string) {
+  return getPlanetLaw(id) ?? SCIENTIFIC_LAWS.find((law) => law.id === id) ?? null;
+}
 
 type MatchPayload = {
   selectedId?: unknown;
@@ -17,7 +24,7 @@ type MatchPayload = {
 const SYSTEM: AiMessage = {
   role: "system",
   content:
-    "你是观点星球的解释模型匹配器。候选库包含数学方程、经济学模型、认知与决策理论、统计偏差、系统科学与传播学模型。" +
+    "你是观点星球的解释模型匹配器。候选库包含数学、物理、化学、生物、信息科学、经济与决策科学中的真实公式、定律和形式模型。" +
     "你只能从给定候选中选择，不得发明公式、理论、论文或来源，也不得修改候选中的定义。" +
     "先识别观点的底层机制，再判断哪个模型提供了真正的结构增量；关键词相似不是充分理由。" +
     "如果没有很强的对应关系，仍可返回最接近的候选，但 confidence 必须低于 0.45。" +
@@ -30,6 +37,12 @@ function compact(value: unknown, max = 320) {
 
 function fallbackLaw(text: string): { id: string; confidence: number } {
   const rules: Array<[RegExp, string, number]> = [
+    [/(温度|反应速率|一点变化.*很大|条件敏感|非线性放大)/, "arrhenius", 0.7],
+    [/(边际收益|饱和|处理上限|投入越来越多|上限)/, "michaelis_menten", 0.71],
+    [/(恢复|适应|接近环境|差距越大|趋近)/, "newton_cooling", 0.66],
+    [/(扩散|梯度|高密度|低密度|迁移|资源流动)/, "fick_diffusion", 0.66],
+    [/(恢复力|弹性|纠偏|偏离平衡|反作用)/, "hooke", 0.65],
+    [/(传播|感染|接触率|扩散速度|群体采用)/, "sir", 0.68],
     [/(幸存|成功案例|留下来的人|样本|看得到|看不见|选择偏差|幸存者)/, "selection_bias", 0.68],
     [/(拖延|即时满足|短期诱惑|眼前舒服|以后再说|未来的自己)/, "hyperbolic_discounting", 0.68],
     [/(损失|失去|舍不得|亏|后悔|风险厌恶|参考点)/, "prospect_theory", 0.66],
@@ -41,8 +54,8 @@ function fallbackLaw(text: string): { id: string; confidence: number } {
     [/(内卷|竞争|大家都|没人先|博弈|互相|对手)/, "nash", 0.65],
     [/(什么时候|何时|继续|停止|退出|辞职|offer|读研|考研|要不要等)/, "optimal_stopping", 0.67],
     [/(长期|未来|路径|后续|机会|规划|选择空间|下一步状态)/, "bellman", 0.64],
-    [/(临界|撑不住|恢复|崩溃|阈值|失稳|耗尽)/, "saddle_node", 0.65],
-    [/(平台期|饱和|上限|边际|收益递减)/, "logistic", 0.65],
+    [/(临界|撑不住|崩溃|阈值|失稳|耗尽)/, "saddle_node", 0.65],
+    [/(平台期|边际|收益递减)/, "logistic", 0.65],
     [/(不确定|混乱|未知|信息量|分布很散)/, "entropy", 0.62],
     [/(排队|积压|拥堵|等待|任务堆积|工单)/, "little_law", 0.66],
     [/(复利|积累|长期主义|习惯|差距扩大|滚雪球)/, "exponential", 0.64],
@@ -82,13 +95,13 @@ export async function POST(request: NextRequest) {
     : [];
   if (!title) return NextResponse.json({ ok: false, error: "missing_opinion" }, { status: 400 });
 
-  // Homepage showcase galaxies are completely deterministic and never depend
-  // on external AI/API availability. Free-form search continues below through
-  // the real Zhihu + model pipeline.
+  // Homepage showcase galaxies are deterministic and never depend on external
+  // AI/API availability. Free-form search continues below through the real
+  // Zhihu + model pipeline.
   const demoOpinion = demoOpinionByTitle(title);
   if (demoOpinion) {
     const preset = getDemoLawPreset(demoOpinion.id);
-    const law = preset ? getPlanetLaw(preset.lawId) : null;
+    const law = preset ? findLaw(preset.lawId) : null;
     if (preset && law) {
       return NextResponse.json({
         ok: true,
@@ -107,7 +120,7 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  const catalog = LAW_CATALOG.map((law) => ({
+  const catalog = ALL_LAWS.map((law) => ({
     id: law.id,
     name: law.name,
     kind: law.kind,
@@ -125,7 +138,7 @@ export async function POST(request: NextRequest) {
       `观点：${title}\n` +
       `说明：${summary || "无"}\n` +
       `代表性知乎回答摘录：\n${sources.length ? sources.map((s, i) => `[${i + 1}] ${s}`).join("\n") : "无"}\n\n` +
-      `候选解释模型库：\n${JSON.stringify(catalog)}\n\n` +
+      `候选科学法则库：\n${JSON.stringify(catalog)}\n\n` +
       "请先判断现实机制，再匹配模型。输出：" +
       '{"selectedId":"只能是候选 id","confidence":0到1,"mechanism":"一句话概括这个现实观点的底层机制","reason":"为什么这个模型结构最接近，不超过90字","mapping":"模型中的关键结构如何对应到这个观点，不超过140字","boundary":"这个模型无法解释或不能推出什么，不超过100字"}',
   };
@@ -133,8 +146,8 @@ export async function POST(request: NextRequest) {
   const ai = await aiJsonWithProvider<MatchPayload>([SYSTEM, user]);
   const fallback = fallbackLaw(`${title} ${summary} ${sources.join(" ")}`);
   const selectedId = compact(ai?.value.selectedId, 80);
-  const selectedLaw = getPlanetLaw(selectedId);
-  const law = selectedLaw ?? getPlanetLaw(fallback.id)!;
+  const selectedLaw = findLaw(selectedId);
+  const law = selectedLaw ?? findLaw(fallback.id)!;
   const confidenceRaw = Number(ai?.value.confidence);
   const confidence = selectedLaw && Number.isFinite(confidenceRaw)
     ? Math.max(0, Math.min(1, confidenceRaw))
