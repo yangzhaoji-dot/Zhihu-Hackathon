@@ -150,7 +150,8 @@ export async function collideOpinions(
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ aId, bId, graph }),
   });
-  const data = await json<{ analysis: CollisionAnalysis }>(res);
+  const data = await json<{ analysis?: CollisionAnalysis; error?: string; code?: string }>(res);
+  if (!res.ok || !data.analysis) throw new Error(data.error || data.code || "collision_failed");
   return data.analysis;
 }
 
