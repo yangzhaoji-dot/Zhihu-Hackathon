@@ -11,7 +11,9 @@ describe("cognitive galaxy", () => {
     const result=buildGalaxy(DEMO_GRAPH,DEMO_ASSIGNMENTS);
     expect(result.demo).toBe(true); expect(result.count).toBe(48); expect(result.clusters.length).toBe(6);
     expect(new Set(result.clusters.flatMap((g)=>g.nodes.map((n)=>n.opinion.id))).size).toBe(48);
-    expect(DEMO_GRAPH.sources).toEqual([]);
+    expect(DEMO_GRAPH.sources.length).toBeGreaterThanOrEqual(2);
+    expect(DEMO_GRAPH.sources.every((source)=>safeSourceUrl(source.url)!==null)).toBe(true);
+    expect(DEMO_GRAPH.opinions.every((opinion)=>opinion.sourceIds.length>0)).toBe(true);
   });
   test("layout is deterministic and independent of API opinion ordering", () => {
     const a=buildGalaxy(DEMO_GRAPH,DEMO_ASSIGNMENTS),b=buildGalaxy({...DEMO_GRAPH,opinions:[...DEMO_GRAPH.opinions].reverse()},DEMO_ASSIGNMENTS);
