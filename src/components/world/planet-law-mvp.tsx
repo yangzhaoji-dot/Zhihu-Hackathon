@@ -2,7 +2,7 @@
 
 import { ArrowLeft, ArrowRight, BookOpen, Telescope } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import styles from "./planet-law-mvp.module.css";
 
 type LawSlide = {
@@ -119,22 +119,6 @@ export function PlanetLawMvp({ opinionId }: { opinionId: string }) {
       setLeaving(false);
     }, 260);
   };
-
-  useEffect(() => {
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === "ArrowRight" || event.key === " ") {
-        event.preventDefault();
-        if (last) openObservations();
-        else changeSlide(index + 1);
-      }
-      if (event.key === "ArrowLeft") {
-        event.preventDefault();
-        changeSlide(index - 1);
-      }
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [index, last, leaving]);
 
   return (
     <main className={styles.page} data-el="planet-law-mvp">
