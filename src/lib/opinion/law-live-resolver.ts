@@ -1,1 +1,0 @@
-export const LIVE_RESOLVER_VERSION=1;
