@@ -20,7 +20,7 @@ export default function Home() {
   const { t } = useTranslation("galaxy");
   const router = useRouter();
   const reduced = useReducedMotion();
-  const [intro, setIntro] = useState(false);
+  const [intro, setIntro] = useState(true);
   const [query, setQuery] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -36,12 +36,11 @@ export default function Home() {
   }, []);
   useEffect(() => {
     const frame = requestAnimationFrame(() => {
-      try { if (!localStorage.getItem(INTRO_KEY) && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) setIntro(true); } catch { /* Still allow use when storage is blocked. */ }
+      try { if (localStorage.getItem(INTRO_KEY) === "ci-skip") setIntro(false); } catch { /* Normal users always see the prologue. */ }
     });
     return () => { cancelAnimationFrame(frame); invalidateRequests(); };
   }, [invalidateRequests]);
   const finishIntro = useCallback(() => {
-    try { localStorage.setItem(INTRO_KEY, "seen"); } catch { /* Optional preference. */ }
     setIntro(false);
     window.setTimeout(() => searchInput.current?.focus({ preventScroll:true }), 80);
   }, []);
@@ -121,10 +120,10 @@ export default function Home() {
           <div className={styles.sectionLabel}><span>{t("recommendations")}</span><i/></div>
           <div className={styles.cards}>
             {HOME_DEMOS.map((item, index) => (
-              <Link href={galaxyUrl(item.id)} className={`${styles.card} ${index === 0 ? styles.demoCard : ""}`} key={item.id} data-el={`enter-demo-${item.index}`}>
+              <Link href={`/demo/${encodeURIComponent(item.id)}`} className={`${styles.card} ${index === 0 ? styles.demoCard : ""}`} key={item.id} data-el={`enter-demo-${item.index}`}>
                 <span className={styles.cardIndex}>{item.index} / <b>DEMO</b></span>
                 <h2>{item.title}</h2>
-                <small>{item.meta}</small>
+                <small>{item.meta} · 在线优先恢复真实知乎来源</small>
                 <ArrowUpRight className={styles.cardArrow} size={17}/>
               </Link>
             ))}
