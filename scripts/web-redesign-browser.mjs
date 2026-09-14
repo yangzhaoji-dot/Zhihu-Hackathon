@@ -72,7 +72,9 @@ try {
   await page.locator('[data-el="collision-panel"]').waitFor();
   await page.getByRole("button", { name: /分析观点碰撞/ }).click({ force: true });
   await page.locator('[data-el="collision-analysis"]').waitFor();
-  assert.ok(await page.getByText(/不冒充真实知乎证据/).count());
+  // The panel renders the verdict (rather than evidence.a/evidence.b), and it
+  // must explicitly state that the demo is not comparing invented evidence.
+  assert.ok(await page.getByText(/不比较虚构证据强弱/).count());
   await shot("04-demo-collision.png");
   await page.locator('[data-el="fuse-planets"]').click({ force: true });
   await page.waitForURL((url) => (url.searchParams.get("opinion") || "").startsWith("fusion_"), { timeout: 8000 });
