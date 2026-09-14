@@ -15,7 +15,11 @@ await context.addInitScript(() => localStorage.setItem("cognitive-galaxy:intro:v
 const page = await context.newPage();
 const errors = [];
 page.setDefaultTimeout(20000);
-page.on("pageerror", (error) => errors.push(error.message));
+page.on("pageerror", (error) => {
+  const detail = `${page.url()} :: ${error.message}`;
+  console.error("[pageerror]", detail);
+  errors.push(detail);
+});
 const open = (url) => page.goto(url, { waitUntil: "domcontentloaded" });
 const waitUrl = (url) => page.waitForURL(url, { waitUntil: "domcontentloaded" });
 const capture = (name) => page.screenshot({ path: path.join(out, name), fullPage: true });
