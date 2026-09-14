@@ -1,0 +1,11 @@
+:global([data-el="dynamic-planet-story-v5"]) article > div > strong {
+  display: none;
+}
+
+:global([data-el="dynamic-planet-story-v5"]) article > footer > span {
+  display: none;
+}
+
+:global([data-el="dynamic-planet-story-v5"]) article > footer {
+  justify-content: flex-end;
+}
