@@ -1,12 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowRight, LoaderCircle, Orbit, Radio, Sparkles } from "lucide-react";
 import { SpaceShell } from "@/components/cognitive-galaxy/space-shell";
 import { searchGalaxy } from "@/lib/api/cognitive-galaxy";
-import { galaxyUrl, readGalaxy, readQuestionNetwork, saveGalaxy } from "@/lib/cognitive-galaxy/session";
-import type { Question, QuestionRelation } from "@/lib/opinion/types";
+import { galaxyUrl, readQuestionNetwork, saveGalaxy } from "@/lib/cognitive-galaxy/session";
+import type { Question, QuestionNetwork, QuestionRelation } from "@/lib/opinion/types";
 import styles from "./page.module.css";
 
 const KIND_LABEL: Record<string, string> = {
@@ -31,10 +31,19 @@ export default function LostUniversePage() {
   const { questionId: rawId } = useParams<{ questionId: string }>();
   const questionId = decodeURIComponent(rawId);
   const router = useRouter();
+  const [network, setNetwork] = useState<QuestionNetwork | null>(null);
+  const [hydrated, setHydrated] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const network = useMemo(() => readQuestionNetwork(questionId), [questionId]);
-  const coreGraph = useMemo(() => readGalaxy(questionId), [questionId]);
+
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => {
+      setNetwork(readQuestionNetwork(questionId));
+      setHydrated(true);
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [questionId]);
+
   const byId = useMemo(() => new Map(network?.questions.map((question) => [question.id, question]) ?? []), [network]);
 
   const enter = async (question: Question) => {
@@ -58,8 +67,12 @@ export default function LostUniversePage() {
     }
   };
 
+  if (!hydrated) {
+    return <SpaceShell map><main className={styles.missing}><Radio size={24}/><h1>正在校准旧文明坐标</h1><p>残存的认知信号正在重新进入可观测范围。</p></main></SpaceShell>;
+  }
+
   if (!network) {
-    return <SpaceShell map><main className={styles.missing}><Radio size={24}/><h1>信号已经消散</h1><p>这片问题星系没有保存在当前航行记录中。</p><button onClick={() => router.push(coreGraph ? galaxyUrl(questionId) : "/")}>返回可观测区域</button></main></SpaceShell>;
+    return <SpaceShell map><main className={styles.missing}><Radio size={24}/><h1>信号已经消散</h1><p>这片问题星系没有保存在当前航行记录中。</p><button onClick={() => router.push("/")}>返回可观测区域</button></main></SpaceShell>;
   }
 
   return <SpaceShell map>
