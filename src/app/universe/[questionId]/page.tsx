@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowRight, LoaderCircle, Orbit, Radio, Sparkles } from "lucide-react";
 import { SpaceShell } from "@/components/cognitive-galaxy/space-shell";
 import { searchGalaxy } from "@/lib/api/cognitive-galaxy";
 import { galaxyUrl, readGalaxy, readQuestionNetwork, saveGalaxy } from "@/lib/cognitive-galaxy/session";
-import type { Question, QuestionNetwork, QuestionRelation } from "@/lib/opinion/types";
+import type { Question, QuestionRelation } from "@/lib/opinion/types";
 import styles from "./page.module.css";
 
 const KIND_LABEL: Record<string, string> = {
@@ -31,14 +31,9 @@ export default function LostUniversePage() {
   const { questionId: rawId } = useParams<{ questionId: string }>();
   const questionId = decodeURIComponent(rawId);
   const router = useRouter();
-  const [network, setNetwork] = useState<QuestionNetwork | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    setNetwork(readQuestionNetwork(questionId));
-  }, [questionId]);
-
+  const network = useMemo(() => readQuestionNetwork(questionId), [questionId]);
   const coreGraph = useMemo(() => readGalaxy(questionId), [questionId]);
   const byId = useMemo(() => new Map(network?.questions.map((question) => [question.id, question]) ?? []), [network]);
 
