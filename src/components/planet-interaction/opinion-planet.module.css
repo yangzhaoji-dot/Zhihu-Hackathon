@@ -1,5 +1,5 @@
 .planetTarget,
-.planetLabel {
+.planetLabelGroup {
   cursor: pointer;
 }
 
@@ -22,10 +22,32 @@
     drop-shadow(0 0 15px color-mix(in srgb, var(--cg-growth) 75%, transparent));
 }
 
+.planetLabelGroup {
+  transition: opacity 160ms ease;
+}
+
+.planetLabelPlate {
+  fill-opacity: 0.9;
+  stroke-opacity: 0.5;
+  stroke-width: 0.65px;
+  filter: drop-shadow(0 3px 8px rgb(0 0 0 / 58%));
+}
+
 .planetLabel {
-  filter: drop-shadow(0 2px 4px rgb(0 0 0 / 50%));
+  font-weight: 650;
+  letter-spacing: 0.015em;
   paint-order: stroke;
-  stroke: color-mix(in srgb, var(--cg-bg-deep) 90%, transparent);
+  stroke: color-mix(in srgb, var(--cg-bg-deep) 78%, transparent);
   stroke-linejoin: round;
-  stroke-width: 1.2px;
+  stroke-width: 0.65px;
+}
+
+.planetLabelGroup[data-emphasized="true"] .planetLabelPlate {
+  fill-opacity: 0.98;
+  stroke-opacity: 0.95;
+  stroke-width: 0.9px;
+}
+
+.planetLabelGroup[data-emphasized="true"] .planetLabel {
+  font-weight: 760;
 }
