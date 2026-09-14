@@ -55,7 +55,12 @@ export function buildGalaxy(graph: OpinionGraph, assignments: Record<string, Dim
   }
   const groups = new Map<Dimension, Opinion[]>();
   for (const opinion of unique.values()) {
-    const id = assignments[opinion.id] ?? classify(opinion);
+    // Authored demos store their intended thinking direction in camp. Live data
+    // never trusts camp for layout and still falls back to keyword clustering.
+    const authoredDimension = demo && opinion.camp && DIMENSIONS.includes(opinion.camp as Dimension)
+      ? opinion.camp as Dimension
+      : null;
+    const id = assignments[opinion.id] ?? authoredDimension ?? classify(opinion);
     groups.set(id, [...(groups.get(id) ?? []), opinion]);
   }
   const ids = DIMENSIONS.filter((id) => groups.has(id));
