@@ -54,9 +54,9 @@ try {
   assert.ok(await page.getByText(/ẋ = r \+ x²|科学|方程/).count());
   await shot("02-planet-page-01.png");
   await advanceStoryToArchive();
-  assert.ok(await page.getByText(/没有绑定真实知乎来源/).count());
-  assert.equal(await page.locator('a').filter({ hasText: /原回答/ }).count(), 0);
-  await shot("03-demo-archive-boundary.png");
+  const realArchiveLinks = page.locator('a[href^="https://www.zhihu.com/question/"][href*="/answer/"]');
+  assert.ok(await realArchiveLinks.count() >= 1);
+  await shot("03-demo-real-zhihu-archive.png");
 
   await page.getByRole("button", { name: /返回主星系/ }).click({ force: true });
   await page.waitForURL((url) => url.pathname.endsWith("/galaxy/demo-luoci") && url.searchParams.get("opinion") === "demo-health-0");
@@ -73,8 +73,6 @@ try {
   await page.getByRole("button", { name: /分析观点碰撞/ }).click({ force: true });
   const collision = page.locator('[data-el="collision-analysis"]');
   await collision.waitFor();
-  // Collision is API-first in production and deterministic-fallback in offline CI.
-  // Validate the rendered result contract instead of pinning the test to fallback copy.
   assert.ok((await collision.locator("section").count()) >= 4);
   assert.ok((await collision.locator("h3").innerText()).trim().length > 0);
   await shot("04-demo-collision.png");
@@ -96,6 +94,8 @@ try {
   for (const [galaxyId, cluster, opinionId, count] of others) {
     await openDemoPlanet(galaxyId, cluster, opinionId, count);
     assert.ok(await page.getByText(/观点星球/).count());
+    await advanceStoryToArchive();
+    assert.ok(await page.locator('a[href^="https://www.zhihu.com/question/"][href*="/answer/"]').count() >= 1);
     await page.getByRole("button", { name: /返回主星系/ }).click({ force: true });
     await page.waitForURL((url) => url.pathname.endsWith(`/galaxy/${galaxyId}`) && url.searchParams.get("opinion") === opinionId);
     await isolateProductUi();
@@ -113,7 +113,7 @@ try {
 
   await fs.writeFile(path.join(out, "result.json"), JSON.stringify({
     ok: true,
-    checks: ["four homepage demos", "six-page planet story", "demo source honesty", "return focus", "API-first collision with offline fallback", "fusion", "reset", "three additional demos", "mobile overflow"],
+    checks: ["four homepage demos", "six-page planet story", "real Zhihu demo archives", "return focus", "API-first collision with offline fallback", "fusion", "reset", "three additional demos", "mobile overflow"],
     pageErrors: errors,
   }, null, 2));
 } catch (error) {
