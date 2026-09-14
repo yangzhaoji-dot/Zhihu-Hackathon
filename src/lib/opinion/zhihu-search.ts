@@ -2,9 +2,11 @@ import "server-only";
 
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
+import { parseQuestionAnswersPayload } from "./zhihu-question-answers";
 
 const execFileAsync = promisify(execFile);
 const SEARCH_ENDPOINT = "https://developer.zhihu.com/api/v1/content/zhihu_search";
+const QUESTION_ANSWERS_ENDPOINT = "https://developer.zhihu.com/api/v1/content/question_answers";
 const CACHE_TTL_MS = 10 * 60 * 1000;
 
 export interface ZhihuSearchItem {
@@ -16,8 +18,10 @@ export interface ZhihuSearchItem {
   VoteUpCount?: number;
   CommentCount?: number;
   AuthorName?: string;
+  AuthorAvatar?: string;
   AuthorSignature?: string;
   AuthorBadgeText?: string;
+  EditTime?: number;
   Summary?: string;
 }
 
@@ -25,6 +29,7 @@ export interface ZhihuSearchResult {
   items: ZhihuSearchItem[];
   hasMore: boolean;
   searchHashId?: string;
+  total?: number;
 }
 
 export interface ZhihuQuestionCandidate {
@@ -33,7 +38,7 @@ export interface ZhihuQuestionCandidate {
   sourceCount: number;
 }
 
-interface ZhihuResponse {
+type ZhihuSearchResponse = {
   Code?: number;
   Message?: string;
   Data?: {
@@ -41,19 +46,30 @@ interface ZhihuResponse {
     HasMore?: boolean;
     SearchHashId?: string;
   };
+};
+
+const searchCache = new Map<string, { expiresAt: number; result: Promise<ZhihuSearchResult> }>();
+const answerCache = new Map<string, { expiresAt: number; result: Promise<ZhihuSearchResult> }>();
+
+function authHeaders(secret: string) {
+  return {
+    Accept: "application/json",
+    Authorization: `Bearer ${secret}`,
+    "X-Request-Timestamp": String(Math.floor(Date.now() / 1000)),
+  };
 }
 
-const cache = new Map<string, { expiresAt: number; result: Promise<ZhihuSearchResult> }>();
-
-function parseResponse(payload: string): ZhihuSearchResult {
-  let response: ZhihuResponse;
+function parseSearchResponse(payload: string): ZhihuSearchResult {
+  let response: ZhihuSearchResponse;
   try {
-    response = JSON.parse(payload) as ZhihuResponse;
+    response = JSON.parse(payload) as ZhihuSearchResponse;
   } catch {
     throw new Error("zhihu_invalid_response");
   }
   if (response.Code !== 0 || !response.Data) {
-    throw new Error(response.Code === 30001 ? "zhihu_rate_limited" : "zhihu_request_failed");
+    if (response.Code === 30001) throw new Error("zhihu_rate_limited");
+    if (response.Code === 20001) throw new Error("zhihu_auth_failed");
+    throw new Error("zhihu_request_failed");
   }
   return {
     items: Array.isArray(response.Data.Items) ? response.Data.Items : [],
@@ -67,16 +83,12 @@ async function searchWithHttp(query: string, count: number, secret: string) {
   url.searchParams.set("Query", query);
   url.searchParams.set("Count", String(count));
   const response = await fetch(url, {
-    headers: {
-      Accept: "application/json",
-      Authorization: `Bearer ${secret}`,
-      "X-Request-Timestamp": String(Math.floor(Date.now() / 1000)),
-    },
+    headers: authHeaders(secret),
     cache: "no-store",
     signal: AbortSignal.timeout(15_000),
   });
   if (!response.ok) throw new Error(`zhihu_http_${response.status}`);
-  return parseResponse(await response.text());
+  return parseSearchResponse(await response.text());
 }
 
 async function searchWithLocalCli(query: string, count: number) {
@@ -90,7 +102,7 @@ async function searchWithLocalCli(query: string, count: number) {
       ["search", "zhihu", "--query", query, "--count", String(count)],
       { windowsHide: true, timeout: 20_000, maxBuffer: 2 * 1024 * 1024 },
     );
-    return parseResponse(stdout);
+    return parseSearchResponse(stdout);
   } catch (error) {
     if (error instanceof Error && error.message.startsWith("zhihu_")) throw error;
     throw new Error("zhihu_cli_unavailable");
@@ -99,9 +111,7 @@ async function searchWithLocalCli(query: string, count: number) {
 
 async function performSearch(query: string, count: number) {
   const secret = process.env.ZHIHU_ACCESS_SECRET?.trim();
-  return secret
-    ? searchWithHttp(query, count, secret)
-    : searchWithLocalCli(query, count);
+  return secret ? searchWithHttp(query, count, secret) : searchWithLocalCli(query, count);
 }
 
 export function searchZhihu(query: string, count = 10): Promise<ZhihuSearchResult> {
@@ -109,14 +119,14 @@ export function searchZhihu(query: string, count = 10): Promise<ZhihuSearchResul
   if (!normalized) return Promise.reject(new Error("empty_query"));
   const safeCount = Math.max(1, Math.min(10, Math.round(count)));
   const key = `${normalized.toLocaleLowerCase("zh-CN")}:${safeCount}`;
-  const cached = cache.get(key);
+  const cached = searchCache.get(key);
   if (cached && cached.expiresAt > Date.now()) return cached.result;
-
   const result = performSearch(normalized, safeCount).catch((error) => {
-    cache.delete(key);
+    searchCache.delete(key);
     throw error;
   });
-  cache.set(key, { expiresAt: Date.now() + CACHE_TTL_MS, result });
+  searchCache.set(key, { expiresAt: Date.now() + CACHE_TTL_MS, result });
+  if (searchCache.size > 30) searchCache.delete(searchCache.keys().next().value as string);
   return result;
 }
 
@@ -127,108 +137,122 @@ export function canonicalQuestionUrl(value: string): string | null {
   return match?.[0] ?? null;
 }
 
-export function questionCandidates(
-  items: ZhihuSearchItem[],
-  fallbackTitle: string,
-): ZhihuQuestionCandidate[] {
+function compact(value: string | undefined) {
+  return typeof value === "string" ? value.replace(/\s+/g, " ").trim().slice(0, 160) : "";
+}
+
+export function questionCandidates(items: ZhihuSearchItem[], fallbackTitle: string): ZhihuQuestionCandidate[] {
   const byUrl = new Map<string, ZhihuQuestionCandidate>();
   for (const item of items) {
     const url = canonicalQuestionUrl(item.Url ?? "");
     if (!url) continue;
     const existing = byUrl.get(url);
     const title = compact(item.Title) || existing?.title || fallbackTitle;
-    byUrl.set(url, {
-      url,
-      title,
-      sourceCount: (existing?.sourceCount ?? 0) + 1,
-    });
+    byUrl.set(url, { url, title, sourceCount: (existing?.sourceCount ?? 0) + 1 });
   }
   return [...byUrl.values()].slice(0, 3);
 }
 
-function compact(value: string | undefined) {
-  return typeof value === "string" ? value.replace(/\s+/g, " ").trim().slice(0, 160) : "";
-}
-
-function normalizeTitle(value: string | undefined) {
-  return compact(value)
-    .replace(/<[^>]+>/g, "")
-    .replace(/[\s?？!！,，.。:：;；、“”‘’"'《》【】()（）]/g, "")
-    .toLocaleLowerCase("zh-CN");
-}
-
-function titleSimilarity(left: string | undefined, right: string | undefined) {
-  const a = normalizeTitle(left);
-  const b = normalizeTitle(right);
-  if (!a || !b) return 0;
-  if (a === b) return 1;
-  if ((a.length >= 6 && b.includes(a)) || (b.length >= 6 && a.includes(b))) return 0.95;
-
-  const grams = (value: string) => {
-    const result = new Set<string>();
-    if (value.length === 1) result.add(value);
-    for (let index = 0; index < value.length - 1; index += 1) {
-      result.add(value.slice(index, index + 2));
-    }
-    return result;
-  };
-  const ga = grams(a);
-  const gb = grams(b);
-  let overlap = 0;
-  for (const gram of ga) if (gb.has(gram)) overlap += 1;
-  return overlap / Math.max(ga.size, gb.size, 1);
-}
-
-function isAnswer(item: ZhihuSearchItem) {
-  return compact(item.ContentType).toLocaleLowerCase("en-US") === "answer";
+async function fetchQuestionAnswersPage(questionUrl: string, offset: number, limit: number, secret: string) {
+  const url = new URL(QUESTION_ANSWERS_ENDPOINT);
+  url.searchParams.set("QuestionUrl", questionUrl);
+  url.searchParams.set("Offset", String(offset));
+  url.searchParams.set("Limit", String(limit));
+  const response = await fetch(url, {
+    headers: authHeaders(secret),
+    cache: "no-store",
+    signal: AbortSignal.timeout(20_000),
+  });
+  if (!response.ok) throw new Error(`zhihu_question_answers_http_${response.status}`);
+  return parseQuestionAnswersPayload(await response.json());
 }
 
 async function fetchQuestionAnswersWithHttp(
-  questionTitle: string,
-  limit: number,
-): Promise<ZhihuSearchResult> {
-  const safeLimit = Math.max(1, Math.min(10, Math.round(limit)));
-  const result = await searchZhihu(questionTitle, safeLimit);
-  const ranked = result.items
-    .filter((item) => isAnswer(item) && Boolean(item.Summary || item.ContentText))
-    .map((item) => ({ item, score: titleSimilarity(item.Title, questionTitle) }))
-    .filter(({ score }) => score >= 0.55)
-    .sort((left, right) => right.score - left.score || (right.item.VoteUpCount ?? 0) - (left.item.VoteUpCount ?? 0))
-    .slice(0, safeLimit)
-    .map(({ item }) => item);
-
-  return { ...result, items: ranked };
-}
-
-export async function fetchQuestionAnswers(
   questionUrl: string,
-  limit = 20,
+  limit: number,
+  secret: string,
   questionTitle?: string,
 ): Promise<ZhihuSearchResult> {
-  const canonical = canonicalQuestionUrl(questionUrl);
-  if (!canonical) throw new Error("invalid_question_url");
+  const target = Math.max(1, Math.min(50, Math.round(limit)));
+  const requestLimit = Math.min(50, Math.max(target, Math.min(50, target * 2)));
+  const collected: ZhihuSearchItem[] = [];
+  const seen = new Set<string>();
+  let offset = 0;
+  let isEnd = false;
+  let total: number | undefined;
 
-  const secret = process.env.ZHIHU_ACCESS_SECRET?.trim();
-  const normalizedTitle = compact(questionTitle);
-  if (secret && normalizedTitle) {
-    return fetchQuestionAnswersWithHttp(normalizedTitle, limit);
+  // Usually one 40–50 item request is enough for the 20-source graph. Follow
+  // NextOffset only when filtering left us short, and cap automatic pagination
+  // to protect the daily question_answers quota.
+  for (let pageIndex = 0; pageIndex < 3 && !isEnd && collected.length < target; pageIndex += 1) {
+    const page = await fetchQuestionAnswersPage(questionUrl, offset, requestLimit, secret);
+    isEnd = page.isEnd;
+    total = page.total ?? total;
+    for (const item of page.items) {
+      const identity = item.ContentToken || item.Url || "";
+      if (!identity || seen.has(identity)) continue;
+      seen.add(identity);
+      collected.push({
+        Title: compact(questionTitle) || undefined,
+        ContentType: item.ContentType || "Answer",
+        ContentID: item.ContentToken,
+        ContentText: item.Summary,
+        Summary: item.Summary,
+        Url: item.Url,
+      });
+    }
+    if (collected.length >= target || isEnd) break;
+    if (page.nextOffset === undefined || page.nextOffset <= offset) break;
+    offset = page.nextOffset;
   }
 
+  return {
+    items: collected.slice(0, target),
+    hasMore: collected.length > target || !isEnd,
+    total,
+  };
+}
+
+async function fetchQuestionAnswersWithCli(questionUrl: string, limit: number): Promise<ZhihuSearchResult> {
   if (process.platform !== "win32" || !process.env.LOCALAPPDATA) {
-    throw new Error(secret ? "zhihu_question_title_required" : "zhihu_auth_not_configured");
+    throw new Error("zhihu_auth_not_configured");
   }
   const cli = `${process.env.LOCALAPPDATA}\\ZhihuCLI\\current\\zhihu-cli.exe`;
   try {
     const { stdout } = await execFileAsync(
       cli,
-      ["question", "answers", "--question-url", canonical, "--limit", String(Math.max(1, Math.min(20, Math.round(limit))))],
-      { windowsHide: true, timeout: 20_000, maxBuffer: 4 * 1024 * 1024 },
+      ["question", "answers", "--question-url", questionUrl, "--limit", String(Math.max(1, Math.min(50, Math.round(limit))))],
+      { windowsHide: true, timeout: 25_000, maxBuffer: 4 * 1024 * 1024 },
     );
-    const result = parseResponse(stdout);
-    const items = result.items.filter((item) => Boolean(item.Summary || item.ContentText));
-    return { ...result, items };
+    const result = parseSearchResponse(stdout);
+    return { ...result, items: result.items.filter((item) => Boolean(item.Summary || item.ContentText)) };
   } catch (error) {
     if (error instanceof Error && error.message.startsWith("zhihu_")) throw error;
     throw new Error("zhihu_question_answers_failed");
   }
+}
+
+export function fetchQuestionAnswers(
+  questionUrl: string,
+  limit = 20,
+  questionTitle?: string,
+): Promise<ZhihuSearchResult> {
+  const canonical = canonicalQuestionUrl(questionUrl);
+  if (!canonical) return Promise.reject(new Error("invalid_question_url"));
+  const safeLimit = Math.max(1, Math.min(50, Math.round(limit)));
+  const key = `${canonical}:${safeLimit}`;
+  const cached = answerCache.get(key);
+  if (cached && cached.expiresAt > Date.now()) return cached.result;
+
+  const secret = process.env.ZHIHU_ACCESS_SECRET?.trim();
+  const result = (secret
+    ? fetchQuestionAnswersWithHttp(canonical, safeLimit, secret, questionTitle)
+    : fetchQuestionAnswersWithCli(canonical, safeLimit)
+  ).catch((error) => {
+    answerCache.delete(key);
+    throw error;
+  });
+  answerCache.set(key, { expiresAt: Date.now() + CACHE_TTL_MS, result });
+  if (answerCache.size > 20) answerCache.delete(answerCache.keys().next().value as string);
+  return result;
 }
