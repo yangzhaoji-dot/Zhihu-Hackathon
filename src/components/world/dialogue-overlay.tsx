@@ -1,6 +1,6 @@
 "use client";
 
-import { ExternalLink, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, ExternalLink, X } from "lucide-react";
 import Image from "next/image";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -66,11 +66,24 @@ export function DialogueOverlay({
     else setIndex((i) => i + 1);
   }, [isLast, onClose, openedSourceId]);
 
+  const rewind = useCallback(() => {
+    if (openedSourceId) {
+      setOpenedSourceId(null);
+      return;
+    }
+    setIndex((i) => Math.max(0, i - 1));
+  }, [openedSourceId]);
+
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         event.stopPropagation();
         onClose();
+        return;
+      }
+      if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        rewind();
         return;
       }
       event.preventDefault();
@@ -79,7 +92,7 @@ export function DialogueOverlay({
     // capture 阶段接管键盘，避免世界页的移动键监听同时响应。
     window.addEventListener("keydown", onKeyDown, { capture: true });
     return () => window.removeEventListener("keydown", onKeyDown, { capture: true });
-  }, [advance, onClose]);
+  }, [advance, onClose, rewind]);
 
   const visibleActions = useMemo(
     () =>
@@ -178,9 +191,27 @@ export function DialogueOverlay({
 
           <div className={styles.footer}>
             <span className={styles.progress}>{index + 1} / {lines.length}</span>
-            <span className={styles.hint}>
-              {isLast ? t("world.dialogueUi.closeHint") : t("world.dialogueUi.nextHint")}
-            </span>
+            <div className={styles.pager} onClick={(e) => e.stopPropagation()}>
+              <button
+                type="button"
+                className={styles.pageButton}
+                onClick={rewind}
+                disabled={index === 0}
+                aria-label={t("world.dialogueUi.previous")}
+              >
+                <ChevronLeft size={15} aria-hidden />
+                {t("world.dialogueUi.previous")}
+              </button>
+              <button
+                type="button"
+                className={`${styles.pageButton} ${styles.pageButtonPrimary}`}
+                onClick={advance}
+                aria-label={isLast ? t("world.dialogueUi.finish") : t("world.dialogueUi.next")}
+              >
+                {isLast ? t("world.dialogueUi.finish") : t("world.dialogueUi.next")}
+                <ChevronRight size={15} aria-hidden />
+              </button>
+            </div>
           </div>
         </div>
       </div>

@@ -214,8 +214,10 @@ export class QuestionSpace3D {
       font: isCore ? "600 48px" : "600 38px",
       maxWidth: 520,
     });
-    label.position.set(0, radius + (isCore ? 2 : 1.4), 0);
     label.scale.multiplyScalar(isCore ? 3 : 2.3);
+    // Position from the sprite's actual rendered height. Titles can wrap to
+    // several lines, so a fixed center offset lets them overlap nearby copy.
+    label.position.set(0, radius + (isCore ? 1.2 : 0.8) + label.scale.y / 2, 0);
     group.add(label);
 
     // count sub-label for non-core
@@ -225,8 +227,10 @@ export class QuestionSpace3D {
         font: "500 30px",
         maxWidth: 300,
       });
-      sub.position.set(0, radius + 0.6, 0);
       sub.scale.multiplyScalar(1.6);
+      // Keep the count on the opposite side of the planet. This guarantees a
+      // clear gap even when the question title wraps to two or three lines.
+      sub.position.set(0, -radius - 0.45 - sub.scale.y / 2, 0);
       group.add(sub);
     }
 

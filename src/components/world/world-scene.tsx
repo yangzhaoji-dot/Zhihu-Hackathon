@@ -27,6 +27,7 @@ interface WorldSceneProps {
   worldElRef: RefObject<HTMLDivElement | null>;
   playerElRef: RefObject<HTMLDivElement | null>;
   highlightId: string | null;
+  collectedOpinionIds: string[];
   onTap: (pos: GridPos, npcId: string | null) => void;
 }
 
@@ -48,6 +49,19 @@ function PoiGlyph({ poi, locked }: { poi: Poi; locked: boolean }) {
     case "monument": return <Landmark size={24} aria-hidden />;
     case "observatory": return <Flag size={22} aria-hidden />;
     case "bridge":
+      return (
+        <span className={styles.bridgeModel} aria-hidden>
+          <span className={styles.bridgeShadow} />
+          <span className={styles.bridgeApproachLeft} />
+          <span className={styles.bridgeApproachRight} />
+          <span className={styles.bridgeDeck} />
+          <span className={`${styles.bridgeRail} ${styles.bridgeRailTop}`} />
+          <span className={`${styles.bridgeRail} ${styles.bridgeRailBottom}`} />
+          <span className={`${styles.bridgePier} ${styles.bridgePierLeft}`} />
+          <span className={`${styles.bridgePier} ${styles.bridgePierRight}`} />
+          {locked && <span className={styles.bridgeLock}><Lock size={16} /></span>}
+        </span>
+      );
     case "gate":
       return locked ? <Lock size={18} aria-hidden /> : <span className={styles.bridgeDeck} aria-hidden />;
     case "chest": return <span className={styles.chest} aria-hidden />;
@@ -65,6 +79,7 @@ export function WorldScene({
   worldElRef,
   playerElRef,
   highlightId,
+  collectedOpinionIds,
   onTap,
 }: WorldSceneProps) {
   const fogLifted = (zone: Zone) =>
@@ -185,6 +200,12 @@ export function WorldScene({
             }}
             aria-label={npc.role}
           >
+            {collectedOpinionIds.includes(npc.opinion.id) && (
+              <span className={styles.cardBubble} aria-label="已取得观点卡">
+                <span className={styles.cardBubbleEmoji}>🎴</span>
+                <span className={styles.cardBubbleTail} />
+              </span>
+            )}
             {npc.sprite ? (
               <Image
                 className={styles.npcSprite}

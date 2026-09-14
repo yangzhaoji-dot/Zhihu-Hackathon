@@ -262,13 +262,16 @@ export class CosmosEngine {
       this.trail(ev.clientX, ev.clientY, d.node.kind === "ai" ? TRAIL_VIOLET : TRAIL_CYAN);
     }
     this.draw();
-    this.checkCollision(d.node);
   }
 
   private onPointerUp() {
     if (this.longPressTimer) clearTimeout(this.longPressTimer);
-    if (this.drag && !this.drag.moved) {
-      this.cb.onTap(this.drag.node);
+    const drag = this.drag;
+    if (drag && !drag.moved) {
+      this.cb.onTap(drag.node);
+    } else if (drag?.moved) {
+      // Let nodes overlap during dragging; release confirms the final collision.
+      this.checkCollision(drag.node);
     }
     this.drag = null;
   }

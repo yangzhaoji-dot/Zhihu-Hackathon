@@ -257,6 +257,9 @@
     "dialogueUi": {
       "you": "You",
       "close": "Close",
+      "previous": "Previous",
+      "next": "Next",
+      "finish": "Finish",
       "nextHint": "Press any key / tap to continue",
       "closeHint": "Press any key / tap to end the conversation"
     },
