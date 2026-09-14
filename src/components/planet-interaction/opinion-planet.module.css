@@ -1,0 +1,31 @@
+.planetTarget,
+.planetLabel {
+  cursor: pointer;
+}
+
+.planetTarget:focus-visible {
+  outline: none;
+}
+
+.planetTarget:focus-visible > circle:first-child {
+  stroke: var(--cg-accent);
+  stroke-width: 1;
+}
+
+.planetTarget[data-impact="true"] {
+  filter: brightness(1.65) saturate(1.45)
+    drop-shadow(0 0 12px color-mix(in srgb, var(--cg-accent) 80%, transparent));
+}
+
+.planetTarget[data-fusion-birth="true"] {
+  filter: brightness(1.35) saturate(1.3)
+    drop-shadow(0 0 15px color-mix(in srgb, var(--cg-growth) 75%, transparent));
+}
+
+.planetLabel {
+  filter: drop-shadow(0 2px 4px rgb(0 0 0 / 50%));
+  paint-order: stroke;
+  stroke: color-mix(in srgb, var(--cg-bg-deep) 90%, transparent);
+  stroke-linejoin: round;
+  stroke-width: 1.2px;
+}

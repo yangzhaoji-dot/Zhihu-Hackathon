@@ -13,12 +13,9 @@
 .stage::after { content:""; position:absolute; inset:0; pointer-events:none; background:linear-gradient(90deg,rgba(4,9,18,.18),transparent 12%,transparent 88%,rgba(4,9,18,.18)); }
 .map { width:100%; height:100%; display:block; touch-action:none; cursor:grab; overflow:hidden; position:relative; z-index:1; }
 .map:active { cursor:grabbing; }
-.clusterTarget,.planetTarget,.planetLabel { cursor:pointer; }
+.clusterTarget { cursor:pointer; }
 .clusterTarget:focus-visible { outline:none; }
 .clusterTarget:focus-visible>ellipse { stroke:var(--cg-accent); stroke-width:1; stroke-dasharray:4 5; }
-.planetTarget:focus-visible { outline:none; }
-.planetTarget:focus-visible>circle:first-child { stroke:var(--cg-accent); stroke-width:1; }
-.planetLabel { paint-order:stroke; stroke:rgba(5,12,22,.9); stroke-width:1.2px; stroke-linejoin:round; filter:drop-shadow(0 2px 4px rgba(0,0,0,.5)); }
 .mapControls { position:absolute; z-index:3; right:clamp(24px,4vw,72px); bottom:18px; display:flex; gap:3px; border:1px solid var(--cg-line); border-radius:9px; background:rgba(11,27,47,.74); padding:4px; backdrop-filter:blur(18px); box-shadow:0 12px 42px rgba(0,0,0,.18); }
 .mapControls button { width:36px; height:36px; border:0; background:none; color:var(--cg-muted); display:grid; place-items:center; border-radius:5px; }
 .mapControls button:hover { color:var(--cg-ink); background:rgba(146,190,222,.1); }
