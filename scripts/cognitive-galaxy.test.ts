@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { buildGalaxy, hash, safeSourceUrl, classify, fitBounds } from "../src/lib/cognitive-galaxy/model";
 import { DEMO_GRAPH, DEMO_ASSIGNMENTS } from "../src/lib/cognitive-galaxy/demo";
 import { galaxyUrl, isOpinionGraph, readGalaxy } from "../src/lib/cognitive-galaxy/session";
+import { parseQuestionAnswersPayload } from "../src/lib/opinion/zhihu-question-answers";
 import zh from "../src/i18n/locales/galaxy.zh-CN.json";
 import en from "../src/i18n/locales/galaxy.en-US.json";
 
@@ -59,5 +60,25 @@ describe("cognitive galaxy", () => {
   test("Chinese and English namespaces have identical keys", () => {
     const keys=(v:unknown,p=""):string[] => v && typeof v==="object" ? Object.entries(v).flatMap(([k,w])=>keys(w,`${p}.${k}`)) : [p];
     expect(keys(zh).sort()).toEqual(keys(en).sort());
+  });
+
+  test("official question_answers payload preserves summaries and paging", () => {
+    const page=parseQuestionAnswersPayload({Code:0,Data:{Items:[
+      {ContentType:"Answer",ContentToken:"a1",Url:"https://www.zhihu.com/question/123/answer/456",Summary:"真实回答摘要一"},
+      {ContentType:"Answer",ContentToken:"a2",Url:"https://www.zhihu.com/question/123/answer/789",Summary:"真实回答摘要二"},
+    ],Paging:{IsEnd:false,NextOffset:20,Totals:86}}});
+    expect(page.items.map((item)=>item.ContentToken)).toEqual(["a1","a2"]);
+    expect(page.isEnd).toBe(false); expect(page.nextOffset).toBe(20); expect(page.total).toBe(86);
+  });
+
+  test("question_answers filters unusable rows and exposes stable quota/auth errors", () => {
+    const page=parseQuestionAnswersPayload({Code:0,Data:{Items:[
+      {ContentToken:"missing-url",Summary:"没有链接"},
+      {ContentToken:"empty",Url:"https://www.zhihu.com/answer/1",Summary:"  "},
+      {ContentToken:"valid",Url:"https://www.zhihu.com/answer/2",Summary:"保留"},
+    ],Paging:{IsEnd:true}}});
+    expect(page.items.map((item)=>item.ContentToken)).toEqual(["valid"]);
+    expect(()=>parseQuestionAnswersPayload({Code:30001})).toThrow("zhihu_rate_limited");
+    expect(()=>parseQuestionAnswersPayload({Code:20001})).toThrow("zhihu_auth_failed");
   });
 });
