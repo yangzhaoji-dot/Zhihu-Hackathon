@@ -8,11 +8,11 @@ import styles from "./planet-observation-archive.module.css";
 const OBSERVATION_META: Record<string, { label: string; note: string }> = {
   s1: {
     label: "恢复能力发生变化",
-    note: "这条旧人类记录留下了一个关键转折：离开原环境之后，睡眠明显恢复。它与这颗星球所讨论的“恢复能力存在边界”发生了回响。",
+    note: "这条记录留下了一个关键转折：离开原环境之后，睡眠明显恢复。它与这颗星球关于“恢复存在边界”的法则产生了回响。",
   },
   s2: {
     label: "损耗由个体承担",
-    note: "另一位旧人类观察者记录了更残酷的一面：损耗发生在系统之中，后果却可能最终落在个体身上。这不能证明法则，却解释了为什么“继续留在原环境”值得被重新判断。",
+    note: "另一条记录指出了更残酷的一面：损耗发生在系统之中，后果却可能最终落在个体身上。它不能证明法则，却解释了为什么“继续留在原环境”值得被重新判断。",
   },
 };
 
@@ -41,23 +41,23 @@ export function PlanetObservationArchive({ opinionId }: { opinionId: string }) {
           <ArrowLeft size={15} />
           返回星球法则
         </button>
-        <span>LOST HUMAN ARCHIVE · 01</span>
+        <span>ECHO ARCHIVE · 01</span>
       </header>
 
       <section className={styles.hero}>
-        <div className={styles.heroIcon}><Radar size={25} /></div>
+        <div className={styles.heroIcon}><Radar size={22} /></div>
         <div>
-          <span className={styles.eyebrow}>失落人类档案</span>
-          <h1>这里保存着旧人类世界留下的声音。</h1>
+          <span className={styles.eyebrow}>人类纪元 · 遗声档案</span>
+          <h1>这些声音来自一个已经远去的时代。</h1>
           <p>
-            很久以前，人类曾把自己的工作、疲惫、恢复、离开与犹豫写进一个名为“知乎”的公共知识档案。
-            我们不把这些文字改写成法则，只把它们从时间的尘埃里重新读出来。
+            在人类纪元，人们曾把工作、疲惫、恢复、离开与犹豫写进一个名为“知乎”的公共知识档案。
+            如今，我们沿着仍被保存的文字，重新听见他们。
           </p>
         </div>
       </section>
 
       <section className={styles.context}>
-        <span>此星球保存的旧人类判断</span>
+        <span>此星球保存的判断</span>
         <strong>长期消耗身心的工作，离开也可以是一种止损。</strong>
         <small>Planet Law · Saddle-node bifurcation</small>
       </section>
@@ -69,16 +69,16 @@ export function PlanetObservationArchive({ opinionId }: { opinionId: string }) {
             <article className={styles.card} key={source.id}>
               <div className={styles.cardHead}>
                 <div>
-                  <span className={styles.number}>HUMAN RECORD {String(index + 1).padStart(2, "0")}</span>
-                  <h2>{meta?.label ?? "旧人类观测"}</h2>
+                  <span className={styles.number}>ECHO RECORD {String(index + 1).padStart(2, "0")}</span>
+                  <h2>{meta?.label ?? "遗留记录"}</h2>
                 </div>
-                <span className={styles.upvotes}>{source.upvotes.toLocaleString()} 赞同 · 知乎档案</span>
+                <span className={styles.upvotes}>{source.upvotes.toLocaleString()} 赞同 · 知乎记录</span>
               </div>
 
               <blockquote>“{source.excerpt}”</blockquote>
 
               <div className={styles.authorLine}>
-                <strong>{author?.name ?? "旧人类记录者"}</strong>
+                <strong>{author?.name ?? "无名记录者"}</strong>
                 {author?.title ? <span>{author.title}</span> : null}
               </div>
 
@@ -96,7 +96,7 @@ export function PlanetObservationArchive({ opinionId }: { opinionId: string }) {
 
               <div className={styles.cardFoot}>
                 {placeholder ? (
-                  <span className={styles.demoBadge}>演示档案 · 尚未接入真实知乎原记录</span>
+                  <span className={styles.demoBadge}>演示记录 · 尚未接入原始知乎档案</span>
                 ) : (
                   <a href={source.url} target="_blank" rel="noreferrer">
                     打开原始知乎档案 <ExternalLink size={13} />
@@ -111,8 +111,8 @@ export function PlanetObservationArchive({ opinionId }: { opinionId: string }) {
       <section className={styles.note}>
         <span>档案注记</span>
         <p>
-          这些记录不会“证明”鞍结分岔适用于人生。星球法则只是提供一个理解结构；旧人类留下的经历，则告诉我们这个结构能照亮什么，又会遗漏什么。
-          当前仓库使用演示材料验证体验，后续接入真实可追溯知乎回答时，这一层的叙事结构可以保持不变。
+          这些记录不会“证明”鞍结分岔适用于人生。法则提供结构，记录保留经验；两者只在相似的机制上彼此照亮。
+          当前仓库使用演示材料验证体验，后续接入真实可追溯知乎回答时，这一层的结构无需改变。
         </p>
       </section>
     </main>
