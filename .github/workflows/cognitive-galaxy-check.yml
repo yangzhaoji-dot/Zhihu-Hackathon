@@ -1,9 +1,9 @@
 name: Cognitive galaxy check
 on:
   push:
-    branches: [cognitive-galaxy-v1, cognitive-galaxy-v2]
+    branches: [cognitive-galaxy-v1, cognitive-galaxy-v2, web-redesign-v1]
   pull_request:
-    branches: [resonance-scroll-v1, cognitive-galaxy-v1]
+    branches: [resonance-scroll-v1, cognitive-galaxy-v1, web-redesign-v1]
 permissions:
   contents: read
 concurrency:
