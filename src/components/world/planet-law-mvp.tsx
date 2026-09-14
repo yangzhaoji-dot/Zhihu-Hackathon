@@ -2,101 +2,95 @@
 
 import { ArrowLeft, ArrowRight, BookOpen, Telescope } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useState } from "react";
 import styles from "./planet-law-mvp.module.css";
 
-const LAW_STEPS = [
-  {
-    index: "01",
-    law: "变化可以是缓慢的",
-    math: "r ↑",
-    lawCopy: "控制参数可以一点点改变，系统却仍然维持原来的状态。",
-    projectionTitle: "灾难，并不总是突然降临。",
-    projection:
-      "工作压力可能只是每天多一点，睡眠每天少一点，情绪每天差一点。单独看任何一天，都不像必须离开的理由。",
-  },
-  {
-    index: "02",
-    law: "稳定存在边界",
-    math: "r < 0",
-    lawCopy: "在临界点之前，稳定态仍然存在。受到扰动之后，系统仍有机会回到原来的平衡。",
-    projectionTitle: "恢复，是稳定仍然存在的证据。",
-    projection:
-      "累的时候休息一个周末还能恢复，压力增加后仍能重新建立节奏——此时，继续留下仍然是一种可维持的状态。",
-  },
-  {
-    index: "03",
-    law: "临界点不会提前宣告自己",
-    math: "r → 0",
-    lawCopy: "稳定态与不稳定态逐渐靠近。表面仍可维持，但系统能够承受扰动的余量正在消失。",
-    projectionTitle: "最危险的时候，世界可能仍然看起来正常。",
-    projection:
-      "真正重要的并不是‘今天是不是更累了’，而是：这个环境是否还允许你恢复。",
-  },
-  {
-    index: "04",
-    law: "有些状态不是变差，而是消失",
-    math: "r > 0",
-    lawCopy: "越过临界点后，原来的平衡解不再存在。继续施加同样的恢复方式，也无法让系统回到那个状态。",
-    projectionTitle: "有些平衡，一旦失去，便不再等待你回来。",
-    projection:
-      "当长期失眠、焦虑或身体损耗已经让‘休息以后恢复正常’不再发生，问题可能已经从‘还能不能坚持’变成‘原来的平衡是否还存在’。",
-  },
-] as const;
-
-type MythicSceneProps = {
-  label?: string;
-  title?: ReactNode;
+type LawSlide = {
+  label: string;
+  title: string;
   math?: string;
-  children?: ReactNode;
-  tone?: "default" | "law" | "projection" | "climax";
+  lawCopy?: string;
+  realityTitle?: string;
+  reality?: string;
+  tone?: "default" | "law" | "climax";
 };
 
-function MythicScene({ label, title, math, children, tone = "default" }: MythicSceneProps) {
-  const ref = useRef<HTMLElement | null>(null);
-  const [active, setActive] = useState(false);
-
-  useEffect(() => {
-    const node = ref.current;
-    if (!node) return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => setActive(entry.isIntersecting),
-      {
-        rootMargin: "-24% 0px -24% 0px",
-        threshold: 0.08,
-      },
-    );
-
-    observer.observe(node);
-    return () => observer.disconnect();
-  }, []);
-
-  const toneClass =
-    tone === "law"
-      ? styles.sceneLaw
-      : tone === "projection"
-        ? styles.sceneProjection
-        : tone === "climax"
-          ? styles.sceneClimax
-          : "";
-
-  return (
-    <section ref={ref} className={`${styles.scene} ${toneClass} ${active ? styles.sceneActive : ""}`}>
-      <div className={styles.sceneAura} aria-hidden />
-      <div className={styles.sceneContent}>
-        {label ? <span className={`${styles.sceneLabel} ${styles.sceneLine}`}>{label}</span> : null}
-        {math ? <div className={`${styles.sceneMath} ${styles.sceneLine}`}>{math}</div> : null}
-        {title ? <h2 className={`${styles.sceneTitle} ${styles.sceneLine}`}>{title}</h2> : null}
-        {children ? <div className={`${styles.sceneCopy} ${styles.sceneLine}`}>{children}</div> : null}
-      </div>
-    </section>
-  );
-}
+const SLIDES: LawSlide[] = [
+  {
+    label: "观点星球 · 身心与边界",
+    title: "长期消耗身心的工作，离开也可以是一种止损。",
+    lawCopy: "每颗星球都由一条法则支配。这里，我们借一条真实的动力系统法则，理解“还能恢复”这件事为什么会有边界。",
+    tone: "climax",
+  },
+  {
+    label: "第一法则 · 临界消失",
+    title: "鞍结分岔",
+    math: "ẋ = r + x²",
+    lawCopy: "在动力系统里，鞍结分岔描述的是：随着控制参数缓慢变化，一个稳定态和一个不稳定态逐渐靠近，最后在临界点相遇并消失。",
+    realityTitle: "先说人话：它关心的不是“越来越差”，而是“原来的稳定状态还在不在”。",
+    reality: "放到这个观点里，我们不把 x 或 r 生硬地等同于某个具体指标。我们只借这个结构理解一件事：一个人可以在一段时间里虽然很累，却还能恢复；但“还能恢复”的状态本身，也可能被持续消耗推到边界。",
+    tone: "law",
+  },
+  {
+    label: "第 01 律 · 稳定仍然存在",
+    title: "系统被扰动后，还能回去。",
+    math: "r < 0   ·   x = ±√(-r)",
+    lawCopy: "当 r 还在临界点的一侧时，系统里仍然存在平衡状态。其中有一个是稳定的：受到小扰动之后，系统会被拉回去。",
+    realityTitle: "现实里就是：工作虽然累，但你休息以后还能回来。",
+    reality: "加班一晚，第二天还能补回来；项目冲刺一周，周末休息后还能恢复睡眠和情绪；压力增加了，但人仍然能重新建立节奏。这个阶段，“继续留下”至少还是一种可以维持的状态。",
+    tone: "law",
+  },
+  {
+    label: "第 02 律 · 恢复余量正在缩小",
+    title: "表面没崩，不等于和以前一样稳定。",
+    math: "r → 0⁻",
+    lawCopy: "随着控制参数逼近临界点，稳定态和不稳定态越来越近。系统还没有崩溃，但它能够承受扰动、再回到原状态的余量越来越小。",
+    realityTitle: "现实里就是：以前睡一晚能缓过来，后来要一个周末，再后来请假也恢复不全。",
+    reality: "你可能仍然能上班、开会、交付任务，所以看起来“一切正常”。但真正发生变化的是恢复能力：同样一次加班，以前一天能恢复，现在要三天；以前周末能恢复，现在周一仍然疲惫。",
+    tone: "law",
+  },
+  {
+    label: "第 03 律 · 临界点",
+    title: "“还能恢复”这件事，到达了边界。",
+    math: "r = 0",
+    lawCopy: "在临界点，稳定态和不稳定态相遇。再往前一点，原来那个稳定解就不再存在。",
+    realityTitle: "现实里不是某一天突然比昨天更累很多，而是：你第一次发现，休息已经不能把自己带回原来的状态。",
+    reality: "可能是连续几个周末都睡不回来，可能是请假后心悸和焦虑仍然持续，也可能是回到工位就重新出现明显的身体反应。变化看起来仍然是连续的，但“恢复以后还能继续”的前提已经被逼到边界。",
+    tone: "climax",
+  },
+  {
+    label: "第 04 律 · 稳定态消失",
+    title: "不是更难恢复，而是原来的恢复状态已经不存在。",
+    math: "r > 0   ·   r + x² = 0 无实数平衡解",
+    lawCopy: "越过临界点后，原来的平衡解消失。继续用之前那套方式，并不会把系统重新带回那个旧状态。",
+    realityTitle: "现实里就是：睡一觉、休个周末、咬牙坚持，都不再把你带回“原来那个自己”。",
+    reality: "这并不自动推出“必须裸辞”。它真正提醒的是：此时问题已经不只是“还能不能坚持”，而是“当前环境里，原来的恢复机制是否还成立”。如果恢复条件已经不存在，离开才开始获得“止损”的意义。",
+    tone: "climax",
+  },
+  {
+    label: "LAW INFERENCE · 法则推论",
+    title: "这颗星球因此相信：离开，有时不是放弃，而是承认旧的平衡已经不存在。",
+    lawCopy: "“长期消耗身心的工作，离开也可以是一种止损。”这句话被重新解释为：判断是否该离开，不只看今天有多累，还要看这个环境是否仍然允许你恢复。",
+    realityTitle: "这条数学法则没有替你做决定。",
+    reality: "它只给了一个更精确的问题：你面对的是暂时的扰动，还是一个已经失去恢复条件的系统？",
+    tone: "climax",
+  },
+  {
+    label: "OBSERVATIONS · 观测档案",
+    title: "公式给出一种理解结构，真实回答告诉我们：人们究竟经历了什么。",
+    lawCopy: "下一层不再继续讲数学。我们回到真实世界，查看这颗星球背后的回答、经历、数据与反例。",
+    realityTitle: "法则是解释器，回答是观测记录。",
+    reality: "它们不会证明这条公式“适用于人生”，但会告诉我们：这套数学结构究竟照亮了哪些真实经验，又遗漏了什么。",
+  },
+];
 
 export function PlanetLawMvp({ opinionId }: { opinionId: string }) {
   const router = useRouter();
   const search = useSearchParams();
+  const [index, setIndex] = useState(0);
+  const [leaving, setLeaving] = useState(false);
+  const slide = SLIDES[index];
+  const last = index === SLIDES.length - 1;
 
   const returnToGalaxy = () => {
     const galaxy = search.get("galaxy");
@@ -117,6 +111,31 @@ export function PlanetLawMvp({ opinionId }: { opinionId: string }) {
     router.push(`/world/${encodeURIComponent(opinionId)}/observations${params.size ? `?${params.toString()}` : ""}`);
   };
 
+  const changeSlide = (nextIndex: number) => {
+    if (nextIndex < 0 || nextIndex >= SLIDES.length || leaving) return;
+    setLeaving(true);
+    window.setTimeout(() => {
+      setIndex(nextIndex);
+      setLeaving(false);
+    }, 260);
+  };
+
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "ArrowRight" || event.key === " ") {
+        event.preventDefault();
+        if (last) openObservations();
+        else changeSlide(index + 1);
+      }
+      if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        changeSlide(index - 1);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [index, last, leaving]);
+
   return (
     <main className={styles.page} data-el="planet-law-mvp">
       <div className={styles.glow} aria-hidden />
@@ -126,54 +145,63 @@ export function PlanetLawMvp({ opinionId }: { opinionId: string }) {
           <ArrowLeft size={15} />
           返回主星系
         </button>
-        <span className={styles.coordinates}>PLANET LAW · 01</span>
+        <span className={styles.coordinates}>PLANET LAW · {String(index + 1).padStart(2, "0")} / {String(SLIDES.length).padStart(2, "0")}</span>
       </header>
 
-      <MythicScene label="观点星球 · 身心与边界" tone="climax">
-        <h1 className={styles.opinionTitle}>长期消耗身心的工作，离开也可以是一种止损。</h1>
-        <p className={styles.opinionPrelude}>每颗星球都由一条法则支配。这里的法则，决定一种稳定何时仍被世界允许，又何时从世界中消失。</p>
-      </MythicScene>
+      <section className={`${styles.stage} ${slide.tone === "climax" ? styles.stageClimax : ""} ${leaving ? styles.stageLeaving : styles.stageEntering}`}>
+        <div className={styles.aura} aria-hidden />
 
-      <MythicScene label="第一法则 · 临界消失" math="ẋ = r + x²" tone="law">
-        <p className={styles.lawIdentity}>Saddle-node bifurcation · 鞍结分岔</p>
-      </MythicScene>
+        <div className={styles.stageInner} key={index}>
+          <div className={styles.lawSide}>
+            <span className={styles.label}>{slide.label}</span>
+            {slide.math ? <div className={styles.formula}>{slide.math}</div> : null}
+            <h1 className={styles.title}>{slide.title}</h1>
+            {slide.lawCopy ? <p className={styles.lawCopy}>{slide.lawCopy}</p> : null}
+          </div>
 
-      <MythicScene label="法则原义" title="两种状态，在临界点相遇。" tone="law">
-        <p>鞍结分岔是动力系统中的经典临界现象：随着控制参数缓慢变化，一个稳定态与一个不稳定态逐渐靠近，最终在临界点相遇，并同时消失。</p>
-      </MythicScene>
+          {slide.realityTitle || slide.reality ? (
+            <aside className={styles.realitySide}>
+              <span className={styles.realityLabel}>现实投影 · 说人话</span>
+              {slide.realityTitle ? <h2>{slide.realityTitle}</h2> : null}
+              {slide.reality ? <p>{slide.reality}</p> : null}
+            </aside>
+          ) : null}
+        </div>
+      </section>
 
-      {LAW_STEPS.flatMap((step) => [
-        <MythicScene key={`${step.index}-law`} label={`第 ${step.index} 律`} title={step.law} math={step.math} tone="law">
-          <p>{step.lawCopy}</p>
-        </MythicScene>,
-        <MythicScene key={`${step.index}-projection`} label="现实投影" title={step.projectionTitle} tone="projection">
-          <p>{step.projection}</p>
-        </MythicScene>,
-      ])}
+      <div className={styles.controls}>
+        <div className={styles.progress} aria-label={`第 ${index + 1} 幕，共 ${SLIDES.length} 幕`}>
+          {SLIDES.map((_, dotIndex) => (
+            <button
+              key={dotIndex}
+              type="button"
+              aria-label={`切换到第 ${dotIndex + 1} 幕`}
+              className={`${styles.dot} ${dotIndex === index ? styles.dotActive : ""}`}
+              onClick={() => changeSlide(dotIndex)}
+            />
+          ))}
+        </div>
 
-      <MythicScene label="LAW INFERENCE · 法则推论" title="稳定态消失了。" tone="climax">
-        <p className={styles.climaxLine}>不是它变得更差。</p>
-        <p className={styles.climaxLine}>而是原来那个可以恢复的状态，已经失去了继续存在的条件。</p>
-      </MythicScene>
+        {index > 0 ? (
+          <button type="button" className={styles.previousButton} onClick={() => changeSlide(index - 1)} disabled={leaving}>
+            <ArrowLeft size={16} />
+            上一幕
+          </button>
+        ) : <span />}
 
-      <MythicScene label="这颗星球因此相信" tone="climax">
-        <blockquote className={styles.finalBelief}>长期消耗身心的工作，离开也可以是一种止损。</blockquote>
-        <p>离开未必意味着放弃一个仍然稳定的世界。有时，它只是承认：旧的平衡，已经不再存在。</p>
-      </MythicScene>
-
-      <MythicScene label="OBSERVATIONS · 观测档案" title="法则之外，还有真实世界留下的记录。">
-        <p>这些记录不负责证明公式。它们让我们看到，这个数学结构能够照亮哪些真实经验，又有哪些地方无法解释。</p>
-        <button type="button" onClick={openObservations} className={styles.archiveButton}>
-          <Telescope size={17} />
-          <BookOpen size={16} />
-          进入观测档案
-          <ArrowRight size={16} />
+        <button
+          type="button"
+          className={styles.nextButton}
+          disabled={leaving}
+          onClick={() => (last ? openObservations() : changeSlide(index + 1))}
+        >
+          {last ? <BookOpen size={17} /> : null}
+          {last ? "进入观测档案" : "下一幕"}
+          {last ? <Telescope size={16} /> : <ArrowRight size={17} />}
         </button>
-      </MythicScene>
+      </div>
 
-      <footer className={styles.disclaimer}>
-        数学法则在这里是一种结构化理解工具，不是对人生处境的定量预测模型。
-      </footer>
+      <footer className={styles.disclaimer}>数学法则在这里是一种结构化理解工具，不是对人生处境的定量预测模型。</footer>
     </main>
   );
 }
