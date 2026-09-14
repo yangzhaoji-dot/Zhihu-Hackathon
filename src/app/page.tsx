@@ -11,15 +11,10 @@ import { Opening } from "@/components/cognitive-galaxy/opening";
 import { searchGalaxy } from "@/lib/api/cognitive-galaxy";
 import type { ZhihuQuestionCandidate } from "@/lib/api/opinion";
 import { galaxyUrl, saveGalaxy } from "@/lib/cognitive-galaxy/session";
-import { DEMO_ID } from "@/lib/cognitive-galaxy/demo";
+import { HOME_DEMOS } from "@/lib/cognitive-galaxy/demo";
 import styles from "@/components/cognitive-galaxy/home.module.css";
 
 const INTRO_KEY = "cognitive-galaxy:intro:v2";
-const RECOMMENDATIONS = [
-  { key:"aiTitle", query:"AI 会取代程序员吗", type:"02" },
-  { key:"studyTitle", query:"读研真的值得吗", type:"03" },
-  { key:"gradeTitle", query:"大学应该卷绩点还是做项目", type:"04" },
-];
 
 export default function Home() {
   const { t } = useTranslation("galaxy");
@@ -51,6 +46,8 @@ export default function Home() {
     window.setTimeout(() => searchInput.current?.focus({ preventScroll:true }), 80);
   }, []);
 
+  // Only free-form search uses the real Zhihu API. The four visible homepage
+  // cards are authored demos so judges can always enter a complete experience.
   const runSearch = async (text: string, candidate?: ZhihuQuestionCandidate) => {
     const clean = text.trim();
     if (!clean) { setError("emptySearch"); searchInput.current?.focus(); return; }
@@ -105,12 +102,23 @@ export default function Home() {
         <section className={styles.recommendations} aria-label={t("recommendations")}>
           <div className={styles.sectionLabel}><span>{t("recommendations")}</span><i/></div>
           <div className={styles.cards}>
-            <Link href={galaxyUrl(DEMO_ID)} className={`${styles.card} ${styles.demoCard}`} data-el="enter-demo"><span className={styles.cardIndex}>01 / <b>{t("demo")}</b></span><h2>{t("demoTitle")}</h2><small>{t("demoMeta")}</small><ArrowUpRight className={styles.cardArrow} size={17}/></Link>
-            {RECOMMENDATIONS.map((item) => <button type="button" className={styles.card} key={item.key} disabled={busy} onClick={() => void runSearch(item.query)}><span className={styles.cardIndex}>{item.type} /</span><h2>{t(item.key)}</h2><small>{t("liveRecommendation")}</small><ArrowUpRight className={styles.cardArrow} size={17}/></button>)}
+            {HOME_DEMOS.map((item, index) => (
+              <Link
+                href={galaxyUrl(item.id)}
+                className={`${styles.card} ${index === 0 ? styles.demoCard : ""}`}
+                key={item.id}
+                data-el={`enter-demo-${item.index}`}
+              >
+                <span className={styles.cardIndex}>{item.index} / <b>DEMO</b></span>
+                <h2>{item.title}</h2>
+                <small>{item.meta}</small>
+                <ArrowUpRight className={styles.cardArrow} size={17}/>
+              </Link>
+            ))}
           </div>
         </section>
       </main>
-      <footer className={styles.footer}><span>{t("homeFootnote")}</span><small>{t("phase")}</small></footer>
+      <footer className={styles.footer}><span>首页精选为策展演示；搜索框使用真实知乎检索与 AI 观点构建。</span><small>{t("phase")}</small></footer>
     </div>
     <AnimatePresence>{intro && <Opening onDone={finishIntro}/>}</AnimatePresence>
   </SpaceShell>;
