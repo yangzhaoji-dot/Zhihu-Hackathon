@@ -85,6 +85,7 @@ export function OpinionPlanet({
   const labelWidth = Math.max(72, Math.min(112, longest * 7.4 + 18));
   const labelHeight = lines.length > 1 ? 31 : 22;
   const labelY = radius + 8;
+  const labelVisible = showTitle || (active && !dimmed);
 
   return <motion.g
     initial={fusionOrigin ? { x: fusionOrigin.x, y: fusionOrigin.y } : false}
@@ -133,7 +134,7 @@ export function OpinionPlanet({
         return <circle key={index} cx={Math.cos(angle) * distance} cy={Math.sin(angle) * distance} r={index % 2 ? .55 : .85} fill={color} opacity={.45 + index * .05} />;
       })}
     </motion.g>
-    {showTitle && <g
+    {labelVisible && <g
       className={styles.planetLabelGroup}
       data-clickable="true"
       data-emphasized={emphasized ? "true" : "false"}
