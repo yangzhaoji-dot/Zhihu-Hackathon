@@ -34,9 +34,6 @@ export function PlanetFocus({ node, galaxy, onClose }: { node: GalaxyNode; galax
   const mapped = INTERACTIVE_PLANET_ROUTES[opinion.id];
 
   const land = () => {
-    // Every opinion can now open a planet interior. Live opinions carry real
-    // sources; authored demo opinions can still be explored with their claim
-    // alone and simply show an empty evidence layer.
     const targetOpinionId = mapped ?? opinion.id;
     const params = new URLSearchParams({ galaxy: galaxy.graph.questionId, origin: opinion.id });
     const cluster = search.get("cluster");
@@ -50,7 +47,7 @@ export function PlanetFocus({ node, galaxy, onClose }: { node: GalaxyNode; galax
     <h2>{opinion.title}</h2>
     {opinion.summary !== opinion.title && <p className={styles.summary}>{opinion.summary}</p>}
     <div className={styles.metadata}>
-      <span>{node.sourceCount ? t("sourceCount",{ count:node.sourceCount }) : (galaxy.demo ? "演示观点 · 无原始知乎来源" : t("sourceMissing"))}</span>
+      <span>{node.sourceCount ? t("sourceCount",{ count:node.sourceCount }) : (galaxy.demo ? "策展演示观点" : t("sourceMissing"))}</span>
       {related.length > 0 && <span>{t("relatedCount",{ count:related.length })}</span>}
       {opinion.derivedFrom?.length ? <span>AI 辅助形成</span> : null}
     </div>
@@ -60,9 +57,9 @@ export function PlanetFocus({ node, galaxy, onClose }: { node: GalaxyNode; galax
     </div>}
     {sources.slice(0,3).map((source,index) => {
       const url = safeSourceUrl(source.url);
-      return url ? <a key={source.id} className={styles.sourceLink} href={url} target="_blank" rel="noopener noreferrer">{t("sourceRead")} {index+1} <ExternalLink size={11} style={{ display:"inline" }}/></a> : null;
+      return url ? <a key={source.id} className={styles.sourceLink} href={url} target="_blank" rel="noopener noreferrer">{galaxy.demo ? "查看相关知乎档案" : t("sourceRead")} {index+1} <ExternalLink size={11} style={{ display:"inline" }}/></a> : null;
     })}
-    {galaxy.demo && <p className={styles.notice}>{t("demoNotice")}</p>}
+    {galaxy.demo && <p className={styles.notice}>策展演示观点 · 上述链接来自真实知乎回答，用于提供相关背景与证据线索，不表示这条观点逐字摘录自某一回答。</p>}
     <button type="button" className={styles.landing} onClick={land} data-el="land-planet">{t("landing")}<ArrowRight size={16}/></button>
   </motion.aside>;
 }
