@@ -20,7 +20,13 @@ page.on("pageerror", (error) => {
   console.error("[pageerror]", detail);
   errors.push(detail);
 });
-const open = (url) => page.goto(url, { waitUntil: "domcontentloaded" });
+const open = async (url) => {
+  const response = await page.goto(url, { waitUntil: "domcontentloaded" });
+  // The homepage is client-interactive. Give React a brief deterministic window
+  // to hydrate before clicks/submits so Playwright never falls back to native form behavior.
+  await page.waitForTimeout(300);
+  return response;
+};
 const waitUrl = (url) => page.waitForURL(url, { waitUntil: "domcontentloaded" });
 const capture = (name) => page.screenshot({ path: path.join(out, name), fullPage: true });
 const home = page.locator('[data-el="galaxy-home"]');
