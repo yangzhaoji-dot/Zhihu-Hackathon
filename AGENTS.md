@@ -8,6 +8,19 @@ This file governs generated app code quality: framework conventions, app structu
 
 It does not govern Creator build orchestration.
 
+## Feature Ownership
+
+Use these boundaries for the Cognitive Universe redesign:
+
+- `src/components/planet-internal/` — owner A. Everything after landing on an opinion planet: sources, excerpt selection, cognition fragments, synthesis, evaluation, Merge, and Fork.
+- `src/components/planet-interaction/` — owner B. Planet rendering and planet-to-planet behavior: hover, selection, drag, Gravity, Collision, Bridge, Fusion, and relation overlays.
+- `src/components/universe/` — owner C. Opening, home, backgrounds, galaxy shell/layout, navigation, global controls, transitions, responsive behavior, and visual consistency.
+- `src/lib/opinion/types.ts` and `src/lib/cognitive-galaxy/` are shared contracts. Coordinate core model changes before editing them.
+
+During the gradual migration, legacy code may still live under `src/components/world/`, `src/components/cognitive-galaxy/`, or `src/components/cosmos/`. New work must follow the ownership above. Cross-feature behavior communicates through typed data and semantic events. In particular, planet interaction exposes `InteractionState`; the universe owner decides how the shell responds visually.
+
+Do not implement another owner's feature directly. If a change needs another area, add or request the smallest typed interface, then let that owner implement the response.
+
 ## Stack
 
 - Next.js 16 App Router, React 19, TypeScript, Tailwind CSS v4, Bun.

@@ -162,3 +162,5 @@ Collision 本身只分析，不修改认知宇宙。
 - Reset 恢复 Demo 初始宇宙；
 - 单元测试覆盖 Bridge graph mutation；
 - 浏览器验收覆盖 Gravity / Collision / Bridge / Fusion。
+
+当前 B 模块公共入口为 `src/components/planet-interaction/index.ts`。星球视觉、拖拽/引力判定、Collision 面板和 relation overlay 均从这里导出；Galaxy 舞台只组合这些能力，并通过 `InteractionState` 向 Universe 层提供语义状态。
