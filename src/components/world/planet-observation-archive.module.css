@@ -1,0 +1,238 @@
+.page {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 82% 0%, rgba(87, 131, 218, .07), transparent 25%),
+    #060910;
+  color: #f4f6fb;
+  padding: 22px clamp(22px, 5vw, 78px) 70px;
+}
+
+.topbar,
+.hero,
+.context,
+.list,
+.note {
+  max-width: 980px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: rgba(190, 203, 225, .45);
+  font-size: 11px;
+  letter-spacing: .14em;
+}
+
+.backButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  background: transparent;
+  color: rgba(233, 238, 247, .67);
+  font: inherit;
+  letter-spacing: 0;
+  cursor: pointer;
+  padding: 8px 0;
+}
+
+.backButton:hover { color: #fff; }
+
+.hero {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 22px;
+  padding: 92px 0 48px;
+  align-items: start;
+}
+
+.heroIcon {
+  width: 56px;
+  height: 56px;
+  display: grid;
+  place-items: center;
+  border-radius: 18px;
+  color: #b6cff7;
+  background: rgba(94, 137, 205, .1);
+  border: 1px solid rgba(161, 190, 236, .1);
+}
+
+.eyebrow {
+  display: block;
+  color: #8ba5cd;
+  font-size: 11px;
+  letter-spacing: .15em;
+  margin-bottom: 12px;
+}
+
+.hero h1 {
+  margin: 0;
+  font-size: clamp(34px, 5vw, 58px);
+  line-height: 1.05;
+  letter-spacing: -.04em;
+}
+
+.hero p {
+  max-width: 720px;
+  margin: 22px 0 0;
+  color: rgba(226, 233, 244, .58);
+  line-height: 1.85;
+  font-size: 16px;
+}
+
+.context {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 22px 24px;
+  border: 1px solid rgba(165, 187, 221, .1);
+  border-radius: 20px;
+  background: rgba(16, 21, 31, .62);
+}
+
+.context span,
+.evidence > span,
+.interpretation > span,
+.note > span {
+  color: #809bc5;
+  font-size: 11px;
+  letter-spacing: .12em;
+}
+
+.context strong { font-size: 18px; font-weight: 580; }
+.context small { color: rgba(204, 216, 236, .4); }
+
+.list {
+  display: grid;
+  gap: 24px;
+  padding-top: 34px;
+}
+
+.card {
+  border: 1px solid rgba(163, 187, 225, .12);
+  border-radius: 26px;
+  padding: 30px;
+  background: linear-gradient(145deg, rgba(18, 24, 36, .82), rgba(9, 13, 21, .82));
+}
+
+.cardHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+}
+
+.number {
+  display: block;
+  color: rgba(130, 160, 206, .68);
+  font-size: 10px;
+  letter-spacing: .16em;
+  margin-bottom: 8px;
+}
+
+.card h2 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 590;
+}
+
+.upvotes {
+  flex: none;
+  color: rgba(208, 221, 241, .46);
+  font-size: 12px;
+}
+
+.card blockquote {
+  margin: 28px 0 24px;
+  padding: 0;
+  font-size: clamp(20px, 2.7vw, 29px);
+  line-height: 1.65;
+  letter-spacing: -.02em;
+  color: rgba(247, 249, 253, .92);
+}
+
+.authorLine {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  padding-bottom: 24px;
+  border-bottom: 1px solid rgba(162, 185, 221, .09);
+}
+
+.authorLine strong { font-size: 14px; }
+.authorLine span { color: rgba(203, 215, 234, .43); font-size: 12px; }
+
+.evidence,
+.interpretation {
+  padding-top: 22px;
+}
+
+.evidence div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.evidence em {
+  font-style: normal;
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: rgba(107, 145, 203, .08);
+  border: 1px solid rgba(132, 166, 217, .11);
+  color: rgba(222, 232, 247, .62);
+  font-size: 12px;
+}
+
+.interpretation p {
+  margin: 10px 0 0;
+  color: rgba(226, 234, 246, .62);
+  line-height: 1.8;
+}
+
+.cardFoot {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 24px;
+}
+
+.cardFoot a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #a9c9fa;
+  font-size: 12px;
+  text-decoration: none;
+}
+
+.demoBadge {
+  color: rgba(205, 214, 230, .34);
+  font-size: 11px;
+}
+
+.note {
+  margin-top: 34px;
+  padding: 20px 22px;
+  border-left: 2px solid rgba(109, 163, 255, .28);
+  background: rgba(59, 91, 139, .05);
+}
+
+.note p {
+  margin: 8px 0 0;
+  color: rgba(205, 216, 234, .46);
+  font-size: 13px;
+  line-height: 1.75;
+}
+
+@media (max-width: 700px) {
+  .page { padding-inline: 20px; }
+  .topbar > span { display: none; }
+  .hero { grid-template-columns: 1fr; padding-top: 68px; }
+  .heroIcon { width: 48px; height: 48px; }
+  .card { padding: 24px 20px; }
+  .cardHead { flex-direction: column; }
+  .card blockquote { margin-top: 22px; }
+}
