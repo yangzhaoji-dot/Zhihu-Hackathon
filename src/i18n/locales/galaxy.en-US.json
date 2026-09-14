@@ -8,15 +8,15 @@
   "continue": "Continue",
   "pause": "Pause",
   "play": "Play",
-  "introLabel": "Cognition universe prologue",
+  "introLabel": "Lost Universe prologue",
   "phase": "PHASE 01 · EXPLORATION",
-  "heroKicker": "Every question is an uncharted galaxy.",
+  "heroKicker": "These are not stars. This is a lost universe left by a vanished civilization.",
   "heroTitle": "Which galaxy\nwill you enter?",
-  "heroDescription": "Travel through perspectives. Get closer to a different way of thinking.",
+  "heroDescription": "Every question was once asked again and again by real people. Now only their faint gravitational pull remains.",
   "searchLabel": "Search Zhihu questions",
-  "searchPlaceholder": "A question is all it takes…",
+  "searchPlaceholder": "Enter a question and trace what the old world left behind…",
   "search": "Find a galaxy",
-  "searching": "Searching questions and perspectives…",
+  "searching": "Recovering question coordinates and opinion archives…",
   "cancel": "Cancel",
   "recommendations": "A few places to begin",
   "demo": "DEMO GALAXY",
@@ -27,10 +27,10 @@
   "gradeTitle": "Grades or projects at university?",
   "liveRecommendation": "Search Zhihu discussions",
   "homeFootnote": "A question becomes a galaxy. Each opinion becomes a planet.",
-  "selectQuestion": "Which question would you like to explore?",
+  "selectQuestion": "Which question do you want to pursue?",
   "noCandidates": "No accessible questions found. Try different keywords.",
-  "emptySearch": "Enter a question to explore first.",
-  "searchFailed": "This galaxy could not be built. Try again, or explore the demo.",
+  "emptySearch": "Enter a question to pursue first.",
+  "searchFailed": "This galaxy could not be recovered. Try again, or explore the demo.",
   "searchUnavailable": "Zhihu search is not configured or authorized yet. The demo remains available.",
   "searchEmpty": "Not enough retrieved material to build a galaxy. Try another question.",
   "searchLimited": "Search is busy. Please try again later.",
@@ -39,11 +39,11 @@
   "unavailable": "This galaxy could not be recovered.",
   "unavailableDetail": "Its material may not be saved in this browser, or the server is unavailable. Search again from the home page.",
   "overview": "Galaxy overview",
-  "chooseDirection": "Choose a direction. Go deeper into this galaxy.",
-  "choosePlanet": "Approach a perspective. Discover what it is saying.",
-  "overviewKicker": "QUESTION GALAXY · OVERVIEW",
-  "clusterKicker": "PERSPECTIVE CLUSTER",
-  "coreLabel": "QUESTION CORE",
+  "chooseDirection": "This question galaxy still turns inside the ruins of the old civilization. Choose a direction and find the opinion planets that remain in orbit.",
+  "choosePlanet": "Each planet preserves a judgment once genuinely held by a human. Approach it and see why that thought survived.",
+  "overviewKicker": "LOST UNIVERSE · QUESTION GALAXY",
+  "clusterKicker": "OPINION CLUSTER · HUMAN COGNITION RELIC",
+  "coreLabel": "UNFINISHED QUESTION",
   "nodes": "{{count}} opinions",
   "directions": "{{count}} directions",
   "demoNotice": "Demo data · Authored interaction examples, not actual Zhihu answers or statistics.",
@@ -57,17 +57,17 @@
   "reset": "Reset view",
   "zoomIn": "Zoom in",
   "zoomOut": "Zoom out",
-  "drag": "Drag empty space to pan · Click to explore",
+  "drag": "Drag empty space to pan · Click to enter a relic",
   "back": "Back one level",
   "close": "Close",
-  "focusKicker": "OPINION PLANET",
+  "focusKicker": "HUMAN OPINION RELIC · PLANET",
   "sourceCount": "{{count}} linked sources",
   "sourceMissing": "No traceable material yet",
   "sourceRead": "Read original answer",
   "relatedCount": "{{count}} opinion relationships",
-  "landing": "Land on planet",
+  "landing": "Land on relic planet",
   "landingSoon": "The surface is not open yet",
-  "landingDetail": "You have reached the end of this phase. Claims, evidence and boundaries will unfold here in the next phase.",
+  "landingDetail": "This planet preserves a judgment that once existed in the human world. Land to recover its claim, reasons, conditions and evidence.",
   "backToCluster": "Keep exploring",
   "opinionsList": "Opinions in this direction",
   "emptyGalaxy": "This material has no human opinions to display yet.",
@@ -129,28 +129,28 @@
   },
   "intro": [
     {
-      "line": "Long ago, the AI revolution began.",
-      "detail": "Thought took on another form."
+      "line": "Long ago, humanity lived in both the physical and digital worlds.",
+      "detail": "Questions, arguments, experiences and judgments accumulated deep inside the network."
     },
     {
-      "line": "The digital and the real lost their boundaries.",
-      "detail": "There was more than one way for the world to unfold."
+      "line": "Then human civilization disappeared from this place.",
+      "detail": "Cities fell silent and coastlines emptied, but the cognitive archive preserved by Zhihu kept running."
     },
     {
-      "line": "Then, Earth disappeared.",
-      "detail": ""
+      "line": "At some unknown moment, the digital world overlapped with the surviving material world.",
+      "detail": "Cities, oceans, forests and ruins were reshaped by questions and opinions."
     },
     {
-      "line": "But human thought did not.",
-      "detail": "Questions, debates and memories still flickered in the dark."
+      "line": "The unfinished questions of old humanity gained gravity.",
+      "detail": "Neighboring questions pulled on one another, and unresolved debates kept echoing in the dark."
     },
     {
-      "line": "They collapsed into a higher-dimensional universe.",
-      "detail": "Beyond positions: evidence, assumptions and values."
+      "line": "Questions formed galaxies. Opinions condensed into planets.",
+      "detail": "Answers, reasons, conditions and evidence sank into their surfaces as relics of civilization."
     },
     {
-      "line": "A question, a galaxy. An opinion, a planet.",
-      "detail": "Seeker, your exploration starts here."
+      "line": "This is not a place of answers. It is a lost universe.",
+      "detail": "Seeker, continue along the questions they never finished."
     }
   ],
   "dimensionWords": [
