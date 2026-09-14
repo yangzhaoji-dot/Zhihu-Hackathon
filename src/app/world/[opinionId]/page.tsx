@@ -2,7 +2,7 @@
 
 import { useParams, useSearchParams } from "next/navigation";
 import "@/components/world/planet-synthesis-extra.module.css";
-import { DynamicPlanetStoryV4 } from "@/components/world/dynamic-planet-story-v4";
+import { DynamicPlanetStoryV5 } from "@/components/world/dynamic-planet-story-v5";
 import { EnvironmentGuidanceLayer } from "@/components/world/environment-guidance-layer";
 import { FirstCarrierCue } from "@/components/world/first-carrier-cue";
 import { FirstFragmentCue } from "@/components/world/first-fragment-cue";
@@ -22,15 +22,14 @@ export default function PlanetPage() {
   const search = useSearchParams();
   const opinionId = decodeURIComponent(params.opinionId);
 
-  // Every planet entered from a galaxy now uses the same paced, page-by-page
-  // interior story: viewpoint -> human scientific legacy -> property ->
-  // structural echo -> boundary -> evidence/archive.
+  // Every planet entered from a galaxy uses the same paced six-page story:
+  // viewpoint -> human scientific legacy -> property -> structural echo ->
+  // boundary -> real evidence/archive.
   if (search.has("galaxy")) {
-    return <DynamicPlanetStoryV4 opinionId={opinionId} />;
+    return <DynamicPlanetStoryV5 key={`${search.get("galaxy")}:${opinionId}`} opinionId={opinionId} />;
   }
 
-  // Keep the original hand-authored saddle-node story available as a direct
-  // reference route, but do not let it override the actual galaxy experience.
+  // Keep the original authored saddle-node reference available by direct URL.
   if (LAW_MVP_OPINIONS.has(opinionId)) {
     return <PlanetLawMvp opinionId={opinionId} />;
   }

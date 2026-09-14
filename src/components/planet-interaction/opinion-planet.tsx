@@ -7,7 +7,7 @@ import { hash } from "@/lib/cognitive-galaxy/model";
 import type { PlanetCollision, PlanetMotion } from "./types";
 import styles from "./opinion-planet.module.css";
 
-function titleLines(value: string, max = 10): string[] {
+function titleLines(value: string, max = 12): string[] {
   const chars = Array.from(value);
   return [
     chars.slice(0, max).join(""),
@@ -80,6 +80,12 @@ export function OpinionPlanet({
     : fusionBirth && !reducedMotion
       ? [.02, 1.32, .9, 1]
       : selected ? 1.82 : target ? 1.16 : dragged ? 1.1 : hovered ? 1.08 : 1;
+  const lines = titleLines(node.opinion.title);
+  const longest = Math.max(...lines.map((line) => Array.from(line).length), 1);
+  const labelWidth = Math.max(72, Math.min(112, longest * 7.4 + 18));
+  const labelHeight = lines.length > 1 ? 31 : 22;
+  const labelY = radius + 8;
+  const labelVisible = showTitle || (active && !dimmed);
 
   return <motion.g
     initial={fusionOrigin ? { x: fusionOrigin.x, y: fusionOrigin.y } : false}
@@ -128,6 +134,33 @@ export function OpinionPlanet({
         return <circle key={index} cx={Math.cos(angle) * distance} cy={Math.sin(angle) * distance} r={index % 2 ? .55 : .85} fill={color} opacity={.45 + index * .05} />;
       })}
     </motion.g>
-    {showTitle && <text className={styles.planetLabel} y={radius + 13} textAnchor="middle" fill="var(--cg-ink)" fontSize="6.4" onClick={() => onSelect(node.opinion.id)}>{titleLines(node.opinion.title).map((line, index) => <tspan key={index} x="0" dy={index ? 9 : 0}>{line}</tspan>)}</text>}
+    {labelVisible && <g
+      className={styles.planetLabelGroup}
+      data-clickable="true"
+      data-emphasized={emphasized ? "true" : "false"}
+      onClick={() => onSelect(node.opinion.id)}
+      onMouseEnter={() => active && onHover(node.opinion.id)}
+      onMouseLeave={() => !motionState && onHover(null)}
+    >
+      <rect
+        className={styles.planetLabelPlate}
+        x={-labelWidth / 2}
+        y={labelY}
+        width={labelWidth}
+        height={labelHeight}
+        rx="5.5"
+        fill="var(--cg-bg-deep)"
+        stroke={color}
+      />
+      <text
+        className={styles.planetLabel}
+        y={labelY + 13}
+        textAnchor="middle"
+        fill="var(--cg-ink)"
+        fontSize="7.4"
+      >
+        {lines.map((line, index) => <tspan key={index} x="0" dy={index ? 10 : 0}>{line}</tspan>)}
+      </text>
+    </g>}
   </motion.g>;
 }
