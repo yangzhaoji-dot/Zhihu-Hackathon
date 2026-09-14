@@ -34,14 +34,14 @@ jobs:
         run: |
           npm install --prefix /tmp/cognitive-browser --no-package-lock playwright@1.51.1
           /tmp/cognitive-browser/node_modules/.bin/playwright install --with-deps chromium
-      - name: Browser integrated evolution acceptance
+      - name: Browser current demo acceptance
         env:
           PLAYWRIGHT_MODULE_PATH: /tmp/cognitive-browser/node_modules/playwright
         run: |
           mkdir -p test-artifacts/universe
           bun run start > /tmp/cognitive-universe-server.log 2>&1 &
           for i in $(seq 1 20); do curl -s http://localhost:3000/galaxy/demo-luoci > /dev/null && break; sleep 1; done
-          node scripts/cognitive-universe-browser.mjs || { tail -n 120 /tmp/cognitive-universe-server.log; cp /tmp/cognitive-universe-server.log test-artifacts/universe/server.log; exit 1; }
+          node scripts/web-redesign-browser.mjs || { tail -n 120 /tmp/cognitive-universe-server.log; cp /tmp/cognitive-universe-server.log test-artifacts/universe/server.log; exit 1; }
       - uses: actions/upload-artifact@v4
         if: always()
         with:
