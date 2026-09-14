@@ -29,6 +29,10 @@ export interface OpinionSource {
   authorId: string;
   excerpt: string; // original-text excerpt, verbatim feel
   upvotes: number;
+  /** Some official summary endpoints return the answer but omit vote metadata. */
+  upvotesKnown?: boolean;
+  /** False when the answer endpoint omitted author metadata. */
+  authorKnown?: boolean;
   url: string; // deep link back to the original Zhihu answer
   evidence?: string[]; // supporting facts / data cited in the answer
 }
@@ -255,7 +259,7 @@ export interface WorldTrigger {
   once?: boolean;                     // true = 触发一次后写入 progress.firedTriggerIds
 }
 
-// ── Dialogue scripts (world-design-v0.2 §3.2) ───────────────────────────────
+// ── Dialogue scripts (world-design-v0.2 §3.2) ────────────────────────────────
 
 /** 单个 NPC 的静态对话脚本：fallback 必用，AI 不可用时的完整体验。 */
 export interface DialogueScript {
