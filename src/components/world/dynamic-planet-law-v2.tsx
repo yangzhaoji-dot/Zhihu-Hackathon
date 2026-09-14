@@ -1,13 +1,13 @@
 "use client";
 
-import { ArrowLeft, ArrowRight, BookOpen, LoaderCircle, Telescope } from "lucide-react";
+import { ArrowLeft, BookOpen, ExternalLink, LoaderCircle } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { readGalaxy } from "@/lib/cognitive-galaxy/session";
 import type { OpinionGraph } from "@/lib/opinion/types";
 import type { LawVisual, PlanetLawDefinition } from "@/lib/opinion/law-catalog";
 import { DynamicArchivePanel } from "./dynamic-archive-panel";
-import styles from "./planet-law-mvp.module.css";
+import styles from "./planet-interior-v3.module.css";
 
 type Match = {
   confidence: number;
@@ -19,111 +19,110 @@ type Match = {
 };
 
 type Result = { law: PlanetLawDefinition; match: Match };
-type Slide = {
-  label: string;
-  title: string;
-  math?: string;
-  body?: string;
-  note?: string;
-  visual: LawVisual | "records";
-  climax?: boolean;
-};
+type ViewMode = "law" | "mapping" | "evidence";
 
-function LawVisualPanel({ law }: { law: PlanetLawDefinition }) {
+function compact(value: string, limit = 210) {
+  const clean = value.replace(/\s+/g, " ").trim();
+  return clean.length > limit ? `${clean.slice(0, limit)}…` : clean;
+}
+
+function safeZhihuUrl(value: string) {
+  return /^https:\/\/(www\.)?zhihu\.com\//i.test(value) ? value : null;
+}
+
+function LawDiagram({ law }: { law: PlanetLawDefinition }) {
+  const visual: LawVisual = law.visual;
   return (
-    <div className={styles.diagramWrap} aria-hidden>
-      <div className={styles.diagramCaption}>{law.name.toUpperCase()} · {law.field}</div>
-      <svg className={styles.diagram} viewBox="0 0 460 320">
-        <line className={styles.axis} x1="56" y1="258" x2="414" y2="258" />
-        <line className={styles.axis} x1="56" y1="258" x2="56" y2="48" />
+    <div className={styles.diagramBox} aria-hidden>
+      <svg viewBox="0 0 520 280">
+        <line className={styles.axis} x1="52" y1="236" x2="470" y2="236" />
+        <line className={styles.axis} x1="52" y1="236" x2="52" y2="44" />
 
-        {law.visual === "bifurcation" ? (
+        {visual === "bifurcation" ? (
           <>
-            <path className={styles.unstableBranch} d="M76 82 C166 84 274 118 330 160" />
-            <path className={styles.stableBranch} d="M76 238 C166 234 274 202 330 160" />
-            <line className={styles.thresholdLine} x1="330" y1="68" x2="330" y2="252" />
-            <circle className={styles.marker} cx="246" cy="198" r="6" />
+            <path className={styles.secondaryLine} d="M72 72 C170 78 282 118 350 154" />
+            <path className={styles.primaryLine} d="M72 222 C170 216 282 188 350 154" />
+            <line className={styles.axis} x1="350" y1="64" x2="350" y2="236" />
+            <circle className={styles.point} cx="268" cy="190" r="6" />
           </>
         ) : null}
 
-        {law.visual === "belief" ? (
+        {visual === "belief" ? (
           <>
-            <rect x="112" y="150" width="72" height="108" rx="8" fill="rgba(144,172,230,.22)" />
-            <rect x="288" y="88" width="72" height="170" rx="8" fill="rgba(226,202,149,.42)" />
+            <rect x="124" y="142" width="78" height="94" rx="10" fill="rgba(146,176,235,.22)" />
+            <rect x="318" y="78" width="78" height="158" rx="10" fill="rgba(226,202,149,.38)" />
+            <path className={styles.secondaryLine} d="M214 170 C252 139 284 118 310 104" />
           </>
         ) : null}
 
-        {law.visual === "pareto" ? (
-          <path d="M92 82 C166 92 246 128 304 178 C341 210 367 232 398 248" fill="none" stroke="rgba(217,198,151,.64)" strokeWidth="3" />
-        ) : null}
-
-        {law.visual === "game" ? (
+        {visual === "pareto" ? (
           <>
-            <rect x="110" y="70" width="240" height="180" rx="18" fill="none" stroke="rgba(176,195,226,.16)" />
-            <circle cx="292" cy="205" r="10" fill="rgba(226,202,149,.72)" />
+            <path className={styles.primaryLine} d="M88 72 C164 84 252 112 326 164 C372 196 405 218 446 232" />
+            {[0, 1, 2, 3].map((index) => (
+              <circle key={index} className={styles.point} cx={120 + index * 82} cy={84 + index * 38} r="5" />
+            ))}
           </>
         ) : null}
 
-        {law.visual === "decision" || law.visual === "value" ? (
+        {visual === "game" ? (
           <>
-            <circle cx="92" cy="160" r="8" fill="rgba(230,234,244,.82)" />
-            <path d="M100 160 C160 160 176 96 238 96" fill="none" stroke="rgba(151,178,232,.42)" strokeWidth="3" />
-            <path d="M100 160 C160 160 176 224 238 224" fill="none" stroke="rgba(215,193,145,.5)" strokeWidth="3" />
+            <rect x="132" y="62" width="270" height="174" rx="20" fill="none" stroke="rgba(184,202,234,.14)" />
+            <line className={styles.axis} x1="267" y1="62" x2="267" y2="236" />
+            <line className={styles.axis} x1="132" y1="149" x2="402" y2="149" />
+            <circle className={styles.point} cx="335" cy="194" r="8" />
           </>
         ) : null}
 
-        {law.visual === "entropy"
-          ? [56, 118, 88, 142, 74, 126].map((height, index) => (
+        {visual === "decision" || visual === "value" ? (
+          <>
+            <circle className={styles.point} cx="98" cy="150" r="7" />
+            <path className={styles.primaryLine} d="M106 150 C162 150 188 92 254 92" />
+            <path className={styles.secondaryLine} d="M106 150 C162 150 188 212 254 212" />
+            <path className={styles.primaryLine} d="M262 92 C322 92 352 70 430 70" />
+            <path className={styles.secondaryLine} d="M262 92 C322 92 352 126 430 126" />
+          </>
+        ) : null}
+
+        {visual === "entropy"
+          ? [52, 118, 82, 146, 68, 126].map((height, index) => (
               <rect
                 key={index}
-                x={86 + index * 50}
-                y={250 - height}
-                width="28"
+                x={92 + index * 58}
+                y={236 - height}
+                width="32"
                 height={height}
-                rx="5"
-                fill={index === 3 ? "rgba(226,202,149,.48)" : "rgba(147,175,231,.24)"}
+                rx="6"
+                fill={index === 3 ? "rgba(226,202,149,.42)" : "rgba(148,177,235,.22)"}
               />
             ))
           : null}
 
-        {law.visual === "queue"
-          ? [0, 1, 2, 3, 4, 5].map((index) => (
+        {visual === "queue" ? (
+          <>
+            {[0, 1, 2, 3, 4, 5].map((index) => (
               <circle
                 key={index}
-                cx={72 + index * 44}
-                cy="160"
-                r="12"
-                fill="rgba(151,178,232,.24)"
-                stroke="rgba(188,205,235,.28)"
+                cx={86 + index * 50}
+                cy="150"
+                r="13"
+                fill="rgba(148,177,235,.2)"
+                stroke="rgba(190,207,238,.28)"
               />
-            ))
-          : null}
+            ))}
+            <rect x="390" y="106" width="62" height="88" rx="10" fill="rgba(226,202,149,.08)" stroke="rgba(226,202,149,.28)" />
+          </>
+        ) : null}
 
-        {law.visual === "growth" || law.visual === "exponential" ? (
+        {visual === "growth" || visual === "exponential" ? (
           <path
-            d={law.visual === "growth"
-              ? "M54 246 C96 242 126 222 152 188 C187 141 215 92 306 84 C345 81 374 83 408 84"
-              : "M54 250 C145 248 224 230 277 188 C326 149 361 99 407 56"}
-            fill="none"
-            stroke="rgba(205,218,246,.62)"
-            strokeWidth="4"
-            strokeLinecap="round"
+            className={styles.primaryLine}
+            d={visual === "growth"
+              ? "M58 226 C106 222 152 204 188 168 C238 118 280 76 382 76 C420 76 445 77 466 77"
+              : "M58 228 C158 226 242 207 300 164 C356 122 401 80 462 48"}
           />
         ) : null}
       </svg>
       <div className={styles.diagramNote}>{law.mechanism}</div>
-    </div>
-  );
-}
-
-function ArchiveVisual({ count }: { count: number }) {
-  return (
-    <div className={styles.recordsVisual} aria-hidden>
-      <span className={styles.recordOrbit} />
-      <div className={`${styles.recordCard} ${styles.recordOne}`}><i />E-001</div>
-      <div className={`${styles.recordCard} ${styles.recordTwo}`}><i />E-002</div>
-      {count > 2 ? <div className={`${styles.recordCard} ${styles.recordThree}`}><i />E-003</div> : null}
-      <div className={styles.recordCore}>ECHO ARCHIVE</div>
     </div>
   );
 }
@@ -136,9 +135,7 @@ export function DynamicPlanetLawV2({ opinionId }: { opinionId: string }) {
   const [graph, setGraph] = useState<OpinionGraph | null | undefined>(undefined);
   const [result, setResult] = useState<Result | null>(null);
   const [failed, setFailed] = useState(false);
-  const [index, setIndex] = useState(0);
-  const [leaving, setLeaving] = useState(false);
-  const [transitioning, setTransitioning] = useState(false);
+  const [mode, setMode] = useState<ViewMode>("law");
   const [archiveOpen, setArchiveOpen] = useState(false);
 
   useEffect(() => {
@@ -163,7 +160,7 @@ export function DynamicPlanetLawV2({ opinionId }: { opinionId: string }) {
     const controller = new AbortController();
     setResult(null);
     setFailed(false);
-    setIndex(0);
+    setMode("law");
     setArchiveOpen(false);
 
     void fetch("/api/opinion/law", {
@@ -199,21 +196,19 @@ export function DynamicPlanetLawV2({ opinionId }: { opinionId: string }) {
   if (graph === undefined || (opinion && !result && !failed)) {
     return (
       <main className={styles.page}>
-        <div className={styles.glow} />
-        <header className={styles.topbar}>
-          <button className={styles.backButton} onClick={back}><ArrowLeft size={15} />返回主星系</button>
-          <span className={styles.coordinates}>PLANET LAW · RESOLVING</span>
-        </header>
-        <section className={styles.stage}>
-          <div className={styles.stageInner}>
-            <div className={styles.narrativeSide}>
-              <span className={styles.label}>LAW RESOLVER</span>
-              <h1 className={styles.title}>正在解析这颗星球的法则。</h1>
-              <p className={styles.lawCopy}>只从已经校验的真实数学原型中选择，不现场发明公式。</p>
+        <div className={styles.shell}>
+          <header className={styles.topbar}>
+            <button type="button" className={styles.backButton} onClick={back}><ArrowLeft size={15} />返回主星系</button>
+            <span className={styles.coordinates}>PLANET INTERIOR · RESOLVING</span>
+          </header>
+          <section className={styles.loading}>
+            <div className={styles.loadingCore}>
+              <LoaderCircle className={styles.spin} size={38} />
+              <h1>正在校准这颗星球的法则。</h1>
+              <p>只从已经校验的数学原型中匹配，不现场发明公式。</p>
             </div>
-            <aside className={styles.visualSide}><LoaderCircle size={48} /></aside>
-          </div>
-        </section>
+          </section>
+        </div>
       </main>
     );
   }
@@ -221,19 +216,18 @@ export function DynamicPlanetLawV2({ opinionId }: { opinionId: string }) {
   if (!opinion || !result || failed || !graph) {
     return (
       <main className={styles.page}>
-        <div className={styles.glow} />
-        <header className={styles.topbar}>
-          <button className={styles.backButton} onClick={back}><ArrowLeft size={15} />返回主星系</button>
-        </header>
-        <section className={styles.stage}>
-          <div className={styles.stageInner}>
-            <div className={styles.narrativeSide}>
-              <span className={styles.label}>LAW UNRESOLVED</span>
-              <h1 className={styles.title}>这颗星球的法则暂时无法解析。</h1>
-              <p className={styles.lawCopy}>观点仍然保留，但当前没有可靠的法则匹配结果。</p>
+        <div className={styles.shell}>
+          <header className={styles.topbar}>
+            <button type="button" className={styles.backButton} onClick={back}><ArrowLeft size={15} />返回主星系</button>
+            <span className={styles.coordinates}>PLANET INTERIOR · UNRESOLVED</span>
+          </header>
+          <section className={styles.loading}>
+            <div className={styles.loadingCore}>
+              <h1>这颗星球暂时没有可靠法则。</h1>
+              <p>观点仍然保留。没有足够强的结构匹配时，不强行给它套一个公式。</p>
             </div>
-          </div>
-        </section>
+          </section>
+        </div>
       </main>
     );
   }
@@ -252,117 +246,132 @@ export function DynamicPlanetLawV2({ opinionId }: { opinionId: string }) {
     );
   }
 
-  const slides: Slide[] = [
-    {
-      label: `观点星球 · ${law.name}`,
-      title: opinion.title,
-      math: law.formula,
-      body: law.definition,
-      visual: law.visual,
-      climax: true,
-    },
-    {
-      label: `法则原义 · ${law.field}`,
-      title: law.mechanism,
-      math: law.formula,
-      body: match.reason,
-      note: "这里先解释数学结构本身。公式不负责替观点判对错，它只是提供一种已经被研究过的结构。",
-      visual: law.visual,
-    },
-    {
-      label: "结构映射 · 从法则到观点",
-      title: match.mechanism,
-      body: match.mapping,
-      note: `匹配置信度 ${Math.round(match.confidence * 100)}%。我们匹配的是机制，不是关键词。`,
-      visual: law.visual,
-    },
-    {
-      label: "LAW BOUNDARY · 法则边界",
-      title: "它能照亮结构，却不能替现实作决定。",
-      body: match.boundary,
-      note: "所以还要回到真实回答：模型给出结构，人留下条件、反例和细节。",
-      visual: law.visual,
-      climax: true,
-    },
-    {
-      label: "ARCHIVE SIGNAL · 纪元遗声",
-      title: "法则沉默以后，人的声音开始抵达。",
-      body: `这颗星球由 ${sources.length} 条真实知乎记录支撑。它们不是公式的证明，而是这条观点在讨论中留下的声音。`,
-      note: "下一层展开遗声档案，重新阅读原始回答与作者。",
-      visual: "records",
-    },
-  ];
-
-  const slide = slides[index];
-  const last = index === slides.length - 1;
-
-  const change = (next: number) => {
-    if (next < 0 || next >= slides.length || transitioning) return;
-    setTransitioning(true);
-    setLeaving(true);
-    window.setTimeout(() => {
-      setIndex(next);
-      setLeaving(false);
-    }, 720);
-    window.setTimeout(() => setTransitioning(false), 1780);
-  };
+  const visibleRecords = sources.slice(0, 3);
 
   return (
-    <main className={styles.page} data-el="dynamic-planet-law">
-      <div className={styles.glow} />
-      <header className={styles.topbar}>
-        <button type="button" onClick={back} className={styles.backButton}><ArrowLeft size={15} />返回主星系</button>
-        <span className={styles.coordinates}>PLANET LAW · {String(index + 1).padStart(2, "0")} / {String(slides.length).padStart(2, "0")}</span>
-      </header>
+    <main className={styles.page} data-el="dynamic-planet-interior">
+      <div className={styles.shell}>
+        <header className={styles.topbar}>
+          <button type="button" onClick={back} className={styles.backButton}><ArrowLeft size={15} />返回主星系</button>
+          <span className={styles.coordinates}>PLANET INTERIOR · {law.name.toUpperCase()}</span>
+        </header>
 
-      <section className={`${styles.stage} ${slide.climax ? styles.stageClimax : ""} ${leaving ? styles.stageLeaving : styles.stageEntering}`}>
-        <div className={styles.aura} />
-        <div className={styles.stageInner} key={index}>
-          <div className={styles.narrativeSide}>
-            <span className={`${styles.label} ${styles.revealLine}`}>{slide.label}</span>
-            {slide.math ? <div className={`${styles.formula} ${styles.revealLine}`}>{slide.math}</div> : null}
-            <h1 className={`${styles.title} ${styles.revealLine}`}>{slide.title}</h1>
-            {slide.body ? <p className={`${styles.lawCopy} ${styles.revealLine}`}>{slide.body}</p> : null}
-            {slide.note ? <p className={`${styles.realityCopy} ${styles.revealLine}`}>{slide.note}</p> : null}
+        <section className={styles.hero}>
+          <article className={styles.opinionPanel}>
+            <span className={styles.kicker}>观点星球 · {graph.questionTitle}</span>
+            <h1>{opinion.title}</h1>
+            <p className={styles.summary}>{opinion.summary}</p>
+            <div className={styles.metaRow}>
+              {opinion.camp ? <span>{opinion.camp}</span> : null}
+              <span>观点强度 {opinion.support}</span>
+              <span>{sources.length} 条知乎来源</span>
+              <span>{opinion.kind === "ai" ? "AI 推导" : "知乎观点"}</span>
+            </div>
+          </article>
+
+          <article className={styles.lawPanel}>
+            <div className={styles.lawIdentity}>
+              <div>
+                <span className={styles.kicker}>PLANET LAW</span>
+                <h2 className={styles.lawName}>{law.name}</h2>
+                <div className={styles.lawField}>{law.field}</div>
+                <div className={styles.formula}>{law.formula}</div>
+              </div>
+              <div className={styles.confidence}>
+                <span>结构匹配</span>
+                <strong>{Math.round(match.confidence * 100)}%</strong>
+                <div className={styles.confidenceTrack}><i style={{ width: `${Math.round(match.confidence * 100)}%` }} /></div>
+              </div>
+            </div>
+            <LawDiagram law={law} />
+          </article>
+        </section>
+
+        <section className={styles.workspace}>
+          <nav className={styles.tabBar} aria-label="星球内部视图">
+            <button type="button" className={`${styles.tab} ${mode === "law" ? styles.tabActive : ""}`} onClick={() => setMode("law")}>法则</button>
+            <button type="button" className={`${styles.tab} ${mode === "mapping" ? styles.tabActive : ""}`} onClick={() => setMode("mapping")}>结构映射</button>
+            <button type="button" className={`${styles.tab} ${mode === "evidence" ? styles.tabActive : ""}`} onClick={() => setMode("evidence")}>知乎证据</button>
+          </nav>
+
+          {mode === "law" ? (
+            <div className={styles.contentGrid}>
+              <article className={styles.card}>
+                <span className={styles.cardLabel}>法则原义</span>
+                <h2>这个公式本来在说什么</h2>
+                <p>{law.definition}</p>
+              </article>
+              <article className={styles.card}>
+                <span className={styles.cardLabel}>数学机制</span>
+                <h2>{law.mechanism}</h2>
+                <p>{match.reason}</p>
+              </article>
+              <article className={styles.card}>
+                <span className={styles.cardLabel}>适用范围</span>
+                <h2>适合观察这些结构</h2>
+                <div className={styles.chipList}>{law.goodFor.map((item) => <span className={styles.chip} key={item}>{item}</span>)}</div>
+                <div className={styles.chipList}>{law.badFor.map((item) => <span className={styles.chip} key={item}>不适合 · {item}</span>)}</div>
+              </article>
+            </div>
+          ) : null}
+
+          {mode === "mapping" ? (
+            <div className={styles.contentGrid}>
+              <article className={styles.bridge}>
+                <div className={styles.bridgeSide}>
+                  <span className={styles.cardLabel}>数学里</span>
+                  <h2>{law.mechanism}</h2>
+                  <p>{law.definition}</p>
+                </div>
+                <div className={styles.bridgeArrow} aria-hidden />
+                <div className={styles.bridgeSide}>
+                  <span className={styles.cardLabel}>这个观点里</span>
+                  <h2>{match.mechanism}</h2>
+                  <p>{match.mapping}</p>
+                </div>
+              </article>
+              <article className={styles.boundaryCard}>
+                <span className={styles.cardLabel}>LAW BOUNDARY</span>
+                <h2>法则到这里为止</h2>
+                <p>{match.boundary}</p>
+              </article>
+            </div>
+          ) : null}
+
+          {mode === "evidence" ? (
+            <div className={styles.contentGrid}>
+              <div className={styles.recordsGrid}>
+                {visibleRecords.length ? visibleRecords.map((source, index) => {
+                  const author = graph.authors.find((item) => item.id === source.authorId) ?? null;
+                  const url = safeZhihuUrl(source.url);
+                  return (
+                    <article className={styles.recordCard} key={source.id}>
+                      <div className={styles.recordHead}>
+                        <span className={styles.recordLabel}>ECHO {String(index + 1).padStart(2, "0")}</span>
+                        <span>{source.upvotes.toLocaleString()} 赞同</span>
+                      </div>
+                      <blockquote>“{compact(source.excerpt)}”</blockquote>
+                      <div className={styles.recordAuthor}>
+                        <span>{author?.name ?? "知乎回答作者"}</span>
+                        {url ? <a className={styles.recordLink} href={url} target="_blank" rel="noreferrer">原回答 <ExternalLink size={11} /></a> : null}
+                      </div>
+                    </article>
+                  );
+                }) : <div className={styles.emptyRecord}>这颗星球暂时没有可展示的原始知乎记录。</div>}
+              </div>
+            </div>
+          ) : null}
+        </section>
+
+        <div className={styles.bottomDock}>
+          <div className={styles.dockCopy}>
+            公式负责暴露结构，知乎回答负责保留经验与反例。两者不会互相替代。
           </div>
-          <aside className={`${styles.visualSide} ${styles.revealVisual}`}>
-            {slide.visual === "records" ? <ArchiveVisual count={sources.length} /> : <LawVisualPanel law={law} />}
-          </aside>
+          <button type="button" className={styles.archiveButton} onClick={() => setArchiveOpen(true)}>
+            <BookOpen size={16} />展开完整遗声档案
+          </button>
         </div>
-      </section>
-
-      <div className={styles.controls}>
-        <div className={styles.progress}>
-          {slides.map((_, dotIndex) => (
-            <button
-              key={dotIndex}
-              type="button"
-              className={`${styles.dot} ${dotIndex === index ? styles.dotActive : ""}`}
-              onClick={() => change(dotIndex)}
-              disabled={transitioning}
-              aria-label={`第 ${dotIndex + 1} 幕`}
-            />
-          ))}
-        </div>
-
-        {index > 0 ? (
-          <button type="button" className={styles.previousButton} onClick={() => change(index - 1)} disabled={transitioning}>
-            <ArrowLeft size={16} />上一幕
-          </button>
-        ) : <span />}
-
-        {last ? (
-          <button type="button" className={styles.nextButton} onClick={() => setArchiveOpen(true)}>
-            <BookOpen size={17} />进入遗声档案<Telescope size={16} />
-          </button>
-        ) : (
-          <button type="button" className={styles.nextButton} onClick={() => change(index + 1)} disabled={transitioning}>
-            下一幕<ArrowRight size={17} />
-          </button>
-        )}
       </div>
-
-      <footer className={styles.disclaimer}>数学法则在这里是一种结构化理解工具，不是对人生处境的定量预测模型。</footer>
     </main>
   );
 }
