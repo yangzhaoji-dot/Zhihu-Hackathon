@@ -27,7 +27,7 @@ jobs:
         with:
           bun-version: 1.3.9
       - run: bun install --frozen-lockfile
-      - run: bun test scripts/cognitive-universe.test.ts scripts/planet-synthesis.test.ts scripts/cognitive-galaxy.test.ts
+      - run: bun test scripts/cognitive-universe.test.ts scripts/planet-synthesis.test.ts scripts/cognitive-galaxy.test.ts scripts/planet-interaction.test.ts scripts/demo-showcase.test.ts
       - run: bun run lint
       - run: bun run build
       - name: Install isolated browser test runner
