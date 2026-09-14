@@ -1,34 +1,27 @@
 import type { DialogueScript } from "../../types";
 
-// 中央车站 · 半透明售票员（o_threshold, AI 融合观点, support 60, translucent）
-// 性格：自知是推演出来的"影子"，说话带省略号；诚实是它的角色核心——
-// 反复强调"我是候选答案，不是事实"。
-// 台词事实锚点：s9 @大饼（退出成本阈值：健康风险、现金储备、行业周期）。
+// v0.3：AI 融合观点不再拟人成“半透明售票员”，而表现成一台尚未定型的条件闸机。
 export const dlgLuociThreshold: DialogueScript = {
   id: "dlg_luoci_threshold",
   npcId: "npc_threshold",
   aiPromptId: "world-dialogue-v1",
   lines: [
     {
-      speaker: "npc",
-      text: "……你看得见我？我是被'融合'推演出来的影子：{title}。",
+      speaker: "guide",
+      text: "这台闸机不是某个答主留下的。它是系统把几条路线叠在一起后推演出的候选规则：{title}。",
     },
     {
-      speaker: "npc",
-      text: "我没有真人履历撑腰。最接近我的一句话，来自创业者 {author}：「{excerpt}」（{upvotes} 人赞同）",
+      speaker: "guide",
+      text: "最接近这条规则的真人材料来自 {author}：「{excerpt}」（{upvotes} 人赞同）。你可以查看原文，但不要把真人材料和系统推演混成一件事。",
       actions: [{ type: "show-source", sourceId: "s9" }],
     },
     {
-      speaker: "npc",
-      text: "我的配方写在票面上：把身心风险、现金储备、行业周期，折算成一个'退出阈值'。过了阈值，走；没过，留。",
+      speaker: "guide",
+      text: "它尝试把身心风险、现金储备和行业周期放进同一个“退出阈值”里。半透明表示：这个结构可以帮助思考，但它不是已经被证明的事实。",
     },
     {
-      speaker: "npc",
-      text: "但请记住：我是止损派和稳健派争论推出来的候选答案，不是谁的真实经历。半透明，就是我的免责声明。",
-    },
-    {
-      speaker: "npc",
-      text: "愿意的话收下我，拿去和任何一张真人观点卡碰一碰——让我也接受一次检验。",
+      speaker: "guide",
+      text: "如果你愿意，可以把这个候选观点收下，再用真人观点去检验它。这里的目标不是给答案，而是把一个可能的判断规则摆到你面前。",
       actions: [
         { type: "collect-opinion", opinionId: "o_threshold" },
         { type: "open-stance", opinionId: "o_threshold" },

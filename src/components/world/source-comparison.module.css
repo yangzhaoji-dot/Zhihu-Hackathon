@@ -1,0 +1,45 @@
+.comparison {
+  display: grid;
+  width: min(620px, 94%);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.comparison article {
+  min-height: 126px;
+  padding: 13px 14px 12px;
+  border: 1px solid rgba(112, 103, 77, .28);
+  border-radius: 9px 9px 12px 8px;
+  background:
+    linear-gradient(180deg, rgba(240,233,211,.97), rgba(211,202,179,.93)),
+    #dfd4b9;
+  color: #292c25;
+  box-shadow: 0 10px 22px rgba(0,0,0,.22);
+}
+
+.comparison article:first-child { transform: rotate(-.6deg); }
+.comparison article:last-child { transform: rotate(.55deg); }
+
+.comparison small {
+  display: block;
+  color: #687057;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: .13em;
+}
+
+.comparison blockquote {
+  margin: 10px 0 0;
+  padding-left: 10px;
+  border-left: 2px solid #89936f;
+  font-family: ui-serif, "Songti SC", "STSong", serif;
+  font-size: 12px;
+  line-height: 1.7;
+  text-align: left;
+}
+
+@media (max-width: 620px) {
+  .comparison { grid-template-columns: 1fr; }
+  .comparison article { min-height: auto; }
+}

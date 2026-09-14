@@ -6,17 +6,10 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { GuideAvatar } from "@/components/opinion-world/guide-avatar";
 import type { Author, DialogueAction, DialogueLine, OpinionSource } from "@/lib/opinion/types";
+import { ConditionExperiment } from "./condition-experiment";
 import styles from "./dialogue-overlay.module.css";
 
-// 对话 UI 容器（world-design-v0.2 §5.6 / M2）：
-// - 逐行显示、任意键/点击快进、Esc 关闭；
-// - actions：show-source 弹原文卡（直接读 OpinionSource 数据，不经 AI）；
-//   collect-opinion / open-compare / open-stance 在 M2 由 onAction 上抛
-//   （页面层显示"即将上线" toast，M3/M4 实现）；
-// - 对话期间页面层状态机处于 dialogue，移动被锁定。
-
 export interface ResolvedDialogueLine extends DialogueLine {
-  /** 插值后的最终文本（页面层负责填 Opinion/OpinionSource 数据）。 */
   text: string;
 }
 
@@ -27,17 +20,34 @@ export interface SourceCardData {
 
 interface DialogueOverlayProps {
   lines: ResolvedDialogueLine[];
-  /** npc 台词的说话人展示名（角色身份，如「车站管理员」）。 */
   npcLabel: string;
-  /** 副标题（观点标题 / 世界名）。 */
   subtitle?: string;
-  /** npc 立绘（无立绘传空串，画占位圆块）。 */
   npcSprite?: string;
   accent?: string;
   onAction: (action: DialogueAction) => void;
   onClose: () => void;
-  /** 按 sourceId 解析来源卡数据；返回 null 的动作按钮不渲染。 */
   resolveSource: (sourceId: string) => SourceCardData | null;
+  surfaceMode?: "legacy" | "fragments";
+  onConditionCueChange?: (cue: number) => void;
+}
+
+function extractConditionCandidates(lines: ResolvedDialogueLine[]) {
+  const collected: string[] = [];
+  for (const line of lines) {
+    const text = line.text.replace(/\s+/g, " ").trim();
+    const matches = [
+      text.match(/(?:条件|前提)(?:是|包括|依赖|为)?[：:]\s*([^。！？!?]+)/),
+      text.match(/(?:依赖这些条件)[：:]\s*([^。！？!?]+)/),
+      text.match(/(?:conditions?|depends on)[：:]\s*([^.!?]+)/i),
+    ].filter(Boolean) as RegExpMatchArray[];
+    for (const match of matches) {
+      for (const item of match[1].split(/[；;、，,]/)) {
+        const value = item.trim().replace(/^这些?/, "");
+        if (value.length >= 2 && value.length <= 90 && !collected.includes(value)) collected.push(value);
+      }
+    }
+  }
+  return collected.slice(0, 3);
 }
 
 export function DialogueOverlay({
@@ -49,48 +59,64 @@ export function DialogueOverlay({
   onAction,
   onClose,
   resolveSource,
+  surfaceMode = "legacy",
+  onConditionCueChange,
 }: DialogueOverlayProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [index, setIndex] = useState(0);
   const [openedSourceId, setOpenedSourceId] = useState<string | null>(null);
+  const [experimentAction, setExperimentAction] = useState<DialogueAction | null>(null);
 
   const line = lines[Math.min(index, lines.length - 1)];
   const isLast = index >= lines.length - 1;
+  const locale = i18n.resolvedLanguage === "en-US" ? "en-US" : "zh-CN";
+  const experimentConditions = useMemo(() => extractConditionCandidates(lines), [lines]);
 
   const advance = useCallback(() => {
+    if (experimentAction) return;
     if (openedSourceId) {
       setOpenedSourceId(null);
       return;
     }
     if (isLast) onClose();
-    else setIndex((i) => i + 1);
-  }, [isLast, onClose, openedSourceId]);
+    else setIndex((value) => value + 1);
+  }, [experimentAction, isLast, onClose, openedSourceId]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         event.stopPropagation();
+        if (experimentAction) {
+          onConditionCueChange?.(0);
+          setExperimentAction(null);
+          return;
+        }
+        if (openedSourceId) {
+          setOpenedSourceId(null);
+          return;
+        }
         onClose();
         return;
       }
+      if (experimentAction) return;
       event.preventDefault();
       advance();
     };
-    // capture 阶段接管键盘，避免世界页的移动键监听同时响应。
     window.addEventListener("keydown", onKeyDown, { capture: true });
     return () => window.removeEventListener("keydown", onKeyDown, { capture: true });
-  }, [advance, onClose]);
+  }, [advance, experimentAction, onClose, onConditionCueChange, openedSourceId]);
 
   const visibleActions = useMemo(
     () =>
-      (line?.actions ?? []).filter(
-        (action) => action.type !== "show-source" || resolveSource(action.sourceId) !== null,
-      ),
-    [line, resolveSource],
+      (line?.actions ?? []).filter((action) => {
+        if (action.type === "show-source") return resolveSource(action.sourceId) !== null;
+        if (surfaceMode === "fragments" && (action.type === "open-compare" || action.type === "open-stance")) return false;
+        return true;
+      }),
+    [line, resolveSource, surfaceMode],
   );
 
   const opened = openedSourceId ? resolveSource(openedSourceId) : null;
-
   if (!line) return null;
 
   const speakerLabel =
@@ -100,10 +126,17 @@ export function DialogueOverlay({
         ? t("world.dialogueUi.you")
         : npcLabel;
 
+  const actionLabel = (action: DialogueAction) => {
+    if (surfaceMode === "fragments" && action.type === "collect-opinion") {
+      return locale === "en-US" ? "Try the conditions" : "试一试条件";
+    }
+    return t(`world.actions.${action.type}`);
+  };
+
   return (
     <div className={styles.overlay} role="dialog" aria-label={speakerLabel} onClick={advance}>
       {opened && (
-        <div className={styles.sourcePop} onClick={(e) => e.stopPropagation()}>
+        <div className={styles.sourcePop} onClick={(event) => event.stopPropagation()}>
           <div className={styles.sourceCard}>
             <div className={styles.sourceHead}>
               <span className={styles.sourceAvatar} aria-hidden>
@@ -114,7 +147,7 @@ export function DialogueOverlay({
                 <small>{opened.author?.title ?? ""}</small>
               </span>
               <span className={styles.sourceUp}>
-                {t("cosmos.upvotes", { n: opened.source.upvotes.toLocaleString("zh-CN") })}
+                {t("cosmos.upvotes", { n: opened.source.upvotes.toLocaleString(locale) })}
               </span>
               <button
                 type="button"
@@ -126,13 +159,11 @@ export function DialogueOverlay({
               </button>
             </div>
             <p className={styles.sourceExcerpt}>{opened.source.excerpt}</p>
-            {opened.source.evidence && opened.source.evidence.length > 0 && (
+            {opened.source.evidence?.length ? (
               <div className={styles.sourceEvidence}>
-                {opened.source.evidence.map((e) => (
-                  <span key={e}>{e}</span>
-                ))}
+                {opened.source.evidence.map((evidence) => <span key={evidence}>{evidence}</span>)}
               </div>
-            )}
+            ) : null}
             <a className={styles.sourceLink} href={opened.source.url} target="_blank" rel="noreferrer">
               {t("world.openSource")}
               <ExternalLink size={13} aria-hidden />
@@ -159,27 +190,48 @@ export function DialogueOverlay({
           </span>
           <p className={styles.text}>{line.text}</p>
 
-          {visibleActions.length > 0 && (
-            <div className={styles.actions} onClick={(e) => e.stopPropagation()}>
-              {visibleActions.map((action, i) => (
+          {visibleActions.length > 0 && !experimentAction && (
+            <div className={styles.actions} onClick={(event) => event.stopPropagation()}>
+              {visibleActions.map((action, actionIndex) => (
                 <button
-                  key={`${action.type}-${i}`}
+                  key={`${action.type}-${actionIndex}`}
                   type="button"
                   onClick={() => {
+                    if (surfaceMode === "fragments" && action.type === "collect-opinion") {
+                      setExperimentAction(action);
+                      return;
+                    }
                     if (action.type === "show-source") setOpenedSourceId(action.sourceId);
                     onAction(action);
                   }}
                 >
-                  {t(`world.actions.${action.type}`)}
+                  {actionLabel(action)}
                 </button>
               ))}
+            </div>
+          )}
+
+          {experimentAction?.type === "collect-opinion" && (
+            <div onClick={(event) => event.stopPropagation()}>
+              <ConditionExperiment
+                conditions={experimentConditions}
+                locale={locale}
+                onCueChange={onConditionCueChange}
+                onCancel={() => setExperimentAction(null)}
+                onComplete={() => {
+                  onAction(experimentAction);
+                  setExperimentAction(null);
+                }}
+              />
             </div>
           )}
 
           <div className={styles.footer}>
             <span className={styles.progress}>{index + 1} / {lines.length}</span>
             <span className={styles.hint}>
-              {isLast ? t("world.dialogueUi.closeHint") : t("world.dialogueUi.nextHint")}
+              {experimentAction
+                ? (locale === "en-US" ? "Change at least one assumption" : "至少改变一个前提")
+                : isLast ? t("world.dialogueUi.closeHint") : t("world.dialogueUi.nextHint")}
             </span>
           </div>
         </div>

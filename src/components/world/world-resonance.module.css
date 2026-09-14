@@ -1,0 +1,221 @@
+.resonant {
+  filter: saturate(1.04) brightness(1.08) contrast(0.98);
+  transition: filter 1800ms ease;
+  animation: worldSettle 2200ms cubic-bezier(.2,.7,.2,1) both;
+}
+
+/* Every resonance receives dawn: understanding brings visibility, never a truth badge. */
+.resonant::before {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  content: "";
+  background:
+    linear-gradient(180deg, rgba(246, 197, 126, 0.3), transparent 40%),
+    radial-gradient(circle at 62% 8%, rgba(255, 226, 170, 0.34), transparent 30%);
+  mix-blend-mode: screen;
+  opacity: 1;
+  transform-origin: 62% 0;
+  animation: dawnArrive 2400ms cubic-bezier(.15,.7,.2,1) both;
+}
+
+.resonant [data-terrain="fog"] {
+  opacity: 0.28 !important;
+  filter: blur(7px);
+  transition: opacity 2200ms ease, filter 2200ms ease, transform 2200ms ease;
+  transform: scale(1.04) translateY(-3px);
+}
+
+.resonant [data-terrain="plaza"],
+.resonant [data-terrain="station"],
+.resonant [data-terrain="road"] {
+  filter: brightness(1.08) saturate(1.03);
+  transition: filter 1800ms ease, box-shadow 1800ms ease;
+}
+
+.resonant [data-object-kind],
+.resonant [data-planet-object],
+.resonant [data-fragment-kind] {
+  filter: brightness(1.08) drop-shadow(0 12px 18px rgba(0, 0, 0, 0.2));
+  transition: filter 1800ms ease, transform 1800ms ease;
+}
+
+.resonant [data-fragment-kind][data-fragment-collected="true"] {
+  filter:
+    brightness(1.13)
+    drop-shadow(0 0 10px color-mix(in srgb, var(--world-accent) 30%, transparent))
+    drop-shadow(0 12px 18px rgba(0,0,0,.18));
+}
+
+/* Crossroads / rebuild: fractured paths become readable and connected. */
+.resonant[data-resonance-type="rebuild"] [data-terrain="road"],
+.resonant[data-resonance-type="rebuild"] [data-terrain="bridge"] {
+  box-shadow: 0 0 26px color-mix(in srgb, var(--world-accent) 28%, transparent);
+}
+
+.resonant[data-resonance-type="rebuild"] :global(path[data-route-kind]) {
+  opacity: .42 !important;
+  stroke-dasharray: 5 9;
+  filter: drop-shadow(0 0 8px color-mix(in srgb, var(--world-accent) 42%, transparent));
+  animation: rebuiltRoute 2200ms ease both;
+}
+
+.resonant[data-resonance-type="rebuild"]::after {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  content: "";
+  background:
+    linear-gradient(132deg, transparent 46%, color-mix(in srgb, var(--world-accent) 26%, transparent) 47% 48%, transparent 49%),
+    linear-gradient(48deg, transparent 48%, color-mix(in srgb, var(--world-accent) 20%, transparent) 49% 50%, transparent 51%);
+  transform-origin: 50% 55%;
+  animation: reconnectWorld 2300ms cubic-bezier(.18,.75,.2,1) both;
+}
+
+/* Archive / reveal: a scanning band makes hidden layers legible; some fog remains. */
+.resonant[data-resonance-type="reveal"] [data-terrain="fog"] {
+  opacity: 0.16 !important;
+  filter: blur(4px);
+}
+
+.resonant[data-resonance-type="reveal"] [data-terrain="plaza"] {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--world-accent) 18%, transparent), inset 18px 0 34px rgba(0,0,0,.08);
+}
+
+.resonant[data-resonance-type="reveal"]::after {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  content: "";
+  background: linear-gradient(180deg, transparent 0 34%, color-mix(in srgb, var(--world-accent) 18%, transparent) 46%, rgba(255,255,255,.08) 49%, transparent 62% 100%);
+  mix-blend-mode: screen;
+  animation: archiveScan 2400ms ease both;
+}
+
+/* Theater / illuminate: several positions light in sequence, not one universal spotlight. */
+.resonant[data-resonance-type="illuminate"]::after {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  content: "";
+  background:
+    radial-gradient(ellipse at 28% 48%, color-mix(in srgb, var(--world-accent) 18%, transparent), transparent 22%),
+    radial-gradient(ellipse at 54% 35%, color-mix(in srgb, var(--world-accent) 25%, transparent), transparent 24%),
+    radial-gradient(ellipse at 75% 56%, color-mix(in srgb, var(--world-accent) 18%, transparent), transparent 22%);
+  mix-blend-mode: screen;
+  animation: theaterLights 2300ms ease both;
+}
+
+/* Forest / bloom: quiet growth and spores appear; distant mist survives. */
+.resonant[data-resonance-type="bloom"] {
+  filter: saturate(1.13) brightness(1.09) contrast(0.96);
+}
+
+.resonant[data-resonance-type="bloom"] [data-terrain="plaza"] {
+  box-shadow: inset 0 -24px 50px color-mix(in srgb, var(--world-accent) 15%, transparent);
+}
+
+.resonant[data-resonance-type="bloom"] [data-terrain="fog"] {
+  opacity: 0.34 !important;
+}
+
+.resonant[data-resonance-type="bloom"]::after {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  content: "";
+  background:
+    radial-gradient(circle at 20% 72%, color-mix(in srgb, var(--world-accent) 22%, transparent) 0 2px, transparent 4px),
+    radial-gradient(circle at 36% 58%, color-mix(in srgb, var(--world-accent) 18%, transparent) 0 3px, transparent 5px),
+    radial-gradient(circle at 58% 76%, color-mix(in srgb, var(--world-accent) 20%, transparent) 0 2px, transparent 4px),
+    radial-gradient(circle at 74% 46%, color-mix(in srgb, var(--world-accent) 17%, transparent) 0 3px, transparent 5px),
+    radial-gradient(ellipse at 50% 88%, color-mix(in srgb, var(--world-accent) 12%, transparent), transparent 34%);
+  animation: bloomRise 2600ms ease both;
+}
+
+/* Machine / awaken: power flows through systems rather than making them morally 'correct'. */
+.resonant[data-resonance-type="awaken"] [data-terrain="station"],
+.resonant[data-resonance-type="awaken"] [data-terrain="road"] {
+  box-shadow: 0 0 30px color-mix(in srgb, var(--world-accent) 26%, transparent), inset 0 0 18px rgba(255,255,255,.035);
+}
+
+.resonant[data-resonance-type="awaken"] [data-object-kind],
+.resonant[data-resonance-type="awaken"] [data-planet-object] {
+  filter: brightness(1.18) drop-shadow(0 0 12px color-mix(in srgb, var(--world-accent) 34%, transparent));
+}
+
+.resonant[data-resonance-type="awaken"]::after {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  content: "";
+  background:
+    linear-gradient(90deg, transparent 0 15%, color-mix(in srgb, var(--world-accent) 16%, transparent) 16% 16.5%, transparent 17% 48%, color-mix(in srgb, var(--world-accent) 12%, transparent) 49% 49.5%, transparent 50%),
+    linear-gradient(0deg, transparent 0 28%, color-mix(in srgb, var(--world-accent) 13%, transparent) 29% 29.5%, transparent 30% 68%, color-mix(in srgb, var(--world-accent) 16%, transparent) 69% 69.5%, transparent 70%);
+  filter: drop-shadow(0 0 7px color-mix(in srgb, var(--world-accent) 34%, transparent));
+  animation: powerGrid 2200ms ease both;
+}
+
+@keyframes worldSettle {
+  0% { transform: scale(1.004); }
+  100% { transform: scale(1); }
+}
+
+@keyframes dawnArrive {
+  0% { opacity: 0; transform: scale(.88) translateY(-5%); filter: blur(8px); }
+  45% { opacity: .72; }
+  100% { opacity: 1; transform: scale(1) translateY(0); filter: blur(0); }
+}
+
+@keyframes rebuiltRoute {
+  0% { stroke-dashoffset: 80; opacity: .05; }
+  100% { stroke-dashoffset: 0; opacity: .42; }
+}
+
+@keyframes reconnectWorld {
+  0% { opacity: 0; transform: scale(.78); filter: blur(6px); }
+  55% { opacity: .85; }
+  100% { opacity: 1; transform: scale(1); filter: blur(0); }
+}
+
+@keyframes archiveScan {
+  0% { opacity: 0; transform: translateY(-46%); }
+  32% { opacity: .82; }
+  100% { opacity: .18; transform: translateY(44%); }
+}
+
+@keyframes theaterLights {
+  0% { opacity: 0; filter: blur(14px); transform: scale(.92); }
+  35% { opacity: .35; }
+  70% { opacity: .82; filter: blur(2px); }
+  100% { opacity: 1; filter: blur(0); transform: scale(1); }
+}
+
+@keyframes bloomRise {
+  0% { opacity: 0; transform: translateY(18px) scale(.92); filter: blur(5px); }
+  55% { opacity: .75; }
+  100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+}
+
+@keyframes powerGrid {
+  0% { opacity: 0; clip-path: inset(100% 0 0 0); }
+  48% { opacity: .78; }
+  100% { opacity: .42; clip-path: inset(0 0 0 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .resonant,
+  .resonant::before,
+  .resonant::after,
+  .resonant [data-terrain="fog"],
+  .resonant :global(path[data-route-kind]) {
+    animation: none;
+    transition: none;
+  }
+}

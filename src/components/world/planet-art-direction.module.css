@@ -1,0 +1,165 @@
+.forestWorld {
+  background: #0a1511 !important;
+  box-shadow: inset 0 0 180px rgba(1, 7, 5, .48) !important;
+}
+
+.backdrop,
+.foreground,
+.groundLight {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.backdrop {
+  z-index: 0;
+  opacity: 1;
+  filter: saturate(.78) contrast(1.035) brightness(.9);
+}
+
+.groundLight {
+  z-index: 1;
+  background:
+    linear-gradient(116deg, transparent 0 31%, rgba(205,207,155,.025) 39%, transparent 48%),
+    radial-gradient(ellipse at 35% 56%, rgba(195,198,145,.075), transparent 18%),
+    radial-gradient(ellipse at 69% 48%, rgba(190,198,144,.06), transparent 16%),
+    radial-gradient(ellipse at 51% 79%, rgba(124,160,132,.035), transparent 25%);
+  mix-blend-mode: screen;
+}
+
+.foreground {
+  z-index: 9;
+  opacity: .98;
+  filter: drop-shadow(0 18px 26px rgba(0, 0, 0, .3));
+}
+
+/* Collision geometry stays functional but stops reading as giant level-editor blocks. */
+.forestWorld :global([data-terrain="plaza"]),
+.forestWorld :global([data-terrain="station"]) {
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  opacity: .012 !important;
+}
+
+.forestWorld :global([data-terrain="road"]) {
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  opacity: .02 !important;
+}
+
+.forestWorld :global([data-terrain="fog"]) {
+  border: 0 !important;
+  opacity: .3 !important;
+  filter: blur(20px) !important;
+}
+
+.forestWorld :global([class*="zoneLabel"]) {
+  opacity: 0 !important;
+}
+
+/* Character scale: readable, but still small against the forest. */
+.forestWorld :global(img[src*="player-explorer-v1.png"]) {
+  width: 62px !important;
+  height: 93px !important;
+  margin: -34px 0 0 -7px !important;
+  filter: drop-shadow(0 9px 8px rgba(0,0,0,.58)) !important;
+}
+
+.forestWorld :global(img[src*="guide-fox-v1.png"]) {
+  width: 41px !important;
+  height: 62px !important;
+  left: 43px !important;
+  top: -7px !important;
+  opacity: .94 !important;
+}
+
+/* The scenery is the object. Carrier widgets become subtle interaction anchors. */
+.forestWorld :global(button[data-fragment-kind]),
+.forestWorld :global(button[data-fragment-id]) {
+  opacity: .28;
+  filter: saturate(.58) contrast(.94) brightness(.88);
+  transition: opacity 220ms ease, filter 220ms ease, transform 220ms ease;
+}
+
+.forestWorld :global(button[data-calling="true"]),
+.forestWorld :global([data-calling="true"]) {
+  opacity: .82 !important;
+  filter: saturate(.84) brightness(1.04) drop-shadow(0 0 6px rgba(189,198,139,.16)) !important;
+}
+
+.forestWorld :global([data-fragment-kind][data-fragment-collected="false"]::before) {
+  opacity: .12 !important;
+  filter: blur(10px) !important;
+}
+
+/* Physical forest artifact treatments stay subdued inside the larger landmarks. */
+.forestWorld :global([data-kind="echo-stone"] [data-artifact-part="body"]) {
+  background:
+    radial-gradient(circle at 26% 24%, rgba(142,165,117,.14), transparent 22%),
+    linear-gradient(145deg, #59665a, #2a3931 72%) !important;
+  box-shadow: inset -9px -11px 14px rgba(0,0,0,.28), 0 9px 10px rgba(0,0,0,.2) !important;
+}
+
+.forestWorld :global([data-kind="echo-stone"] [data-artifact-part="detail"]) {
+  width: 19px !important;
+  height: 12px !important;
+  left: 23px !important;
+  bottom: 21px !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: repeating-linear-gradient(0deg, rgba(211,218,172,.45) 0 1px, transparent 1px 4px) !important;
+  box-shadow: none !important;
+  transform: rotate(-4deg);
+}
+
+.forestWorld :global([data-kind="trace-tree"] [data-artifact-part="body"]) {
+  width: 10px !important;
+  left: 27px !important;
+  background: linear-gradient(90deg, #3f3928, #6f6045 48%, #302f22) !important;
+  box-shadow: 0 7px 7px rgba(0,0,0,.2);
+}
+
+.forestWorld :global([data-kind="trace-tree"] [data-artifact-part="top"]) {
+  background: radial-gradient(circle at 42% 34%, #687e55, #314a39 72%) !important;
+  filter: saturate(.64);
+}
+
+.forestWorld :global([data-kind="trace-tree"] [data-artifact-part="detail"]) {
+  left: 17px !important;
+  bottom: 16px !important;
+  width: 31px !important;
+  height: 22px !important;
+  border: 1px solid rgba(113,98,69,.3) !important;
+  border-radius: 2px !important;
+  background:
+    repeating-linear-gradient(0deg, rgba(83,77,57,.42) 0 1px, transparent 1px 5px),
+    linear-gradient(145deg, #d6cca9, #afa582) !important;
+  box-shadow: 0 4px 5px rgba(0,0,0,.25) !important;
+  transform: rotate(-5deg) !important;
+}
+
+.forestWorld :global(button[data-fragment-kind="evidence"]::after) {
+  display: none !important;
+}
+
+@media (max-width: 720px) {
+  .backdrop,
+  .foreground {
+    transform: scale(1.018);
+    transform-origin: center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .backdrop,
+  .foreground,
+  .groundLight,
+  .forestWorld :global(button[data-fragment-kind]),
+  .forestWorld :global(button[data-fragment-id]) {
+    transition: none;
+  }
+}

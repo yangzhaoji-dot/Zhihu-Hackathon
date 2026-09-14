@@ -1,0 +1,218 @@
+.panel {
+  margin-top: 12px;
+  padding: 14px;
+  border: 1px solid color-mix(in srgb, var(--world-accent) 38%, transparent);
+  border-radius: 16px;
+  background: rgba(8, 12, 17, 0.72);
+  cursor: default;
+}
+
+.header {
+  display: grid;
+  gap: 4px;
+}
+
+.header span {
+  color: var(--world-accent);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+}
+
+.header strong {
+  color: #f5f1e8;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.route {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 30px;
+  margin: 12px 0;
+}
+
+.routeOrigin {
+  width: 9px;
+  height: 9px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--world-accent);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--world-accent) 55%, transparent);
+}
+
+.routeTrack {
+  position: relative;
+  height: 5px;
+  flex: 1;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.routeLight {
+  position: absolute;
+  inset: 0 auto 0 0;
+  min-width: 10%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--world-accent), color-mix(in srgb, var(--world-accent) 32%, white));
+  box-shadow: 0 0 14px color-mix(in srgb, var(--world-accent) 42%, transparent);
+  transition: width 240ms ease;
+}
+
+.routeGate {
+  width: 16px;
+  height: 22px;
+  flex: none;
+  border: 2px solid rgba(255, 255, 255, 0.28);
+  border-radius: 3px 3px 1px 1px;
+  transition: border-color 220ms ease, box-shadow 220ms ease, transform 220ms ease;
+}
+
+.routeGate[data-open="true"] {
+  border-color: var(--world-accent);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--world-accent) 40%, transparent);
+  transform: translateY(-2px);
+}
+
+.conditions {
+  display: grid;
+  gap: 7px;
+}
+
+.condition {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 11px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 11px;
+  background: rgba(255, 255, 255, 0.025);
+  color: #f5f1e8;
+  text-align: left;
+  cursor: pointer;
+}
+
+.condition[data-state="fits"] {
+  border-color: color-mix(in srgb, var(--world-accent) 54%, transparent);
+  background: color-mix(in srgb, var(--world-accent) 10%, rgba(255, 255, 255, 0.02));
+}
+
+.condition[data-state="breaks"] {
+  opacity: 0.7;
+  border-style: dashed;
+}
+
+.conditionText {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+}
+
+.condition small {
+  flex: none;
+  color: color-mix(in srgb, var(--world-mist) 76%, white);
+  font-size: 10px;
+}
+
+.missing {
+  padding: 10px 12px;
+  border-left: 2px solid color-mix(in srgb, var(--world-mist) 55%, transparent);
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.missing strong {
+  color: #f5f1e8;
+  font-size: 12px;
+}
+
+.missing p,
+.disclaimer {
+  margin: 5px 0 0;
+  color: rgba(245, 241, 232, 0.58);
+  font-size: 10px;
+  line-height: 1.55;
+}
+
+.disclaimer {
+  margin-top: 10px;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.actions button {
+  min-height: 36px;
+  padding: 7px 11px;
+  border-radius: 999px;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.secondary {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: transparent;
+  color: rgba(245, 241, 232, 0.72);
+}
+
+.primary {
+  border: 1px solid color-mix(in srgb, var(--world-accent) 55%, transparent);
+  background: color-mix(in srgb, var(--world-accent) 20%, rgba(7, 10, 15, 0.72));
+  color: #f5f1e8;
+}
+
+.primary:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+}
+
+/*
+ * The experiment also illuminates the matching route in the actual world.
+ * These variables are local visual feedback only; they never become model confidence.
+ */
+:global([data-el="world-runtime"]) :global(path[data-route-kind="reason"]) {
+  opacity: var(--condition-route-opacity, 0.3);
+  filter: drop-shadow(0 0 var(--condition-route-glow, 6px) color-mix(in srgb, var(--world-accent) 40%, transparent));
+  transition: opacity 220ms ease, filter 220ms ease;
+}
+
+:global([data-el="world-runtime"]) :global([data-fragment-kind="reason"]) {
+  filter: brightness(var(--condition-object-brightness, 0.92));
+  transition: filter 220ms ease;
+}
+
+@media (max-width: 620px) {
+  .condition {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .conditionText {
+    width: 100%;
+    white-space: normal;
+  }
+
+  .actions {
+    align-items: stretch;
+    flex-direction: column-reverse;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .routeLight,
+  .routeGate,
+  :global([data-el="world-runtime"]) :global(path[data-route-kind="reason"]),
+  :global([data-el="world-runtime"]) :global([data-fragment-kind="reason"]) {
+    transition: none;
+  }
+}

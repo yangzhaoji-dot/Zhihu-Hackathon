@@ -96,7 +96,7 @@ body {
   --sidebar-primary: oklch(0.205 0 0);
   --sidebar-primary-foreground: oklch(0.985 0 0);
   --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-accent-foreground: oklch(0.145 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
 }
@@ -151,4 +151,11 @@ body {
 :root {
   --eazo-safe-area-top: max(56px, env(safe-area-inset-top, 0px));
   --eazo-safe-area-bottom: max(34px, env(safe-area-inset-bottom, 0px));
+}
+
+/* Planet travel is physical: leave by walking back to the rocket, not by an
+ * instant page-level back button. Browser/system back remains available as an
+ * escape hatch, but the product UI never bypasses the travel metaphor. */
+[data-el="world-runtime"] > header > button:first-child {
+  display: none !important;
 }

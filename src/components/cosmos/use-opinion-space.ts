@@ -36,7 +36,10 @@ async function settleWithin<T>(promise: Promise<T>, fallback: T): Promise<T> {
  * API-backed stance mutation. Keeping them apart keeps each file reviewable.
  */
 export function useOpinionSpace() {
-  const [mode, setMode] = useState<Mode>("views");
+  // The product hierarchy is Universe -> question galaxy -> opinion planets.
+  // Therefore a fresh entry begins at the question-galaxy layer, never inside
+  // a demo opinion planet system.
+  const [mode, setMode] = useState<Mode>("questions");
   const [loading, setLoading] = useState(true);
   const [graph, setGraph] = useState<OpinionGraph | null>(null);
   const [network, setNetwork] = useState<QuestionNetwork | null>(null);
@@ -99,6 +102,8 @@ export function useOpinionSpace() {
         }],
         relations: [],
       });
+      // A concrete question has now been resolved; its human opinions can form
+      // the visible main galaxy.
       setMode("views");
       setProfile(null);
       return result;

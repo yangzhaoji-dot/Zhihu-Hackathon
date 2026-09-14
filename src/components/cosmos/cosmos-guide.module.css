@@ -8,6 +8,13 @@
   align-items: flex-end;
   gap: 12px;
   pointer-events: none;
+  transition: opacity 420ms ease, transform 420ms cubic-bezier(.2,.72,.2,1), filter 420ms ease;
+}
+
+.guide[data-launching="true"] {
+  opacity: .28;
+  filter: blur(.8px);
+  transform: translateY(12px) scale(.98);
 }
 
 .bubble {
@@ -37,20 +44,62 @@
   line-height: 1.55;
 }
 
-.bubble button {
-  width: 100%;
-  margin-top: 11px;
-  padding: 9px 12px;
-  border: 1px solid rgba(230, 207, 160, 0.44);
+:global(.cosmos.planet-focus .focus-controls) {
+  top: auto;
+  right: auto;
+  bottom: max(18px, calc(env(safe-area-inset-bottom) + 12px));
+  left: 50%;
+  width: fit-content;
+  padding: 5px;
+  justify-content: center;
+  border: 1px solid rgba(230, 207, 160, .2);
   border-radius: 999px;
-  background: rgba(230, 207, 160, 0.14);
-  color: #f6e3c3;
-  cursor: pointer;
+  background: rgba(5, 8, 15, .82);
+  box-shadow: 0 22px 70px rgba(0,0,0,.46);
+  backdrop-filter: blur(20px);
+  transform: translateX(-50%);
+  pointer-events: auto;
 }
 
-.bubble button:disabled { cursor: wait; opacity: 0.55; }
+:global(.cosmos.planet-focus .focus-controls button) {
+  min-width: 132px;
+  min-height: 40px;
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+}
+
+:global(.cosmos.planet-focus .focus-controls button.primary) {
+  min-width: 160px;
+  box-shadow: 0 0 22px rgba(230,207,160,.18);
+}
+
+:global(.cosmos.planet-focus .focus-controls button:not(.primary):hover) {
+  background: rgba(255,255,255,.045);
+}
+
+:global(.cosmos.planet-focus .focus-controls button.primary:not(:disabled):hover) {
+  transform: translateY(-1px);
+  box-shadow: 0 0 28px rgba(230,207,160,.28);
+}
 
 @media (max-width: 720px) {
-  .guide { right: 62px; bottom: 86px; width: min(300px, calc(100vw - 76px)); }
+  .guide {
+    right: 62px;
+    bottom: 94px;
+    width: min(300px, calc(100vw - 76px));
+  }
   .bubble { padding: 12px; }
+  :global(.cosmos.planet-focus .focus-controls) {
+    width: calc(100% - 24px);
+  }
+  :global(.cosmos.planet-focus .focus-controls button),
+  :global(.cosmos.planet-focus .focus-controls button.primary) {
+    min-width: 0;
+    flex: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .guide { transition: none; }
 }

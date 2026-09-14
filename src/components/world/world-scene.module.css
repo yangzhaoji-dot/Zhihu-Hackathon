@@ -15,6 +15,24 @@
     linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
 }
 
+/*
+ * diorama-v1：环境优先的视觉语言。
+ * 这里故意不画格子、不显示“阵营区”标签，而让地貌和物件承担信息。
+ * 这是无需额外美术资产的路线验证版，后续可把 CSS 物件替换为统一的 2.5D 素材。
+ */
+.worldGrid[data-tileset="diorama-v1"] {
+  background-color: color-mix(in srgb, var(--world-ground) 82%, #111820);
+  background-image:
+    radial-gradient(circle at 15% 18%, color-mix(in srgb, var(--world-accent) 12%, transparent) 0 9%, transparent 28%),
+    radial-gradient(circle at 82% 20%, rgba(255, 255, 255, 0.055) 0 8%, transparent 24%),
+    radial-gradient(circle at 48% 82%, color-mix(in srgb, var(--world-road) 12%, transparent) 0 13%, transparent 32%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.018), rgba(0, 0, 0, 0.16)) !important;
+  background-size: auto !important;
+  box-shadow:
+    inset 0 0 180px rgba(0, 0, 0, 0.44),
+    inset 0 0 38px rgba(255, 255, 255, 0.025);
+}
+
 .zone {
   position: absolute;
   border: 1px solid rgba(255, 255, 255, 0.09);
@@ -39,14 +57,54 @@
   backdrop-filter: blur(6px);
 }
 
+.worldGrid[data-tileset="diorama-v1"] .zoneLabel {
+  opacity: 0;
+}
+
+.worldGrid[data-tileset="diorama-v1"] .zone[data-terrain="plaza"] {
+  border: 0;
+  border-radius: 34% 66% 48% 52% / 48% 36% 64% 52%;
+  clip-path: polygon(5% 16%, 22% 4%, 76% 7%, 96% 27%, 91% 76%, 73% 94%, 18% 91%, 2% 67%);
+  opacity: 0.58;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.055),
+    inset 0 -28px 50px rgba(0, 0, 0, 0.19),
+    0 28px 48px rgba(0, 0, 0, 0.12);
+}
+
+.worldGrid[data-tileset="diorama-v1"] .zone[data-terrain="station"] {
+  border: 1px solid color-mix(in srgb, var(--world-accent) 18%, transparent);
+  border-radius: 45% 55% 50% 50% / 52% 42% 58% 48%;
+  opacity: 0.88;
+  box-shadow:
+    inset 0 0 34px color-mix(in srgb, var(--world-accent) 9%, transparent),
+    0 18px 40px rgba(0, 0, 0, 0.24);
+}
+
+.worldGrid[data-tileset="diorama-v1"] .zone[data-terrain="road"] {
+  border: 0;
+  border-radius: 999px;
+  opacity: 0.7;
+}
+
 .fog {
   z-index: 3;
   border-style: dashed;
   animation: fogPulse 4.2s ease-in-out infinite;
 }
 
+.worldGrid[data-tileset="diorama-v1"] .fog {
+  border: 0;
+  border-radius: 50%;
+  filter: blur(3px);
+  opacity: 0.72;
+  box-shadow:
+    0 0 38px rgba(225, 233, 231, 0.13),
+    inset 0 0 28px rgba(255, 255, 255, 0.08);
+}
+
 .fogLifted {
-  opacity: 0.12;
+  opacity: 0.12 !important;
   animation: none;
 }
 
@@ -67,6 +125,12 @@
   background: rgba(6, 9, 13, 0.62);
   color: var(--world-accent);
   pointer-events: none;
+}
+
+.worldGrid[data-tileset="diorama-v1"] .poi {
+  border-color: color-mix(in srgb, var(--world-accent) 22%, transparent);
+  background: radial-gradient(circle at 50% 64%, rgba(5, 8, 12, 0.78), rgba(5, 8, 12, 0.1) 72%, transparent 74%);
+  box-shadow: 0 12px 18px rgba(0, 0, 0, 0.24);
 }
 
 .poi_rocket {
@@ -139,6 +203,298 @@
   font-weight: 700;
 }
 
+/* ── 环境观点载体 ─────────────────────────────────────────────────────── */
+.environmentObject {
+  width: 72px;
+  height: 72px;
+  transform: translate(-12px, -18px);
+  place-items: center;
+}
+
+.environmentArtifact {
+  position: relative;
+  display: block;
+  width: 62px;
+  height: 58px;
+  transform-origin: 50% 90%;
+  filter: drop-shadow(8px 12px 9px rgba(0, 0, 0, 0.38));
+  transition: transform 180ms ease, filter 180ms ease;
+}
+
+.environmentArtifact::after {
+  position: absolute;
+  left: 9px;
+  bottom: -5px;
+  width: 46px;
+  height: 13px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.29);
+  content: "";
+  filter: blur(4px);
+  transform: skewX(-18deg);
+  z-index: -1;
+}
+
+.environmentObject:hover .environmentArtifact,
+.environmentObject:focus-visible .environmentArtifact,
+.environmentObject.highlight .environmentArtifact {
+  transform: translateY(-5px) scale(1.035);
+  filter:
+    drop-shadow(0 0 9px color-mix(in srgb, var(--world-accent) 48%, transparent))
+    drop-shadow(9px 14px 10px rgba(0, 0, 0, 0.4));
+}
+
+.artifactTop,
+.artifactBody,
+.artifactDetail {
+  position: absolute;
+  display: block;
+  box-sizing: border-box;
+}
+
+/* 离职申请箱：一个被反复投递的金属箱。 */
+.environmentArtifact[data-kind="resignation-box"] .artifactBody {
+  left: 10px;
+  bottom: 5px;
+  width: 44px;
+  height: 35px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 5px 5px 8px 8px;
+  background: linear-gradient(145deg, #6c6f6c, #323a3d 72%);
+  box-shadow: inset -7px -8px 12px rgba(0, 0, 0, 0.25);
+}
+
+.environmentArtifact[data-kind="resignation-box"] .artifactTop {
+  left: 13px;
+  bottom: 39px;
+  width: 38px;
+  height: 10px;
+  border-radius: 5px 5px 2px 2px;
+  background: #8c8375;
+  transform: skewX(-17deg);
+}
+
+.environmentArtifact[data-kind="resignation-box"] .artifactDetail {
+  left: 21px;
+  bottom: 27px;
+  width: 22px;
+  height: 3px;
+  border-radius: 999px;
+  background: #d7b175;
+  box-shadow: 0 9px 0 rgba(255, 255, 255, 0.13);
+}
+
+/* 现金流账本台：桌面 + 打开的账本。 */
+.environmentArtifact[data-kind="ledger-desk"] .artifactBody {
+  left: 6px;
+  bottom: 9px;
+  width: 52px;
+  height: 8px;
+  border-radius: 4px;
+  background: #67513d;
+  box-shadow: 7px 9px 0 -3px #30271f, -5px 9px 0 -3px #30271f;
+}
+
+.environmentArtifact[data-kind="ledger-desk"] .artifactTop {
+  left: 13px;
+  bottom: 18px;
+  width: 36px;
+  height: 23px;
+  border: 2px solid #bca57d;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #e0d2ad 0 48%, #9c8e72 49% 52%, #ded0a8 53%);
+  transform: perspective(80px) rotateX(18deg) rotateZ(-4deg);
+}
+
+.environmentArtifact[data-kind="ledger-desk"] .artifactDetail {
+  left: 32px;
+  bottom: 23px;
+  width: 1px;
+  height: 13px;
+  background: rgba(63, 50, 37, 0.7);
+}
+
+/* 在职试验工坊：亮着的屏幕和工作台。 */
+.environmentArtifact[data-kind="workbench"] .artifactBody {
+  left: 7px;
+  bottom: 8px;
+  width: 50px;
+  height: 9px;
+  border-radius: 3px;
+  background: #546066;
+  box-shadow: 8px 10px 0 -4px #242b30, -8px 10px 0 -4px #242b30;
+}
+
+.environmentArtifact[data-kind="workbench"] .artifactTop {
+  left: 17px;
+  bottom: 18px;
+  width: 31px;
+  height: 25px;
+  border: 2px solid #394248;
+  border-radius: 3px;
+  background: linear-gradient(145deg, #86b9b5, #334f55 72%);
+  box-shadow: 0 0 11px rgba(126, 188, 181, 0.22);
+}
+
+.environmentArtifact[data-kind="workbench"] .artifactDetail {
+  left: 23px;
+  bottom: 25px;
+  width: 19px;
+  height: 2px;
+  background: rgba(232, 244, 237, 0.65);
+  box-shadow: 0 6px 0 rgba(232, 244, 237, 0.32);
+}
+
+/* 转行售票机：高而窄的自助终端。 */
+.environmentArtifact[data-kind="ticket-machine"] .artifactBody {
+  left: 15px;
+  bottom: 4px;
+  width: 34px;
+  height: 49px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 7px 7px 4px 4px;
+  background: linear-gradient(150deg, #7a6652, #38434a 62%);
+}
+
+.environmentArtifact[data-kind="ticket-machine"] .artifactTop {
+  left: 21px;
+  bottom: 31px;
+  width: 22px;
+  height: 14px;
+  border-radius: 3px;
+  background: #b7c9bd;
+  box-shadow: inset 0 0 0 2px #334046, 0 0 9px rgba(183, 201, 189, 0.18);
+}
+
+.environmentArtifact[data-kind="ticket-machine"] .artifactDetail {
+  left: 27px;
+  bottom: 18px;
+  width: 11px;
+  height: 3px;
+  border-radius: 999px;
+  background: #d4a96c;
+}
+
+/* 仲裁档案柜：多层抽屉，不用人物解释“证据”。 */
+.environmentArtifact[data-kind="archive-cabinet"] .artifactBody {
+  left: 12px;
+  bottom: 4px;
+  width: 40px;
+  height: 49px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 4px;
+  background: linear-gradient(145deg, #626e68, #303938);
+  box-shadow: inset -6px -6px 12px rgba(0, 0, 0, 0.21);
+}
+
+.environmentArtifact[data-kind="archive-cabinet"] .artifactTop {
+  left: 16px;
+  bottom: 36px;
+  width: 32px;
+  height: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  background: rgba(15, 21, 22, 0.32);
+  box-shadow: 0 12px 0 rgba(15, 21, 22, 0.32), 0 24px 0 rgba(15, 21, 22, 0.32);
+}
+
+.environmentArtifact[data-kind="archive-cabinet"] .artifactDetail {
+  left: 29px;
+  bottom: 39px;
+  width: 7px;
+  height: 2px;
+  background: #c9b078;
+  box-shadow: 0 12px 0 #c9b078, 0 24px 0 #c9b078;
+}
+
+/* 无人长椅：刻意留空，人不出现，人的处境仍在。 */
+.environmentArtifact[data-kind="quiet-bench"] .artifactBody {
+  left: 5px;
+  bottom: 13px;
+  width: 54px;
+  height: 8px;
+  border-radius: 3px;
+  background: #715942;
+  box-shadow: 0 -12px 0 -1px #715942;
+}
+
+.environmentArtifact[data-kind="quiet-bench"] .artifactTop {
+  left: 12px;
+  bottom: 2px;
+  width: 5px;
+  height: 19px;
+  background: #34383a;
+  box-shadow: 35px 0 0 #34383a;
+}
+
+.environmentArtifact[data-kind="quiet-bench"] .artifactDetail {
+  left: 8px;
+  bottom: 11px;
+  width: 48px;
+  height: 1px;
+  background: rgba(235, 217, 187, 0.22);
+}
+
+/* 机会时刻表：雾里只有少量“窗口”被点亮。 */
+.environmentArtifact[data-kind="departure-board"] .artifactBody {
+  left: 7px;
+  bottom: 18px;
+  width: 50px;
+  height: 31px;
+  border: 2px solid #495057;
+  border-radius: 4px;
+  background: #171e22;
+  box-shadow: 0 0 13px rgba(0, 0, 0, 0.31);
+}
+
+.environmentArtifact[data-kind="departure-board"] .artifactTop {
+  left: 28px;
+  bottom: 2px;
+  width: 7px;
+  height: 18px;
+  background: #454d51;
+}
+
+.environmentArtifact[data-kind="departure-board"] .artifactDetail {
+  left: 14px;
+  bottom: 39px;
+  width: 35px;
+  height: 3px;
+  background: #b5c890;
+  box-shadow: 0 -7px 0 #d0a06e, 0 7px 0 rgba(181, 200, 144, 0.42);
+}
+
+/* 条件闸机：AI 融合观点以“规则装置”而不是幽灵 NPC 出现。 */
+.environmentArtifact[data-kind="threshold-gate"] .artifactBody {
+  left: 7px;
+  bottom: 7px;
+  width: 14px;
+  height: 43px;
+  border-radius: 5px;
+  background: linear-gradient(145deg, #66747b, #303b40);
+  box-shadow: 40px 0 0 #39464c;
+}
+
+.environmentArtifact[data-kind="threshold-gate"] .artifactTop {
+  left: 17px;
+  bottom: 31px;
+  width: 30px;
+  height: 5px;
+  border-radius: 999px;
+  background: #cf9d67;
+  transform: rotate(-10deg);
+  transform-origin: 0 50%;
+}
+
+.environmentArtifact[data-kind="threshold-gate"] .artifactDetail {
+  left: 11px;
+  bottom: 39px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #a9c79c;
+  box-shadow: 40px 0 0 #a9c79c, 0 0 8px rgba(169, 199, 156, 0.44);
+}
+
 .translucent {
   opacity: 0.55;
 }
@@ -147,6 +503,11 @@
 .translucent .npcBlob {
   outline: 1px dashed rgba(255, 255, 255, 0.6);
   outline-offset: 3px;
+}
+
+.translucent .environmentArtifact {
+  opacity: 0.72;
+  filter: saturate(0.72) drop-shadow(0 0 10px color-mix(in srgb, var(--world-accent) 24%, transparent));
 }
 
 .npcName {
@@ -160,6 +521,23 @@
   background: rgba(5, 8, 12, 0.72);
   font-size: 10px;
   white-space: nowrap;
+}
+
+.environmentObject .npcName {
+  top: auto;
+  bottom: -3px;
+  max-width: 118px;
+  overflow: hidden;
+  opacity: 0;
+  text-overflow: ellipsis;
+  transition: opacity 160ms ease, transform 160ms ease;
+}
+
+.environmentObject:hover .npcName,
+.environmentObject:focus-visible .npcName,
+.environmentObject.highlight .npcName {
+  opacity: 1;
+  transform: translate(-50%, 4px);
 }
 
 .highlight .npcSprite,
@@ -194,15 +572,15 @@
 
 @media (prefers-reduced-motion: reduce) {
   .fog { animation: none; }
-  .npcSprite { transition: none; }
+  .npcSprite,
+  .environmentArtifact,
+  .environmentObject .npcName { transition: none; }
 }
 
-/* §5.4 场景反馈：运行时迷雾标记（比较衍生，比 zone 雾更小的雾团） */
 .runtimeFog {
   border-style: dotted;
 }
 
-/* §5.4 场景反馈：证据较弱方区域的"停工建筑"标记（斜纹地基） */
 .ruinMark {
   position: absolute;
   right: 8px;

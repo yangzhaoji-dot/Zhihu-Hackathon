@@ -1,0 +1,66 @@
+.discoverable .label {
+  opacity: 0;
+  transform: translateY(-3px);
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+
+.discoverable:hover .label,
+.discoverable:focus-visible .label,
+.discoverable[data-calling="true"] .label {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.discoverable[data-collected="true"] .label {
+  opacity: .34;
+}
+
+.discoverable[data-calling="true"] .object {
+  transform: translateY(-4px) scale(1.045);
+  filter:
+    drop-shadow(0 0 14px color-mix(in srgb, var(--carrier-accent) 54%, transparent))
+    drop-shadow(8px 14px 9px rgba(0,0,0,.38));
+}
+
+.discoverable[data-calling="true"]::before {
+  width: 124px;
+  height: 82px;
+  background: radial-gradient(circle, color-mix(in srgb, var(--carrier-accent) 29%, transparent), transparent 70%);
+  animation-duration: 3s;
+}
+
+:global([data-world-theme][data-carrier-active="true"]) .discoverable[data-fragment-id] .label {
+  opacity: .82;
+  transform: translateY(0);
+}
+
+/* Core claim/reason/evidence carriers are rendered by WorldScene rather than
+   DynamicCarrierLayer. RouteWhisper marks both systems with data-calling so the
+   same environmental affordance works for every cognition role. */
+:global([data-world-theme] [data-fragment-kind][data-calling="true"]) {
+  filter:
+    brightness(1.11)
+    drop-shadow(0 0 13px color-mix(in srgb, var(--world-accent) 45%, transparent));
+  transform: translateY(-3px);
+  transition: filter 220ms ease, transform 220ms ease;
+}
+
+:global([data-world-theme] [data-fragment-kind][data-calling="true"])::before {
+  opacity: .82 !important;
+  transform: translate(-50%, 24%) scale(1.16) !important;
+  animation-duration: 3s !important;
+}
+
+@media (hover: none) {
+  .discoverable .label { opacity: .18; }
+  .discoverable:active .label,
+  .discoverable[data-calling="true"] .label { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .discoverable .label,
+  .discoverable .object,
+  :global([data-world-theme] [data-fragment-kind][data-calling="true"]) {
+    transition: none;
+  }
+}

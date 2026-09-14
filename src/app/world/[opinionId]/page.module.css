@@ -49,6 +49,52 @@
   inset: 0;
 }
 
+/* 火箭坪在远处持续给出返航方向，但不会变成任务箭头。 */
+.sceneViewport :global([class*="poi_rocket"])::before {
+  position: absolute;
+  left: 50%;
+  bottom: 20px;
+  width: 22px;
+  height: 170px;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background: linear-gradient(
+    180deg,
+    transparent,
+    color-mix(in srgb, var(--world-accent) 9%, transparent) 32%,
+    color-mix(in srgb, var(--world-accent) 24%, transparent) 72%,
+    color-mix(in srgb, var(--world-accent) 42%, transparent)
+  );
+  content: "";
+  filter: blur(6px);
+  opacity: 0.5;
+  pointer-events: none;
+  animation: returnBeacon 5.6s ease-in-out infinite;
+}
+
+.sceneViewport :global([class*="poi_rocket"])::after {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 82px;
+  height: 32px;
+  transform: translate(-50%, -30%);
+  border-radius: 50%;
+  background: radial-gradient(ellipse, color-mix(in srgb, var(--world-accent) 22%, transparent), transparent 70%);
+  content: "";
+  filter: blur(2px);
+  pointer-events: none;
+}
+
+.world[data-resonant="true"] .sceneViewport :global([class*="poi_rocket"])::before {
+  opacity: 0.72;
+}
+
+@keyframes returnBeacon {
+  0%, 100% { opacity: 0.34; transform: translateX(-50%) scaleY(0.94); }
+  50% { opacity: 0.64; transform: translateX(-50%) scaleY(1.04); }
+}
+
 /* ── 交互提示 ─────────────────────────────────────────────── */
 .interact {
   position: absolute;
@@ -178,7 +224,8 @@
 @media (prefers-reduced-motion: reduce) {
   .landingRocket,
   .leavingRocket { animation-duration: 1ms; }
-  .toast { animation: none; }
+  .toast,
+  .sceneViewport :global([class*="poi_rocket"])::before { animation: none; }
 }
 
 /* ── 背包"查看原文"弹层（M3 §5.3） ───────────────────────── */

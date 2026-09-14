@@ -1,0 +1,74 @@
+.cue {
+  position: fixed;
+  left: 18px;
+  bottom: 20px;
+  z-index: 24;
+  display: flex;
+  width: min(500px, calc(100vw - 36px));
+  align-items: flex-end;
+  gap: 10px;
+  pointer-events: none;
+  animation: cueIn 320ms cubic-bezier(.18,.82,.2,1) both;
+  transition: opacity 360ms ease, transform 360ms ease;
+}
+
+.cue[data-leaving="true"] {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.bubble {
+  flex: 1;
+  padding: 12px 14px;
+  border: 1px solid color-mix(in srgb, var(--world-accent, #d6ad72) 30%, transparent);
+  border-radius: 16px 16px 16px 5px;
+  background: rgba(5, 9, 14, .88);
+  box-shadow: 0 15px 42px rgba(0,0,0,.34);
+  backdrop-filter: blur(14px);
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.head strong {
+  color: var(--world-accent, #d6ad72);
+  font-size: 9px;
+  letter-spacing: .12em;
+}
+
+.head span {
+  color: rgba(246,241,231,.48);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.bubble p {
+  margin: 0;
+  color: rgba(247,243,234,.82);
+  font-size: 11px;
+  line-height: 1.68;
+}
+
+@keyframes cueIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (max-width: 680px) {
+  .cue {
+    left: 10px;
+    right: 10px;
+    bottom: 72px;
+    width: auto;
+  }
+  .cue > :first-child { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cue { animation: none; transition: none; }
+}
