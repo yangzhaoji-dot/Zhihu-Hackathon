@@ -49,8 +49,6 @@ try {
   await page.locator('[data-el="planet-focus"]').waitFor();
   await capture("04-focus.png");
 
-  // Landing now enters the real page-by-page planet interior rather than the old
-  // phase-boundary placeholder.
   await page.locator('[data-el="land-planet"]').click({ force: true });
   await waitUrl(/\/world\//);
   await isolateProductUi();
@@ -78,10 +76,10 @@ try {
   assert.equal(await page.locator('[data-el^="enter-demo-"]').count(), 4);
   await page.unroute("**/api/opinion/build");
 
-  // Two-stage real-search contract remains intact.
+  // Search now enters the lost question-network layer before the opinion galaxy.
   await page.route("**/api/opinion/build", async (route) => {
     const body = route.request().postDataJSON();
-    const graph = { questionId: "q_test_contract", questionTitle: "测试星系", sourceScope: "zhihu-question-answers", opinions: [{ id: "test-health", questionId: "q_test_contract", title: "心理健康也是重要条件", summary: "仅用于接口测试", kind: "human", sourceIds: [], support: 0, x: 0, y: 0 }], sources: [], authors: [], relations: [] };
+    const graph = { questionId: "q_test_contract", questionTitle: "测试星系", questionUrl: "https://www.zhihu.com/question/123", sourceScope: "zhihu-question-answers", opinions: [{ id: "test-health", questionId: "q_test_contract", title: "心理健康也是重要条件", summary: "仅用于接口测试", kind: "human", sourceIds: [], support: 0, x: 0, y: 0 }], sources: [], authors: [], relations: [] };
     await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(body.questionUrl
       ? { selectionRequired: false, graph, retrieval: { itemCount: 1, hasMore: false, scope: "zhihu-question-answers" } }
       : { selectionRequired: true, query: "测试", questions: [{ title: "测试星系", url: "https://www.zhihu.com/question/123", sourceCount: 1 }] }) });
@@ -89,6 +87,10 @@ try {
   await home.locator("input").fill("测试");
   await home.locator("form button[type=submit]").click({ force: true });
   await home.getByRole("button", { name: "测试星系", exact: true }).click({ force: true });
+  await waitUrl("**/universe/q_test_contract");
+  await isolateProductUi();
+  await page.locator('[data-el="lost-universe-network"]').waitFor();
+  await page.locator('[data-el="core-question-galaxy"]').click({ force: true });
   await waitUrl("**/galaxy/q_test_contract");
   await page.locator('[data-el="galaxy-cluster"]').waitFor();
   assert.equal(await page.locator('[data-el="opinion-planet"]').count(), 1);
@@ -123,7 +125,7 @@ try {
   await fs.writeFile(path.join(out, "result.json"), JSON.stringify({
     ok: true,
     pageErrors: errors,
-    checks: ["four homepage demos", "48 unique planets", "6 clusters", "8 viewpoints per cluster", "focus", "planet landing", "Escape", "browser Back", "keyboard", "search error", "two-stage search contract", "invalid view query", "mobile overflow", "reduced motion"],
+    checks: ["four homepage demos", "48 unique planets", "6 clusters", "8 viewpoints per cluster", "focus", "planet landing", "Escape", "browser Back", "keyboard", "search error", "lost-universe search layer", "invalid view query", "mobile overflow", "reduced motion"],
   }, null, 2));
 } catch (error) {
   const detail = { ok: false, url: page.url(), message: String(error), pageErrors: errors };

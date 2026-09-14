@@ -1,12 +1,18 @@
-import type { OpinionGraph } from "../opinion/types";
+import type { OpinionGraph, QuestionNetwork } from "../opinion/types";
 import { getDemoGraph } from "./demo";
 
 const PREFIX = "cognitive-galaxy:v1:";
+const NETWORK_PREFIX = "lost-universe:v1:";
 const memory = new Map<string, OpinionGraph>();
+const networkMemory = new Map<string, QuestionNetwork>();
 const MAX_ENTRIES = 8;
 
 function cloneGraph(graph: OpinionGraph): OpinionGraph {
   return JSON.parse(JSON.stringify(graph)) as OpinionGraph;
+}
+
+function cloneNetwork(network: QuestionNetwork): QuestionNetwork {
+  return JSON.parse(JSON.stringify(network)) as QuestionNetwork;
 }
 
 /** Validates cached/API content before rendering; unknown data is never a fake demo. */
@@ -34,6 +40,29 @@ export function saveGalaxy(graph: OpinionGraph): void {
   } catch { /* Blocked/quota-limited storage does not prevent current-session use. */ }
 }
 
+export function saveQuestionNetwork(network: QuestionNetwork): void {
+  const snapshot = cloneNetwork(network);
+  networkMemory.set(network.coreQuestionId, snapshot);
+  if (typeof window === "undefined") return;
+  try { sessionStorage.setItem(`${NETWORK_PREFIX}${network.coreQuestionId}`, JSON.stringify(snapshot)); }
+  catch { /* optional cache */ }
+}
+
+export function readQuestionNetwork(id: string): QuestionNetwork | null {
+  const cached = networkMemory.get(id);
+  if (cached) return cloneNetwork(cached);
+  if (typeof window !== "undefined") {
+    try {
+      const value = JSON.parse(sessionStorage.getItem(`${NETWORK_PREFIX}${id}`) ?? "null") as QuestionNetwork | null;
+      if (value && value.coreQuestionId === id && Array.isArray(value.questions) && Array.isArray(value.relations)) {
+        networkMemory.set(id, value);
+        return cloneNetwork(value);
+      }
+    } catch { /* optional cache */ }
+  }
+  return null;
+}
+
 export function readGalaxy(id: string): OpinionGraph | null {
   const cached = memory.get(id);
   if (cached) return cloneGraph(cached);
@@ -46,8 +75,6 @@ export function readGalaxy(id: string): OpinionGraph | null {
       }
     } catch { /* fall through */ }
   }
-  // Authored homepage demos are pristine local fixtures. Once the user evolves
-  // one, the saved session snapshot above wins over the authored original.
   const demo = getDemoGraph(id);
   return demo ? cloneGraph(demo) : null;
 }
@@ -70,4 +97,8 @@ export function galaxyUrl(id: string, cluster?: string | null, opinion?: string 
   if (cluster) params.set("cluster", cluster);
   if (opinion && cluster) params.set("opinion", opinion);
   return `/galaxy/${encodeURIComponent(id)}${params.size ? `?${params}` : ""}`;
+}
+
+export function universeUrl(id: string): string {
+  return `/universe/${encodeURIComponent(id)}`;
 }

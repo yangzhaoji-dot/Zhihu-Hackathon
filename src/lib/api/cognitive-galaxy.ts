@@ -2,7 +2,7 @@
 
 import { request } from "./request";
 import type { BuildOpinionSpaceResult } from "./opinion";
-import type { OpinionGraph } from "../opinion/types";
+import type { OpinionGraph, QuestionNetwork } from "../opinion/types";
 import { isOpinionGraph } from "../cognitive-galaxy/session";
 
 async function abortable<T>(promise: Promise<T>, signal?: AbortSignal): Promise<T> {
@@ -30,6 +30,25 @@ export async function searchGalaxy(query: string, questionUrl?: string, question
   }
   if (data.selectionRequired === false && isOpinionGraph(data.graph)) return data;
   throw new Error("invalid_graph");
+}
+
+export async function searchQuestionNetwork(input: {
+  query: string;
+  coreQuestionId: string;
+  coreTitle: string;
+  coreUrl: string;
+}, signal?: AbortSignal): Promise<QuestionNetwork> {
+  const response = await abortable(request("/api/opinion/question-network", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    signal,
+  }), signal);
+  const data = await response.json() as { network?: QuestionNetwork; error?: string };
+  if (!response.ok || !data.network || !Array.isArray(data.network.questions) || !Array.isArray(data.network.relations)) {
+    throw new Error(data.error || "question_network_failed");
+  }
+  return data.network;
 }
 
 export async function loadGalaxy(id: string, signal?: AbortSignal): Promise<OpinionGraph> {
