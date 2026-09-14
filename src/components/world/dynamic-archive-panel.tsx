@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowLeft, ExternalLink, Radar } from "lucide-react";
-import type { OpinionGraph } from "@/lib/opinion/types";
+import type { OpinionGraph, OpinionSource } from "@/lib/opinion/types";
 import styles from "./planet-observation-archive.module.css";
 
 function compact(value: string, limit = 240) {
@@ -11,6 +11,19 @@ function compact(value: string, limit = 240) {
 
 function safeZhihuUrl(url: string) {
   return /^https:\/\/(www\.)?zhihu\.com\//i.test(url) ? url : null;
+}
+
+function sourceMetadata(graph: OpinionGraph, source: OpinionSource) {
+  const author = graph.authors.find((item) => item.id === source.authorId) ?? null;
+  const genericAuthor = !author || /知乎回答作者|作者信息未随接口返回/.test(author.name);
+  const authorKnown = source.authorKnown ?? !genericAuthor;
+  const upvotesKnown = source.upvotesKnown ?? authorKnown;
+  return {
+    author,
+    authorLabel: authorKnown ? author?.name ?? "知乎回答作者" : "作者信息未随接口返回",
+    authorTitle: authorKnown ? author?.title : null,
+    voteLabel: upvotesKnown ? `${source.upvotes.toLocaleString()} 赞同` : "赞同数未随接口返回",
+  };
 }
 
 export function DynamicArchivePanel({
@@ -60,7 +73,7 @@ export function DynamicArchivePanel({
 
       <section className={styles.list}>
         {records.map((source, index) => {
-          const author = graph.authors.find((item) => item.id === source.authorId) ?? null;
+          const metadata = sourceMetadata(graph, source);
           const url = safeZhihuUrl(source.url);
           return (
             <article className={styles.card} key={source.id}>
@@ -69,14 +82,14 @@ export function DynamicArchivePanel({
                   <span className={styles.number}>ECHO RECORD {String(index + 1).padStart(2, "0")}</span>
                   <h2>{index === 0 ? "最先被捕获的声音" : index === 1 ? "另一条留下来的声音" : "第三条现实切面"}</h2>
                 </div>
-                <span className={styles.upvotes}>{source.upvotes.toLocaleString()} 赞同 · 知乎记录</span>
+                <span className={styles.upvotes}>{metadata.voteLabel} · 知乎记录</span>
               </div>
 
               <blockquote>“{compact(source.excerpt)}”</blockquote>
 
               <div className={styles.authorLine}>
-                <strong>{author?.name ?? "知乎回答作者"}</strong>
-                {author?.title ? <span>{author.title}</span> : null}
+                <strong>{metadata.authorLabel}</strong>
+                {metadata.authorTitle ? <span>{metadata.authorTitle}</span> : null}
               </div>
 
               {source.evidence?.length ? (
@@ -108,7 +121,7 @@ export function DynamicArchivePanel({
       <section className={styles.note}>
         <span>档案注记</span>
         <p>
-          解释模型不是观点的证明。模型提供结构，知乎回答保留人的经验、条件和反例；当两者冲突时，应优先回到原始材料，而不是强迫现实服从模型。
+          若知乎接口只返回回答摘要与链接，我们会明确标记作者或赞同数“未随接口返回”，而不是把缺失信息伪装成 0 或匿名事实。解释模型不是观点的证明；当模型与原始材料冲突时，应优先回到真实回答。
         </p>
       </section>
     </main>

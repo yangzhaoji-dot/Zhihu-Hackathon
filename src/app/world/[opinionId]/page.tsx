@@ -2,6 +2,7 @@
 
 import { useParams, useSearchParams } from "next/navigation";
 import "@/components/world/planet-synthesis-extra.module.css";
+import "@/components/world/planet-story-source-preview.module.css";
 import { DynamicPlanetStoryV5 } from "@/components/world/dynamic-planet-story-v5";
 import { EnvironmentGuidanceLayer } from "@/components/world/environment-guidance-layer";
 import { FirstCarrierCue } from "@/components/world/first-carrier-cue";
