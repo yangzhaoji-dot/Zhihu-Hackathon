@@ -1,1 +1,6 @@
-export const DEMO_LAW_CURATION_VERSION = 2;
+export type CuratedDemoLawPreset={lawId:string;confidence:number;mechanism:string;reason:string;mapping:string;boundary:string};
+type D="health"|"resources"|"growth"|"values"|"context"|"reasoning"|"other";
+const R:Record<D,readonly string[]>={health:["saddle_node","newton_cooling","hooke","michaelis_menten"],resources:["pareto","optimal_stopping","little_law","bellman"],growth:["bellman","michaelis_menten","exponential","optimal_stopping"],values:["prospect_theory","pareto","hyperbolic_discounting","bellman"],context:["nash","fick_diffusion","arrhenius","sir"],reasoning:["bayes","selection_bias","entropy","bayes"],other:["bellman"]};
+const M:Record<D,string>={health:"承受、恢复、负荷与边界会随状态改变。",resources:"有限资源、机会成本与风险共同约束选择。",growth:"当前行动会改变未来能力、路径与机会集。",values:"冲突常来自目标、参考点与价值排序不同。",context:"个体选择嵌在更大的环境与系统结构中。",reasoning:"证据、样本、前提与不确定性会改变判断。",other:"这条观点更适合被看成动态关系。"};
+function parse(id:string):{d:D;i:number}|null{const t=id.replace(/^demo-(?:ai-|study-|grade-)?/,"");const m=t.match(/^(health|resources|growth|values|context|reasoning|other)-(\d+)$/);return m?{d:m[1] as D,i:Number(m[2])}:null;}
+export function getCuratedDemoLawPreset(id:string,title:string):CuratedDemoLawPreset|null{const p=parse(id);if(!p)return null;const lawId=R[p.d][p.i%R[p.d].length];return{lawId,confidence:.84-(p.i%3)*.03,mechanism:M[p.d],reason:"这条演示观点与所选科学法则共享相近的变化结构，而不是只共享关键词。",mapping:"观察「"+title+"」时，只借用法则中的条件、边界和变化关系，不把科学量直接替换成人生变量。",boundary:"这是结构类比，不是因果证明；最终判断仍要回到具体处境和真实证据。"};}
