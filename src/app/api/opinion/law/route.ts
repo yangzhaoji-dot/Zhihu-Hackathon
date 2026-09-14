@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { aiJsonWithProvider, type AiMessage } from "@/lib/opinion/ai-client";
 import { LAW_CATALOG, getPlanetLaw } from "@/lib/opinion/law-catalog";
+import { DEMO_GRAPHS, getDemoLawPreset } from "@/lib/cognitive-galaxy/demo";
 
 export const runtime = "nodejs";
 
@@ -58,6 +59,14 @@ function quality(confidence: number) {
   return "exploratory";
 }
 
+function demoOpinionByTitle(title: string) {
+  for (const graph of Object.values(DEMO_GRAPHS)) {
+    const opinion = graph.opinions.find((item) => item.title === title);
+    if (opinion) return opinion;
+  }
+  return null;
+}
+
 export async function POST(request: NextRequest) {
   let body: { title?: unknown; summary?: unknown; sources?: unknown };
   try {
@@ -72,6 +81,31 @@ export async function POST(request: NextRequest) {
     ? body.sources.map((item) => compact(item, 520)).filter(Boolean).slice(0, 5)
     : [];
   if (!title) return NextResponse.json({ ok: false, error: "missing_opinion" }, { status: 400 });
+
+  // Homepage showcase galaxies are completely deterministic and never depend
+  // on external AI/API availability. Free-form search continues below through
+  // the real Zhihu + model pipeline.
+  const demoOpinion = demoOpinionByTitle(title);
+  if (demoOpinion) {
+    const preset = getDemoLawPreset(demoOpinion.id);
+    const law = preset ? getPlanetLaw(preset.lawId) : null;
+    if (preset && law) {
+      return NextResponse.json({
+        ok: true,
+        law,
+        match: {
+          confidence: preset.confidence,
+          quality: quality(preset.confidence),
+          mechanism: preset.mechanism,
+          reason: preset.reason,
+          mapping: preset.mapping,
+          boundary: preset.boundary,
+          source: "fallback",
+          model: "authored-demo",
+        },
+      });
+    }
+  }
 
   const catalog = LAW_CATALOG.map((law) => ({
     id: law.id,
