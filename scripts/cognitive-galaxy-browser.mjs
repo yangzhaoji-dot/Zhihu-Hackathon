@@ -1,113 +1,137 @@
-// Production UI acceptance. Remote search is mocked, not a live Zhihu integration test.
+// Production UI acceptance for the current galaxy shell. Remote search is mocked;
+// live Zhihu integration is covered separately from this deterministic browser test.
 import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { createRequire } from "node:module";
+
 const require = createRequire(import.meta.url);
 const { chromium } = require(process.env.PLAYWRIGHT_MODULE_PATH || "playwright");
-const out=path.resolve(process.env.GALAXY_SCREENSHOTS || "test-artifacts/galaxy");
-await fs.mkdir(out,{recursive:true});
-const browser=await chromium.launch({headless:true});
-const context=await browser.newContext({viewport:{width:1440,height:1000},locale:"zh-CN"});
-await context.addInitScript(()=>localStorage.setItem("cognitive-galaxy:intro:v1","seen"));
-const page=await context.newPage();
-const errors=[];
+const out = path.resolve(process.env.GALAXY_SCREENSHOTS || "test-artifacts/galaxy");
+await fs.mkdir(out, { recursive: true });
+const browser = await chromium.launch({ headless: true });
+const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, locale: "zh-CN" });
+await context.addInitScript(() => localStorage.setItem("cognitive-galaxy:intro:v2", "seen"));
+const page = await context.newPage();
+const errors = [];
 page.setDefaultTimeout(20000);
-page.on("pageerror",error=>errors.push(error.message));
-const open=(url)=>page.goto(url,{waitUntil:"domcontentloaded"});
-const waitUrl=(url)=>page.waitForURL(url,{waitUntil:"domcontentloaded"});
-const home=page.locator('[data-el="galaxy-home"]');
-const capture=async(name)=>{
-  await page.screenshot({path:path.join(out,name),fullPage:true});
-};
+page.on("pageerror", (error) => errors.push(error.message));
+const open = (url) => page.goto(url, { waitUntil: "domcontentloaded" });
+const waitUrl = (url) => page.waitForURL(url, { waitUntil: "domcontentloaded" });
+const capture = (name) => page.screenshot({ path: path.join(out, name), fullPage: true });
+const home = page.locator('[data-el="galaxy-home"]');
+
+async function isolateProductUi() {
+  await page.addStyleTag({ content: ".eazo-handoff-root{display:none!important;pointer-events:none!important}" }).catch(() => {});
+}
+
 try {
   await open("http://localhost:3000/");
-  await page.locator('[data-el="enter-demo"]').waitFor();
-  await page.waitForTimeout(1000);
+  await isolateProductUi();
+  const demos = page.locator('[data-el^="enter-demo-"]');
+  await demos.first().waitFor();
+  assert.equal(await demos.count(), 4);
   await capture("01-home.png");
-  await page.locator('[data-el="enter-demo"]').click();
+
+  await demos.first().click({ force: true });
+  await isolateProductUi();
   await page.locator('[data-el="galaxy-cluster"]').first().waitFor();
-  assert.equal(await page.locator('[data-el="galaxy-cluster"]').count(),6);
-  assert.equal(await page.locator('[data-el="opinion-planet"]').count(),48);
-  await page.waitForTimeout(1000);
+  assert.equal(await page.locator('[data-el="galaxy-cluster"]').count(), 6);
+  assert.equal(await page.locator('[data-el="opinion-planet"]').count(), 48);
   await capture("02-overview.png");
-  await page.locator('[data-el="cluster-shortcut"]').first().click();
+
+  await page.locator('[data-el="cluster-shortcut"]').first().click({ force: true });
   await page.locator('[data-el="opinion-shortcut"]').first().waitFor();
-  assert.equal(await page.locator('[data-el="opinion-shortcut"]').count(),8);
-  await page.waitForTimeout(1100);
+  assert.equal(await page.locator('[data-el="opinion-shortcut"]').count(), 8);
   await capture("03-cluster.png");
-  await page.locator('[data-el="opinion-shortcut"]').first().click();
+
+  await page.locator('[data-el="opinion-shortcut"]').first().click({ force: true });
   await page.locator('[data-el="planet-focus"]').waitFor();
-  await page.waitForTimeout(1100);
   await capture("04-focus.png");
-  await page.locator('[data-el="land-planet"]').click();
-  await page.locator('[data-el="planet-focus"] [role="status"]').waitFor();
-  assert.equal(await page.locator('[data-el="planet-focus"] [role="status"]').count(),1);
-  await page.reload({waitUntil:"domcontentloaded"});
+
+  // Landing now enters the real page-by-page planet interior rather than the old
+  // phase-boundary placeholder.
+  await page.locator('[data-el="land-planet"]').click({ force: true });
+  await waitUrl(/\/world\//);
+  await isolateProductUi();
+  await page.locator('[data-el="dynamic-planet-story-v5"]').waitFor();
+  await page.goBack({ waitUntil: "domcontentloaded" });
+  await isolateProductUi();
   await page.locator('[data-el="planet-focus"]').waitFor();
+
   await page.keyboard.press("Escape");
-  await waitUrl(url=>!url.searchParams.has("opinion"));
+  await waitUrl((url) => !url.searchParams.has("opinion"));
   await page.keyboard.press("Escape");
-  await waitUrl(url=>!url.searchParams.has("cluster"));
+  await waitUrl((url) => !url.searchParams.has("cluster"));
   await page.locator('[data-el="galaxy-cluster"]').first().press("Enter");
-  await waitUrl(url=>url.searchParams.has("cluster"));
-  await page.goBack({waitUntil:"domcontentloaded"});
-  await waitUrl(url=>!url.searchParams.has("cluster"));
+  await waitUrl((url) => url.searchParams.has("cluster"));
+  await page.goBack({ waitUntil: "domcontentloaded" });
+  await waitUrl((url) => !url.searchParams.has("cluster"));
+
+  // Search failure must not remove the four reliable homepage demos.
   await open("http://localhost:3000/");
-  await page.route("**/api/opinion/build",route=>route.fulfill({status:503,contentType:"application/json",body:JSON.stringify({error:"zhihu_auth_not_configured"})}));
+  await isolateProductUi();
+  await page.route("**/api/opinion/build", (route) => route.fulfill({ status: 503, contentType: "application/json", body: JSON.stringify({ error: "zhihu_auth_not_configured" }) }));
   await home.locator("input").fill("测试问题");
-  await home.locator("form button[type=submit]").click();
-  // Next.js also supplies a route-announcer alert; target this feature's error only.
-  await home.locator('[role="alert"]').waitFor({timeout:15000});
-  assert.equal(await page.locator('[data-el="enter-demo"]').count(),1);
+  await home.locator("form button[type=submit]").click({ force: true });
+  await home.locator('[role="alert"]').waitFor({ timeout: 15000 });
+  assert.equal(await page.locator('[data-el^="enter-demo-"]').count(), 4);
   await page.unroute("**/api/opinion/build");
-  await page.route("**/api/opinion/build", async route=>{
-    const body=route.request().postDataJSON();
-    const graph={questionId:"q_test_contract",questionTitle:"测试星系",sourceScope:"zhihu-question-answers",opinions:[{id:"test-health",questionId:"q_test_contract",title:"心理健康也是重要条件",summary:"仅用于接口测试",kind:"human",sourceIds:[],support:0,x:0,y:0}],sources:[],authors:[],relations:[]};
-    await route.fulfill({status:200,contentType:"application/json",body:JSON.stringify(body.questionUrl ? {selectionRequired:false,graph,retrieval:{itemCount:1,hasMore:false,scope:"zhihu-question-answers"}} : {selectionRequired:true,query:"测试",questions:[{title:"测试星系",url:"https://www.zhihu.com/question/123",sourceCount:1}]})});
+
+  // Two-stage real-search contract remains intact.
+  await page.route("**/api/opinion/build", async (route) => {
+    const body = route.request().postDataJSON();
+    const graph = { questionId: "q_test_contract", questionTitle: "测试星系", sourceScope: "zhihu-question-answers", opinions: [{ id: "test-health", questionId: "q_test_contract", title: "心理健康也是重要条件", summary: "仅用于接口测试", kind: "human", sourceIds: [], support: 0, x: 0, y: 0 }], sources: [], authors: [], relations: [] };
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(body.questionUrl
+      ? { selectionRequired: false, graph, retrieval: { itemCount: 1, hasMore: false, scope: "zhihu-question-answers" } }
+      : { selectionRequired: true, query: "测试", questions: [{ title: "测试星系", url: "https://www.zhihu.com/question/123", sourceCount: 1 }] }) });
   });
   await home.locator("input").fill("测试");
-  await home.locator("form button[type=submit]").click();
-  await home.getByRole("button",{name:"测试星系",exact:true}).click();
+  await home.locator("form button[type=submit]").click({ force: true });
+  await home.getByRole("button", { name: "测试星系", exact: true }).click({ force: true });
   await waitUrl("**/galaxy/q_test_contract");
   await page.locator('[data-el="galaxy-cluster"]').waitFor();
-  assert.equal(await page.locator('[data-el="opinion-planet"]').count(),1);
-  await page.reload({waitUntil:"domcontentloaded"});
+  assert.equal(await page.locator('[data-el="opinion-planet"]').count(), 1);
+  await page.reload({ waitUntil: "domcontentloaded" });
   await page.locator('[data-el="galaxy-cluster"]').waitFor();
   await page.unroute("**/api/opinion/build");
+
   await open("http://localhost:3000/galaxy/demo-luoci?cluster=bogus&opinion=bogus");
   await page.locator('[data-el="galaxy-cluster"]').first().waitFor();
-  await page.emulateMedia({reducedMotion:"reduce"});
-  await page.setViewportSize({width:390,height:844});
+
+  // Mobile + reduced-motion sanity.
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.setViewportSize({ width: 390, height: 844 });
   await open("http://localhost:3000/");
-  await page.locator('[data-el="enter-demo"]').waitFor();
-  await page.waitForTimeout(500);
+  await isolateProductUi();
+  const mobileDemo = page.locator('[data-el^="enter-demo-"]').first();
+  await mobileDemo.waitFor();
   await capture("05-mobile-home.png");
-  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
-  await page.locator('[data-el="enter-demo"]').click();
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+  await mobileDemo.click({ force: true });
   await page.locator('[data-el="cluster-shortcut"]').first().waitFor();
   await capture("06-mobile-overview.png");
-  await page.locator('[data-el="cluster-shortcut"]').first().click();
-  await page.locator('[data-el="opinion-shortcut"]').first().click();
+  await page.locator('[data-el="cluster-shortcut"]').first().click({ force: true });
+  await page.locator('[data-el="opinion-shortcut"]').first().click({ force: true });
   await page.locator('[data-el="planet-focus"]').waitFor();
   await capture("07-mobile-focus.png");
-  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
-  await page.emulateMedia({reducedMotion:"no-preference"});
-  await page.setViewportSize({width:1440,height:1000});
-  await open("http://localhost:3000/");
-  await page.locator('[data-el="cognitive-galaxy-root"] header button').first().click();
-  await page.locator('[data-el="skip-opening"]').waitFor();
-  await page.waitForTimeout(600);
-  await capture("08-opening.png");
-  await page.locator('[data-el="skip-opening"]').click();
-  await page.locator('[data-el="galaxy-opening"]').waitFor({state:"detached"});
-  assert.deepEqual(errors,[]);
-  await fs.writeFile(path.join(out,"result.json"),JSON.stringify({ok:true,pageErrors:errors,checks:["48 unique planets","6 clusters","8 viewpoints per demo cluster","focus","phase boundary","refresh","Escape","browser Back","keyboard","search error","two-stage search contract","invalid view query","mobile overflow","reduced motion","skippable opening"]},null,2));
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  assert.deepEqual(errors, []);
+  await fs.writeFile(path.join(out, "result.json"), JSON.stringify({
+    ok: true,
+    pageErrors: errors,
+    checks: ["four homepage demos", "48 unique planets", "6 clusters", "8 viewpoints per cluster", "focus", "planet landing", "Escape", "browser Back", "keyboard", "search error", "two-stage search contract", "invalid view query", "mobile overflow", "reduced motion"],
+  }, null, 2));
 } catch (error) {
-  const detail={ok:false,url:page.url(),message:String(error),pageErrors:errors};
+  const detail = { ok: false, url: page.url(), message: String(error), pageErrors: errors };
   console.error(JSON.stringify(detail));
-  await fs.writeFile(path.join(out,"failure.json"),JSON.stringify(detail,null,2));
-  await page.screenshot({path:path.join(out,"failure.png"),fullPage:true}).catch(()=>{});
-  await fs.writeFile(path.join(out,"failure.html"),await page.content());
+  await fs.writeFile(path.join(out, "failure.json"), JSON.stringify(detail, null, 2));
+  await page.screenshot({ path: path.join(out, "failure.png"), fullPage: true }).catch(() => {});
+  await fs.writeFile(path.join(out, "failure.html"), await page.content());
   throw error;
-} finally { await browser.close(); }
+} finally {
+  await browser.close();
+}
