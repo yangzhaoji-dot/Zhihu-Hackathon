@@ -11,11 +11,12 @@ import {
 } from "./demo-data";
 import { getCuratedDemoLawPreset, type CuratedDemoLawPreset } from "./demo-law-curation";
 import { withDemoRelations } from "./demo-relations";
+import { withCuratedDemoZhihuSources } from "./demo-zhihu-sources";
 
-export const DEMO_GRAPH = withDemoRelations(RAW_DEMO_GRAPH);
-export const AI_DEMO_GRAPH = withDemoRelations(RAW_AI_DEMO_GRAPH);
-export const STUDY_DEMO_GRAPH = withDemoRelations(RAW_STUDY_DEMO_GRAPH);
-export const GRADE_DEMO_GRAPH = withDemoRelations(RAW_GRADE_DEMO_GRAPH);
+export const DEMO_GRAPH = withCuratedDemoZhihuSources(withDemoRelations(RAW_DEMO_GRAPH));
+export const AI_DEMO_GRAPH = withCuratedDemoZhihuSources(withDemoRelations(RAW_AI_DEMO_GRAPH));
+export const STUDY_DEMO_GRAPH = withCuratedDemoZhihuSources(withDemoRelations(RAW_STUDY_DEMO_GRAPH));
+export const GRADE_DEMO_GRAPH = withCuratedDemoZhihuSources(withDemoRelations(RAW_GRADE_DEMO_GRAPH));
 
 export const DEMO_GRAPHS = {
   [DEMO_ID]: DEMO_GRAPH,
