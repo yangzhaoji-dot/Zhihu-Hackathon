@@ -8,18 +8,19 @@ export function sha256(value: string): string {
   return createHash("sha256").update(value, "utf8").digest("hex");
 }
 
-export function encryptOAuthToken(token: string, secret: string): string {
+export function sealJson(value: unknown, secret: string): string {
   const iv = randomBytes(12);
   const cipher = createCipheriv("aes-256-gcm", keyFromSecret(secret), iv);
-  const ciphertext = Buffer.concat([cipher.update(token, "utf8"), cipher.final()]);
+  const ciphertext = Buffer.concat([cipher.update(JSON.stringify(value), "utf8"), cipher.final()]);
   return [iv, cipher.getAuthTag(), ciphertext].map((part) => part.toString("base64url")).join(".");
 }
 
-export function decryptOAuthToken(value: string, secret: string): string {
+export function openJson<T>(value: string, secret: string): T {
   const parts = value.split(".");
-  if (parts.length !== 3) throw new Error("ZHIHU_OAUTH_TOKEN_INVALID");
+  if (parts.length !== 3) throw new Error("ZHIHU_OAUTH_COOKIE_INVALID");
   const [iv, tag, ciphertext] = parts.map((part) => Buffer.from(part, "base64url"));
   const decipher = createDecipheriv("aes-256-gcm", keyFromSecret(secret), iv);
   decipher.setAuthTag(tag);
-  return Buffer.concat([decipher.update(ciphertext), decipher.final()]).toString("utf8");
+  const plaintext = Buffer.concat([decipher.update(ciphertext), decipher.final()]).toString("utf8");
+  return JSON.parse(plaintext) as T;
 }

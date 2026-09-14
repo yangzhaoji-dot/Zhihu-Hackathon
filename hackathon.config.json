@@ -2,6 +2,7 @@
   "project_name": "Zhihu-Hackathon",
   "oauth": {
     "enabled": true,
+    "session_mode": "callback-only-demo",
     "app_id": "768",
     "redirect_uri": "https://zhihu-hackathon-tawny.vercel.app/auth/callback"
   }

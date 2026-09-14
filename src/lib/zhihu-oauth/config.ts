@@ -1,7 +1,8 @@
 import hackathonConfig from "../../../hackathon.config.json";
 
 export const ZHIHU_BROWSER_COOKIE = "zhihu_oauth_browser";
-export const ZHIHU_SESSION_COOKIE = "zhihu_oauth_session";
+export const ZHIHU_STATE_COOKIE = "zhihu_oauth_state";
+export const ZHIHU_SESSION_COOKIE = "zhihu_oauth_result";
 
 type OAuthConfig = {
   enabled: boolean;

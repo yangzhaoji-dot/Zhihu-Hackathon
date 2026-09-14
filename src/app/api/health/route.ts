@@ -16,6 +16,7 @@ export function GET() {
       appKeyConfigured: hasConfiguredSecret("ZHIHU_OAUTH_APP_KEY"),
       accessSecretConfigured: hasConfiguredSecret("ZHIHU_ACCESS_SECRET"),
       sessionSecretConfigured: hasConfiguredSecret("ZHIHU_OAUTH_SESSION_SECRET"),
+      sessionMode: "callback-only-demo",
     },
   });
 }

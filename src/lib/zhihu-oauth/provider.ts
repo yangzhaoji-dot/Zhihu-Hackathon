@@ -1,4 +1,4 @@
-import type { ZhihuOAuthProfile } from "@/lib/db/schema/zhihu-oauth";
+import type { ZhihuOAuthProfile } from "./types";
 import { getZhihuOAuthConfig, getZhihuOAuthSecrets } from "./config";
 
 type TokenResponse = { accessToken: string; expiresIn: number };

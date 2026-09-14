@@ -10,6 +10,7 @@ export type ZhihuOAuthStatus = {
     accessSecret: boolean;
     sessionSecret: boolean;
   };
+  sessionMode: "callback-only-demo";
   profile: { id: string; fullname: string | null; headline: string | null; avatarUrl: string | null } | null;
   expiresAt: string | null;
 };

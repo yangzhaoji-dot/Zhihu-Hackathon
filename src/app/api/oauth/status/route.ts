@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getZhihuOAuthConfig, hasConfiguredSecret, ZHIHU_SESSION_COOKIE } from "@/lib/zhihu-oauth/config";
-import { readActiveZhihuSession } from "@/lib/zhihu-oauth/session";
+import { readZhihuResult } from "@/lib/zhihu-oauth/cookies";
 
 export async function GET(request: NextRequest) {
   const configured = {
@@ -17,12 +17,13 @@ export async function GET(request: NextRequest) {
   } catch {
     // Configuration flags remain false.
   }
-  const session = await readActiveZhihuSession(request.cookies.get(ZHIHU_SESSION_COOKIE)?.value);
+  const result = readZhihuResult(request.cookies.get(ZHIHU_SESSION_COOKIE)?.value);
   return NextResponse.json({
     ok: true,
-    connected: Boolean(session),
+    connected: Boolean(result),
     configured,
-    profile: session?.profile ?? null,
-    expiresAt: session?.tokenExpiresAt.toISOString() ?? null,
+    sessionMode: "callback-only-demo",
+    profile: result?.profile ?? null,
+    expiresAt: result ? new Date(result.expiresAt).toISOString() : null,
   });
 }
