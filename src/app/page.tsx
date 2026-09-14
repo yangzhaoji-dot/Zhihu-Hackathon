@@ -8,9 +8,9 @@ import { ArrowRight, ArrowUpRight, Search, RotateCcw, LoaderCircle } from "lucid
 import { useTranslation } from "react-i18next";
 import { SpaceShell } from "@/components/cognitive-galaxy/space-shell";
 import { Opening } from "@/components/cognitive-galaxy/opening";
-import { searchGalaxy } from "@/lib/api/cognitive-galaxy";
+import { searchGalaxy, searchQuestionNetwork } from "@/lib/api/cognitive-galaxy";
 import type { ZhihuQuestionCandidate } from "@/lib/api/opinion";
-import { galaxyUrl, saveGalaxy } from "@/lib/cognitive-galaxy/session";
+import { galaxyUrl, saveGalaxy, saveQuestionNetwork, universeUrl } from "@/lib/cognitive-galaxy/session";
 import { HOME_DEMOS } from "@/lib/cognitive-galaxy/demo";
 import styles from "@/components/cognitive-galaxy/home.module.css";
 
@@ -46,8 +46,6 @@ export default function Home() {
     window.setTimeout(() => searchInput.current?.focus({ preventScroll:true }), 80);
   }, []);
 
-  // Only free-form search uses the real Zhihu API. The four visible homepage
-  // cards are authored demos so judges can always enter a complete experience.
   const runSearch = async (text: string, candidate?: ZhihuQuestionCandidate) => {
     const clean = text.trim();
     if (!clean) { setError("emptySearch"); searchInput.current?.focus(); return; }
@@ -66,6 +64,25 @@ export default function Home() {
         if (!result.questions.length) setError("noCandidates");
       } else {
         saveGalaxy(result.graph);
+        const coreUrl = result.graph.questionUrl || candidate?.url;
+        if (coreUrl) {
+          try {
+            const network = await searchQuestionNetwork({
+              query: clean,
+              coreQuestionId: result.graph.questionId,
+              coreTitle: result.graph.questionTitle,
+              coreUrl,
+            }, abort.signal);
+            if (id !== requestId.current) return;
+            saveQuestionNetwork(network);
+            router.push(universeUrl(result.graph.questionId));
+            return;
+          } catch {
+            saveQuestionNetwork({ coreQuestionId: result.graph.questionId, questions: [{ id: result.graph.questionId, title: result.graph.questionTitle, x: .5, y: .5, core: true }], relations: [] });
+            router.push(universeUrl(result.graph.questionId));
+            return;
+          }
+        }
         router.push(galaxyUrl(result.graph.questionId));
       }
     } catch (cause) {
@@ -85,8 +102,9 @@ export default function Home() {
       <main className={styles.home} data-el="galaxy-home">
         <div className={styles.celestial} aria-hidden="true"><div className={styles.orbitA}/><div className={styles.orbitB}/><div className={styles.rim}/><div className={styles.globe}/><div className={styles.smallMoon}/></div>
         <motion.section className={styles.hero} initial={{ opacity:0, y:18 }} animate={{ opacity:1, y:0 }} transition={{ duration:reduced ? 0 : .8 }}>
-          <p className={styles.kicker}><span/>{t("heroKicker")}</p>
+          <p className={styles.kicker}><span/>THE LOST UNIVERSE · 失落宇宙</p>
           <h1>{t("heroTitle")}</h1>
+          <p className={styles.description}>旧人类文明已经远去。被保存下来的数字认知，与残存的物质世界发生了无法解释的重合。城市、海洋、废墟与一个个未完的追问，由此重新获得了形状。</p>
           <p className={styles.description}>{t("heroDescription")}</p>
           <form className={styles.search} onSubmit={(event) => { event.preventDefault(); void runSearch(query); }}>
             <Search size={19} strokeWidth={1.5} aria-hidden="true"/>
@@ -97,18 +115,13 @@ export default function Home() {
             {busy && <p>{t("searching")} <button type="button" onClick={cancelSearch}>{t("cancel")}</button></p>}
             {error && <p role="alert">{t(error)}</p>}
           </div>
-          {candidates.length > 0 && <section className={styles.candidates} aria-label={t("selectQuestion")}><h2>{t("selectQuestion")}</h2>{candidates.map((candidate) => <button type="button" key={candidate.url} disabled={busy} onClick={() => void runSearch(resolvedQuery, candidate)}><span>{candidate.title}</span><ArrowUpRight size={15}/></button>)}</section>}
+          {candidates.length > 0 && <section className={styles.candidates} aria-label={t("selectQuestion")}><h2>发现了几处相近的旧文明信号。选择你真正想追问的那一个。</h2>{candidates.map((candidate) => <button type="button" key={candidate.url} disabled={busy} onClick={() => void runSearch(resolvedQuery, candidate)}><span>{candidate.title}</span><ArrowUpRight size={15}/></button>)}</section>}
         </motion.section>
         <section className={styles.recommendations} aria-label={t("recommendations")}>
           <div className={styles.sectionLabel}><span>{t("recommendations")}</span><i/></div>
           <div className={styles.cards}>
             {HOME_DEMOS.map((item, index) => (
-              <Link
-                href={galaxyUrl(item.id)}
-                className={`${styles.card} ${index === 0 ? styles.demoCard : ""}`}
-                key={item.id}
-                data-el={`enter-demo-${item.index}`}
-              >
+              <Link href={galaxyUrl(item.id)} className={`${styles.card} ${index === 0 ? styles.demoCard : ""}`} key={item.id} data-el={`enter-demo-${item.index}`}>
                 <span className={styles.cardIndex}>{item.index} / <b>DEMO</b></span>
                 <h2>{item.title}</h2>
                 <small>{item.meta}</small>
@@ -118,7 +131,7 @@ export default function Home() {
           </div>
         </section>
       </main>
-      <footer className={styles.footer}><span>首页精选为策展演示；搜索框使用真实知乎检索与 AI 观点构建。</span><small>{t("phase")}</small></footer>
+      <footer className={styles.footer}><span>这些问题曾经属于旧人类。现在，它们只剩下彼此之间微弱的引力。</span><small>{t("phase")}</small></footer>
     </div>
     <AnimatePresence>{intro && <Opening onDone={finishIntro}/>}</AnimatePresence>
   </SpaceShell>;
