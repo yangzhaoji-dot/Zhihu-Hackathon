@@ -21,7 +21,7 @@ const RELATED_BY_DEMO: Record<string, Array<{ title: string; kind: NonNullable<Q
     { title: "应该先找到下家再辞职吗？", kind: "related", type: "support", label: "相邻问题" },
     { title: "转行需要先辞职吗？", kind: "related", type: "support", label: "相邻问题" },
   ],
-  "demo-ai-replace": [
+  "demo-ai-programmers": [
     { title: "AI 会先替代程序员的哪些工作？", kind: "sub", type: "add", label: "分叉问题" },
     { title: "程序员应该如何学习 AI？", kind: "extension", type: "add", label: "延伸追问" },
     { title: "软件工程师未来最需要哪些能力？", kind: "related", type: "support", label: "相邻问题" },
